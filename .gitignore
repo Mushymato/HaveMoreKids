@@ -1,0 +1,8 @@
+.vscode/
+*/bin
+*/obj
+*/*/bin
+*/*/obj
+*/config.json
+*/manifest.json
+\[CP\] Senlets/Assets/

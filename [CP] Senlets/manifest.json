@@ -1,0 +1,22 @@
+{
+  "$schema": "https://smapi.io/schemas/manifest.json",
+  "Name": "Have More Senlets",
+  "Author": "7thAxis",
+  "Version": "0.1.0",
+  "Description": "16 shadow goobers around the house.",
+  "UniqueID": "7thAxis.LitD.HMC.Senlets",
+  "UpdateKeys": [
+    "Nexus:???"
+  ],
+  "MinimumApiVersion": "4.0.0",
+  "MinimumGameVersion": "1.6",
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "mushymato.HaveMoreKids",
+      "IsRequired": true
+    }
+  ]
+}

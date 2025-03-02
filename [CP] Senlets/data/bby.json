@@ -1,0 +1,35 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    {
+      "Action": "Load",
+      "Target": "Characters/{{ModId}}_{{L@Kid}}",
+      "FromFile": "Assets/Characters/Kids/Toddler_{{L@Kid}}.png"
+    },
+    {
+      "Action": "Load",
+      "Target": "Portraits/{{ModId}}_{{L@Kid}}",
+      "FromFile": "Assets/Portraits/Kids/Toddler_{{L@Kid}}.png"
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Characters",
+      "Entries": {
+        "mushymato.HaveMoreKids_{{ModId}}_{{L@Kid}}": {
+          "Appearance": [
+            {
+              "Id": "mushymato.HaveMoreKids_Toddler",
+              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}"
+            },
+            {
+              "Id": "mushymato.HaveMoreKids_Baby",
+              "Portrait": "Characters/{{ModId}}_The_Baby",
+              "Sprite": "Characters/{{ModId}}_The_Baby"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
