@@ -22,6 +22,7 @@
               "Portrait": "Portraits/{{ModId}}_{{L@Kid}}",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}"
             },
+            // can theoretically have different baby appearances too
             {
               "Id": "mushymato.HaveMoreKids_Baby",
               "Portrait": "Characters/{{ModId}}_The_Baby",
@@ -29,6 +30,34 @@
             }
           ]
         }
+      }
+    },
+    {
+      "Action": "Load",
+      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
+      "FromFile": "data/blank.json"
+    },
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
+      "Entries": {
+        // these are Krobus' dialogue, here as an example
+        "GreenRain": "The flow of water has been unusually strong today... what's going on up there?",
+        "Fri": "...",
+        "Wed": "I find things here and I sell them. Care to buy anything?",
+        "Wed6": "If you put your ear up to the right pipe, you can hear into any house from down here.#$b#I wouldn't eavesdrop, though!$3",
+        "Thu": "Please don't tell anyone about me.#$b#Humans tend to destroy things they can't understand.",
+        "Thu6": "Please don't tell anyone about me.#$b#Most humans are frightened by us shadow people... maybe for good reason.$s#$b#But regardless, if the townspeople knew about me, I might not be safe here.",
+        "Tue": "I am too sensitive to sunlight to go out on most days.#$b#The conditions in here are perfect.#$e#Care to buy anything?",
+        "Mon": "Please, don't be alarmed. I am different than the others.#$e#I've spent a lot of time observing humans. I know you like to shop. Care to see my wares?",
+        "Mon2": "Back again? I suppose it does fit into my theory of human behavior.",
+        "Mon6": "'Krobus' means 'bridge-crosser' in our language.",
+        "Sat": "On Fridays I stay silent as a sign of devotion to Yoba.",
+        "Sat4": "I'd love to see more of the outside world, but it wouldn't be safe for me.$s",
+        "Sat8": "I'll never know what it's like to be human... but talking to you, I feel like I understand it a little.",
+        "Sun": "...Sorry, I'm still a little wary of humans. My shop is still open to you, however.",
+        "Sun4": "You're not like the other humans, are you?",
+        "Sun8": "You've opened my eyes to the world of humans. I appreciate that.",
       }
     }
   ]

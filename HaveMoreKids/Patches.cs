@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
@@ -20,10 +21,38 @@ internal record TempCAD(CharacterAppearanceData Data)
 internal static class Patches
 {
     internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
-    internal static Action<NPC> NPC_ChooseAppearance_Call = MakeDynamicMethod();
+    internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
+    internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!;
+
+    // internal static Action<NPC> NPC_checkAction_Call = null!;
+
+    private static void MakeDynamicMethods()
+    {
+        DynamicMethod dm;
+        ILGenerator gen;
+
+        var NPC_ChooseAppearance = AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.ChooseAppearance));
+        dm = new DynamicMethod("NPC_ChooseAppearance_Call", typeof(void), [typeof(NPC)]);
+        gen = dm.GetILGenerator();
+        gen.Emit(OpCodes.Ldarg_0);
+        gen.Emit(OpCodes.Ldnull);
+        gen.Emit(OpCodes.Call, NPC_ChooseAppearance);
+        gen.Emit(OpCodes.Ret);
+        NPC_ChooseAppearance_Call = dm.CreateDelegate<Action<NPC>>();
+
+        var NPC_loadCurrentDialogue = AccessTools.DeclaredMethod(typeof(NPC), "loadCurrentDialogue");
+        dm = new DynamicMethod("NPC_loadCurrentDialogue_Call", typeof(Stack<Dialogue>), [typeof(NPC)]);
+        gen = dm.GetILGenerator();
+        gen.Emit(OpCodes.Ldarg_0);
+        gen.Emit(OpCodes.Call, NPC_loadCurrentDialogue);
+        gen.Emit(OpCodes.Ret);
+        NPC_loadCurrentDialogue_Call = dm.CreateDelegate<Func<NPC, Stack<Dialogue>>>();
+    }
 
     internal static void Apply()
     {
+        MakeDynamicMethods();
+
         Harmony harmony = new(ModEntry.ModId);
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.pickPersonalFarmEvent)),
@@ -49,18 +78,70 @@ internal static class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.GetData)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_GetData_Postfix))
         );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.checkAction)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_checkAction_Postfix))
+        );
+        harmony.Patch(
+            original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.Dialogue)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_Dialogue_Transpiler))
+        );
+        harmony.Patch(
+            original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.CurrentDialogue)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CurrentDialogue_Postfix))
+        );
     }
 
-    private static Action<NPC> MakeDynamicMethod()
+    private static void NPC_CurrentDialogue_Postfix(NPC __instance, ref Stack<Dialogue> __result)
     {
-        var NPC_ChooseAppearance = AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.ChooseAppearance));
-        var dm = new DynamicMethod("NPC_ChooseAppearance_Call", typeof(void), [typeof(NPC)]);
-        var gen = dm.GetILGenerator();
-        gen.Emit(OpCodes.Ldarg_0);
-        gen.Emit(OpCodes.Ldnull);
-        gen.Emit(OpCodes.Call, NPC_ChooseAppearance);
-        gen.Emit(OpCodes.Ret);
-        return dm.CreateDelegate<Action<NPC>>();
+        if (__instance is Child)
+        {
+            Game1.npcDialogues.TryGetValue(__instance.Name, out var value);
+            value ??= Game1.npcDialogues[__instance.Name] = NPC_loadCurrentDialogue_Call(__instance);
+            __result = value;
+        }
+    }
+
+    private static IEnumerable<CodeInstruction> Child_Dialogue_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            // IL_0018: ldarg.0
+            // IL_0019: isinst StardewValley.Characters.Child
+            // IL_001e: brfalse.s IL_0029
+            matcher
+                .MatchEndForward([new(OpCodes.Ldarg_0), new(OpCodes.Isinst, typeof(Child)), new(OpCodes.Brfalse_S)])
+                .ThrowIfNotMatch("Did not find 'this is Child'");
+            matcher.Opcode = OpCodes.Brtrue_S;
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in BirthingEvent_tickUpdate_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
+    private static void Child_checkAction_Postfix(Child __instance, Farmer who, GameLocation l, bool __result)
+    {
+        int hearts = Game1.player.friendshipData.TryGetValue(__instance.Name, out Friendship value)
+            ? (value.Points / 250)
+            : 0;
+        Dialogue dialogue4 = __instance.tryToRetrieveDialogue(Game1.currentSeason + "_", hearts);
+        if (dialogue4 == null)
+        {
+            dialogue4 = __instance.tryToRetrieveDialogue("", hearts);
+        }
+        if (__result && who.IsLocalPlayer && __instance.CurrentDialogue.Count > 0)
+        {
+            Game1.drawDialogue(__instance);
+            return;
+        }
+        ModEntry.Log("Did not dialog");
     }
 
     private static void Child_GetData_Postfix(NPC __instance, ref CharacterData __result)
@@ -115,8 +196,7 @@ internal static class Patches
             if (data.Id.StartsWith(prefixSetTrue))
             {
                 tmpCADs.Add(new(data));
-                if (data.Condition == null)
-                    data.Condition = "TRUE";
+                data.Condition ??= "TRUE";
                 data.Precedence = -100;
             }
             if (data.Id.StartsWith(prefixSetFalse))
@@ -146,6 +226,8 @@ internal static class Patches
         }
         else
         {
+            __instance.Sprite.SpriteWidth = characterData.Size.X;
+            __instance.Sprite.SpriteHeight = characterData.Size.Y;
             __instance.Sprite.currentFrame = 0;
             __instance.HideShadow = false;
         }
