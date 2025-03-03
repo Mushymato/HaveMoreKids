@@ -112,10 +112,18 @@ internal static class Patches
         }
         foreach (var data in appearances)
         {
+            if (data.Id.StartsWith(prefixSetTrue))
+            {
+                tmpCADs.Add(new(data));
+                if (data.Condition == null)
+                    data.Condition = "TRUE";
+                data.Precedence = -100;
+            }
             if (data.Id.StartsWith(prefixSetFalse))
             {
                 tmpCADs.Add(new(data));
                 data.Condition = "FALSE";
+                data.Precedence = 0;
             }
         }
 
@@ -134,14 +142,12 @@ internal static class Patches
                     __instance.Sprite.currentFrame = 32;
                     break;
             }
-            __instance.HideShadow = false;
+            __instance.HideShadow = true;
         }
         else
         {
-            __instance.Sprite.SpriteWidth = 16;
-            __instance.Sprite.SpriteHeight = 32;
             __instance.Sprite.currentFrame = 0;
-            __instance.HideShadow = true;
+            __instance.HideShadow = false;
         }
         __instance.Sprite.UpdateSourceRect();
 
