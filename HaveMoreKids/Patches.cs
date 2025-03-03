@@ -20,11 +20,8 @@ internal record TempCAD(CharacterAppearanceData Data)
 
 internal static class Patches
 {
-    internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!;
-
-    // internal static Action<NPC> NPC_checkAction_Call = null!;
 
     private static void MakeDynamicMethods()
     {
@@ -128,20 +125,11 @@ internal static class Patches
 
     private static void Child_checkAction_Postfix(Child __instance, Farmer who, GameLocation l, bool __result)
     {
-        int hearts = Game1.player.friendshipData.TryGetValue(__instance.Name, out Friendship value)
-            ? (value.Points / 250)
-            : 0;
-        Dialogue dialogue4 = __instance.tryToRetrieveDialogue(Game1.currentSeason + "_", hearts);
-        if (dialogue4 == null)
-        {
-            dialogue4 = __instance.tryToRetrieveDialogue("", hearts);
-        }
         if (__result && who.IsLocalPlayer && __instance.CurrentDialogue.Count > 0)
         {
             Game1.drawDialogue(__instance);
             return;
         }
-        ModEntry.Log("Did not dialog");
     }
 
     private static void Child_GetData_Postfix(NPC __instance, ref CharacterData __result)
@@ -161,7 +149,10 @@ internal static class Patches
     /// <param name="__result"></param>
     private static void Child_displayName_Postfix(Character __instance, ref string __result)
     {
-        if (__instance is Child && __instance.modData.TryGetValue(Child_ModData_DisplayName, out string displayName))
+        if (
+            __instance is Child
+            && __instance.modData.TryGetValue(Quirks.Child_ModData_DisplayName, out string displayName)
+        )
             __result = displayName;
     }
 
@@ -241,16 +232,12 @@ internal static class Patches
 
     private static Child ModifyKid(Child newKid, NPC spouse)
     {
-        if (spouse.GetKidIds() is not string[] kidIds)
+        if (Quirks.PickKidId(spouse) is not string newKidId)
             return newKid;
-        HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
-        string[] availableKidIds = kidIds.Where(id => !children.Contains(id)).ToArray();
-        newKid.modData[Child_ModData_DisplayName] = newKid.Name;
-        newKid.Name = availableKidIds[
-            Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed).Next(availableKidIds.Length)
-        ];
+        newKid.modData[Quirks.Child_ModData_DisplayName] = newKid.Name;
+        newKid.Name = newKidId;
         newKid.reloadSprite(onlyAppearance: true);
-        ModEntry.Log($"Assigned {newKid.Name} to {spouse.Name} and {Game1.player.UniqueMultiplayerID}'s child.");
+        ModEntry.Log($"Assigned {newKidId} to {spouse.Name} and {Game1.player.UniqueMultiplayerID}'s child.");
         return newKid;
     }
 
@@ -328,7 +315,7 @@ internal static class Patches
 
     private static bool ShouldHaveKids(NPC spouse, List<Child> children)
     {
-        if (spouse.GetKidIds() is string[] kidIds)
+        if (Quirks.GetKidIds(spouse) is string[] kidIds)
             return kidIds.Length > children.Count && children.Last().Age > 2;
         return false;
     }

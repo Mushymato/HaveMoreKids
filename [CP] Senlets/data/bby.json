@@ -32,6 +32,7 @@
         }
       }
     },
+    // probably want to have dedicated dialogue per kid instead of same dialogue for everyone
     {
       "Action": "Load",
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
