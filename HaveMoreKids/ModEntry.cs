@@ -1,4 +1,5 @@
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 
 namespace HaveMoreKids;
 
@@ -10,15 +11,25 @@ public class ModEntry : Mod
     private const LogLevel DEFAULT_LOG_LEVEL = LogLevel.Trace;
 #endif
     private static IMonitor? mon;
+    internal static ModConfig Config = null!;
 
     internal static string ModId { get; private set; } = null!;
 
     public override void Entry(IModHelper helper)
     {
+        I18n.Init(helper.Translation);
         mon = Monitor;
         ModId = ModManifest.UniqueID;
+        helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+        Config = helper.ReadConfig<ModConfig>();
         Patches.Apply();
+        AssetManager.Register(helper);
         Quirks.Register(helper);
+    }
+
+    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+    {
+        Config.Register(Helper, ModManifest);
     }
 
     /// <summary>SMAPI static monitor Log wrapper</summary>

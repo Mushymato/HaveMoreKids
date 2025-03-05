@@ -20,112 +20,112 @@
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Auri"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Chirin"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Disthen"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Eerie"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Elowen"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Freya"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Laurel"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Loki"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Nanu"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Opal"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Petra"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Psique"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Senjr"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Telas"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Willow"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/bby.json",
+      "FromFile": "data/bby.json, data/talk.json",
       "LocalTokens": {
         "L@Kid": "Yvette"
       }

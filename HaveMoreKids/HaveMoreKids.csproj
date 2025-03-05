@@ -11,9 +11,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Name>HaveMoreKids</Name>
+    <Name>Have More Kids</Name>
     <Authors>mushymato</Authors>
-    <Description>DESCRIPTION</Description>
+    <Description>Allow you to have more kids, and allow content packs to make unique kids for you to
+      have.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:???</UpdateKeys>
     <Version>0.1.0</Version>
@@ -23,8 +24,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <SMAPIDependency Include="spacechase0.GenericModConfigMenu" Required="false" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.4.0" />
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.3.2" />
+    <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.0" />
   </ItemGroup>
 
 </Project>

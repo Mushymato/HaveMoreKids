@@ -8,6 +8,7 @@ using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
+using StardewValley.Objects;
 
 namespace HaveMoreKids;
 
@@ -20,8 +21,10 @@ internal record TempCAD(CharacterAppearanceData Data)
 
 internal static class Patches
 {
+    internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
+
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
-    internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!;
+    internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
 
     private static void MakeDynamicMethods()
     {
@@ -51,34 +54,52 @@ internal static class Patches
         MakeDynamicMethods();
 
         Harmony harmony = new(ModEntry.ModId);
+        // Change pregnancy chance
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.pickPersonalFarmEvent)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Transpiler))
         );
+        // Change pregnancy time needed
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(QuestionEvent), "answerPregnancyQuestion"),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(QuestionEvent_answerPregnancyQuestion_Transpiler))
+        );
+        // Allow pregnancy past the second child
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.canGetPregnant)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(NPC_canGetPregnant_Transpiler))
         );
+        // Modify the child on birth event
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(BirthingEvent), nameof(BirthingEvent.tickUpdate)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(BirthingEvent_tickUpdate_Transpiler))
         );
+        // Make the child use appearance system
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.reloadSprite)),
             prefix: new HarmonyMethod(typeof(Patches), nameof(Child_reloadSprite_Prefix))
         );
+        // Make the child use their assigned name from mod data
         harmony.Patch(
             original: AccessTools.PropertyGetter(typeof(Character), nameof(Character.displayName)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_displayName_Postfix))
         );
+        // Alter rate of child aging
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.dayUpdate)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler))
+        );
+        // Use special child data for the child form
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.GetData)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_GetData_Postfix))
         );
+        // Talk to the child once every day
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.checkAction)),
-            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_checkAction_Postfix))
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Child_checkAction_Prefix))
         );
+        // Let child have regular npc dialogue
         harmony.Patch(
             original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.Dialogue)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_Dialogue_Transpiler))
@@ -87,6 +108,19 @@ internal static class Patches
             original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.CurrentDialogue)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CurrentDialogue_Postfix))
         );
+        // Let child receive 1 gift a day
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.CanReceiveGifts)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CanReceiveGifts_Postfix))
+        );
+    }
+
+    private static void NPC_CanReceiveGifts_Postfix(NPC __instance, ref bool __result)
+    {
+        if (__instance is Child)
+        {
+            __result = true;
+        }
     }
 
     private static void NPC_CurrentDialogue_Postfix(NPC __instance, ref Stack<Dialogue> __result)
@@ -123,20 +157,29 @@ internal static class Patches
         }
     }
 
-    private static void Child_checkAction_Postfix(Child __instance, Farmer who, GameLocation l, bool __result)
+    private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l)
     {
-        if (__result && who.IsLocalPlayer && __instance.CurrentDialogue.Count > 0)
+        if (__instance.Age >= 3 && who.IsLocalPlayer)
         {
-            Game1.drawDialogue(__instance);
-            return;
+            if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
+            {
+                return !__instance.tryToReceiveActiveObject(who);
+            }
+            if (__instance.CurrentDialogue.Count > 0)
+            {
+                Game1.drawDialogue(__instance);
+                __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
+                return false;
+            }
         }
+        return true;
     }
 
     private static void Child_GetData_Postfix(NPC __instance, ref CharacterData __result)
     {
         if (__result != null)
             return;
-        if (__instance is Child && NPC.TryGetData($"{ModEntry.ModId}_{__instance.Name}", out CharacterData data))
+        if (__instance is Child && AssetManager.ChildData.TryGetValue(__instance.Name, out CharacterData? data))
         {
             __result = data;
         }
@@ -149,11 +192,62 @@ internal static class Patches
     /// <param name="__result"></param>
     private static void Child_displayName_Postfix(Character __instance, ref string __result)
     {
-        if (
-            __instance is Child
-            && __instance.modData.TryGetValue(Quirks.Child_ModData_DisplayName, out string displayName)
-        )
+        if (__instance is Child && __instance.modData.TryGetValue(Child_ModData_DisplayName, out string displayName))
             __result = displayName;
+    }
+
+    private static sbyte ModifyDaysBaby(sbyte days) => (sbyte)ModEntry.Config.DaysBaby;
+
+    private static sbyte ModifyDaysCrawler(sbyte days) =>
+        (sbyte)(ModEntry.Config.DaysBaby + ModEntry.Config.DaysCrawler);
+
+    private static sbyte ModifyDaysToddler(sbyte days) =>
+        (sbyte)(ModEntry.Config.DaysBaby + ModEntry.Config.DaysCrawler + ModEntry.Config.DaysToddler);
+
+    private static IEnumerable<CodeInstruction> Child_dayUpdate_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+
+            // IL_0093: ldfld class Netcode.NetInt StardewValley.Characters.Child::daysOld
+            // IL_0098: callvirt instance !0 class Netcode.NetFieldBase`2<int32, class Netcode.NetInt>::get_Value()
+            // IL_009d: ldc.i4.s 55
+
+            List<ValueTuple<sbyte, MethodInfo>> patchDays =
+            [
+                new(55, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysToddler))),
+                new(27, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysCrawler))),
+                new(13, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysBaby))),
+            ];
+            foreach ((sbyte days, MethodInfo callFunc) in patchDays)
+            {
+                matcher
+                    .MatchEndForward(
+                        [
+                            new(OpCodes.Ldfld, AccessTools.Field(typeof(Child), nameof(Child.daysOld))),
+                            new(
+                                OpCodes.Callvirt
+                            // AccessTools.PropertyGetter(typeof(Netcode.NetInt), nameof(Netcode.NetInt.Value))
+                            ),
+                            new(OpCodes.Ldc_I4_S, days),
+                        ]
+                    )
+                    .ThrowIfNotMatch($"Did not find 'daysOld.Value >= {days}'")
+                    .Advance(1)
+                    .InsertAndAdvance([new(OpCodes.Call, callFunc)]);
+            }
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in Child_dayUpdate_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
     }
 
     /// <summary>
@@ -232,12 +326,19 @@ internal static class Patches
 
     private static Child ModifyKid(Child newKid, NPC spouse)
     {
-        if (Quirks.PickKidId(spouse) is not string newKidId)
+        string kidName = newKid.Name;
+        if (AssetManager.PickKidId(spouse, kidName, true) is not string newKidId)
             return newKid;
-        newKid.modData[Quirks.Child_ModData_DisplayName] = newKid.Name;
+        newKid.modData[Child_ModData_DisplayName] = kidName;
         newKid.Name = newKidId;
+        if (newKid.GetData() is not CharacterData data)
+        {
+            ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);
+            return newKid;
+        }
+        newKid.Gender = data.Gender;
         newKid.reloadSprite(onlyAppearance: true);
-        ModEntry.Log($"Assigned {newKidId} to {spouse.Name} and {Game1.player.UniqueMultiplayerID}'s child.");
+        ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.");
         return newKid;
     }
 
@@ -313,9 +414,33 @@ internal static class Patches
         }
     }
 
+    private static sbyte ModifyDaysPregnant(sbyte days) => (sbyte)ModEntry.Config.DaysPregnant;
+
+    private static IEnumerable<CodeInstruction> QuestionEvent_answerPregnancyQuestion_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            matcher
+                .MatchStartForward([new(OpCodes.Ldc_I4_S, (sbyte)14)])
+                .ThrowIfNotMatch("Did not find '14'")
+                .Advance(1)
+                .Insert([new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysPregnant)))]);
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in QuestionEvent_answerPregnancyQuestion_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
     private static bool ShouldHaveKids(NPC spouse, List<Child> children)
     {
-        if (Quirks.GetKidIds(spouse) is string[] kidIds)
+        if (AssetManager.GetKidIds(spouse.GetData()) is string[] kidIds)
             return kidIds.Length > children.Count && children.Last().Age > 2;
         return false;
     }
@@ -352,7 +477,6 @@ internal static class Patches
                 .ThrowIfNotMatch("Did not find 'children.Count != 0'");
             CodeInstruction ldlocChildren = matcher.InstructionAt(-3);
             ldlocChildren = new(ldlocChildren.opcode, ldlocChildren.operand);
-
             matcher
                 .CreateLabel(out Label lbl)
                 .Insert(
@@ -374,6 +498,12 @@ internal static class Patches
         }
     }
 
+    private static float ModifyPregnancyChance(float originalValue)
+    {
+        ModEntry.Log($"Modify pregnancy chance: {originalValue} -> {ModEntry.Config.PregnancyChance}");
+        return ModEntry.Config.PregnancyChance / 100f;
+    }
+
     /// <summary>Change pregnancy chance to 100%.</summary>
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
@@ -393,8 +523,9 @@ internal static class Patches
                         new(OpCodes.Ldc_R8, 0.05),
                     ]
                 )
-                .ThrowIfNotMatch("Did not find 'random.NextDouble() < 0.05'");
-            matcher.Operand = 1.0;
+                .ThrowIfNotMatch("Did not find 'random.NextDouble() < 0.05'")
+                .Advance(1)
+                .Insert([new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))]);
             return matcher.Instructions();
         }
         catch (Exception err)
