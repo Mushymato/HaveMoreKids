@@ -8,18 +8,42 @@ namespace HaveMoreKids;
 
 internal static class Quirks
 {
+    internal static string Child_ModData_KidId => $"{ModEntry.ModId}/KidId";
+
     internal static void Register(IModHelper helper)
     {
         // events
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         // console commands
-        helper.ConsoleCommands.Add("hmk-reload_sprites", "Reload sprites for all kids", ConsoleReloadSprites);
+        helper.ConsoleCommands.Add(
+            "hmk-unset_kids",
+            "Unset the internal names for unique kids, use this if you want to uninstall this mod completely.",
+            ConsoleUnsetKids
+        );
         helper.ConsoleCommands.Add(
             "hmk-set_ages",
             "Set kids age and daysOld, need to sleep for this to work properly.",
             ConsoleAgeKids
         );
+    }
+
+    /// <summary>Apply unique kids to any existing children</summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    ///
+    private static void ConsoleUnsetKids(string arg1, string[] arg2)
+    {
+        foreach (Child kid in Game1.player.getChildren())
+        {
+            if (kid.modData?.TryGetValue(Patches.Child_ModData_DisplayName, out string? displayName) ?? false)
+            {
+                ModEntry.Log($"Unset '{displayName}' ({kid.Name})", LogLevel.Info);
+                kid.modData.Remove(Patches.Child_ModData_DisplayName);
+                kid.Name = displayName;
+                kid.reloadSprite(onlyAppearance: true);
+            }
+        }
     }
 
     /// <summary>Apply unique kids to any existing children</summary>
@@ -77,17 +101,6 @@ internal static class Quirks
                         break;
                 }
             }
-        }
-    }
-
-    private static void ConsoleReloadSprites(string arg1, string[] arg2)
-    {
-        if (!Context.IsWorldReady)
-            return;
-        foreach (Child kid in Game1.player.getChildren())
-        {
-            ModEntry.Log($"Child({kid.Name}).reloadSprite");
-            kid.reloadSprite();
         }
     }
 }

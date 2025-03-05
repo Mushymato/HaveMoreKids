@@ -438,6 +438,8 @@ internal static class Patches
         return false;
     }
 
+    private static int ModifyBaseKidCount(int count) => ModEntry.Config.BaseMaxChildren;
+
     /// <summary>
     /// Change can get pregnant count to check for number of kids available
     /// </summary>
@@ -481,6 +483,21 @@ internal static class Patches
                         new(OpCodes.Ldc_I4_1),
                         new(OpCodes.Ret),
                     ]
+                );
+            matcher
+                .MatchEndForward(
+                    [
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
+                        ),
+                        new(OpCodes.Ldc_I4_2),
+                        new(OpCodes.Bge_S),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'children.Count < 2'")
+                .InsertAndAdvance(
+                    [new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyBaseKidCount)))]
                 );
             return matcher.Instructions();
         }

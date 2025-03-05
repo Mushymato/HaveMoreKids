@@ -1,6 +1,7 @@
 {
     "$schema": "https://smapi.io/schemas/i18n.json",
-    "config.header.pregnancy": "Pregnancy & Child Growth",
+    "config.page.pregnancy.name": "Pregnancy & Child Growth",
+    "config.page.pregnancy.description": "Settings for pregnancy chances, length, base max number of children, and child stage lengths.",
     "config.PregnancyChance.name": "Pregnancy Chance",
     "config.PregnancyChance.description": "When all other conditions are filled, chance that your spouse will ask to have/adopt a child each night. Vanilla chance is 5%.",
     "config.DaysPregnant.name": "Pregnancy Days",
@@ -11,6 +12,7 @@
     "config.DaysCrawler.description": "Number of days until the baby becomes a crawler. Vanilla days is 14.",
     "config.DaysToddler.name": "Days until Toddler",
     "config.DaysToddler.description": "Number of days until the crawler becomes a toddler. Vanilla days is 13.",
-    "config.header.kids": "Spouse Specific Kids",
-    "config.header.chooseKids": "Choose which spouse specific kid to enable.",
+    "config.page.spousekid.description": "Enable/Disable Spouse Specific Kids Below:",
+    "config.page.spousekid.name": "{{Name}}'s Kids",
+    "config.page.nokids.description": "You do not have any spouse specific kid content packs installed.",
 }

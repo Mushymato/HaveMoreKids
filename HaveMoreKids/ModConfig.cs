@@ -67,7 +67,8 @@ internal sealed class ModConfig
             titleScreenOnly: false
         );
 
-        GMCM.AddSectionTitle(Mod, I18n.Config_Header_Pregnancy);
+        GMCM.AddPageLink(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name, I18n.Config_Page_Pregnancy_Description);
+        GMCM.AddPage(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name);
         GMCM.AddNumberOption(
             Mod,
             () => PregnancyChance,
@@ -113,6 +114,7 @@ internal sealed class ModConfig
             min: 1,
             max: 56
         );
+        GMCM.AddPage(Mod, "");
 
         List<ValueTuple<string, CharacterData, string[]>> needPageSetup = [];
         foreach (var kv in DataLoader.Characters(Game1.content))
@@ -123,19 +125,22 @@ internal sealed class ModConfig
         }
         if (needPageSetup.Any())
         {
-            GMCM.AddSectionTitle(Mod, I18n.Config_Header_Kids);
-            GMCM.AddParagraph(Mod, I18n.Config_Header_ChooseKids);
+            GMCM.AddParagraph(Mod, I18n.Config_Page_Spousekid_Description);
             foreach (var tpl in needPageSetup)
             {
                 SetupSpouseKidsPage(tpl.Item1, tpl.Item2, tpl.Item3);
             }
         }
+        else
+        {
+            GMCM.AddParagraph(Mod, I18n.Config_Page_Nokids_Description);
+        }
     }
 
     private void SetupSpouseKidsPage(string key, CharacterData chara, string[] kidIds)
     {
-        GMCM!.AddPageLink(Mod, key, () => TokenParser.ParseText(chara.DisplayName));
-        GMCM.AddPage(Mod, key, () => TokenParser.ParseText(chara.DisplayName));
+        GMCM!.AddPageLink(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
+        GMCM.AddPage(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
         foreach (string kidId in kidIds)
         {
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
@@ -160,6 +165,7 @@ internal sealed class ModConfig
                 );
             }
         }
+        GMCM.AddPage(Mod, "");
     }
 
     private sealed record KidPreview(CharacterAppearanceData Apr, Point Size)
