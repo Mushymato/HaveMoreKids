@@ -29,7 +29,14 @@ internal static class AssetManager
     private static void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
     {
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
+        {
             childData = null;
+            ModEntry.Config.ResetMenu();
+        }
+        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo("Data/Characters")))
+        {
+            ModEntry.Config.ResetMenu();
+        }
     }
 
     /// <summary>Get and validate kid id</summary>
@@ -50,25 +57,30 @@ internal static class AssetManager
     /// <param name="spouse"></param>
     /// <param name="originalName"></param>
     /// <returns></returns>
-    internal static string? PickKidId(NPC spouse, string originalName, bool newBorn = false)
+    internal static string? PickKidId(NPC spouse, string? originalName = null, bool newBorn = false)
     {
         if (GetKidIds(spouse.GetData()) is not string[] kidIds)
             return null;
         HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
         if (!newBorn && originalName != null && kidIds.Contains(originalName))
             return null;
-        string[] availableKidIds = kidIds.Where(id => !children.Contains(id)).ToArray();
+        string[] availableKidIds = kidIds
+            .Where(id => !children.Contains(id) && !ModEntry.Config.DisabledKids.GetValueOrDefault(id))
+            .ToArray();
         if (availableKidIds.Length == 0)
             return null;
         // Prioritize "real name" if found
-        foreach (var kidId in availableKidIds)
+        if (originalName != null)
         {
-            if (
-                ChildData.TryGetValue(kidId, out CharacterData? data)
-                && TokenParser.ParseText(data.DisplayName) == originalName
-            )
+            foreach (var kidId in availableKidIds)
             {
-                return kidId;
+                if (
+                    ChildData.TryGetValue(kidId, out CharacterData? data)
+                    && TokenParser.ParseText(data.DisplayName) == originalName
+                )
+                {
+                    return kidId;
+                }
             }
         }
         return availableKidIds[

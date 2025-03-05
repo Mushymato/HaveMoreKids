@@ -1,14 +1,12 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
-using StardewValley.Objects;
 
 namespace HaveMoreKids;
 
@@ -22,6 +20,8 @@ internal record TempCAD(CharacterAppearanceData Data)
 internal static class Patches
 {
     internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
+    internal static string Appearances_Prefix_Baby => $"{ModEntry.ModId}_Baby";
+    internal static string Appearances_Prefix_Toddler => $"{ModEntry.ModId}_Toddler";
 
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
@@ -157,18 +157,21 @@ internal static class Patches
         }
     }
 
-    private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l)
+    private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l, ref bool __result)
     {
         if (__instance.Age >= 3 && who.IsLocalPlayer)
         {
             if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
             {
-                return !__instance.tryToReceiveActiveObject(who);
+                __result = __instance.tryToReceiveActiveObject(who);
+                return !__result;
             }
             if (__instance.CurrentDialogue.Count > 0)
             {
                 Game1.drawDialogue(__instance);
+                who.talkToFriend(__instance); // blocks the vanilla interact
                 __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
+                __result = true;
                 return false;
             }
         }
@@ -259,23 +262,13 @@ internal static class Patches
         if (__instance.currentLocation == null)
             return true;
         CharacterData? characterData = __instance.GetData();
-        if (characterData?.Appearance is not List<CharacterAppearanceData> appearances)
+        if (characterData?.Appearance is not List<CharacterAppearanceData> appearances || appearances.Count == 0)
         {
             return true;
         }
         List<TempCAD> tmpCADs = [];
-        string prefixSetTrue;
-        string prefixSetFalse;
-        if (__instance.Age < 3)
-        {
-            prefixSetTrue = $"{ModEntry.ModId}_Baby";
-            prefixSetFalse = $"{ModEntry.ModId}_Toddler";
-        }
-        else
-        {
-            prefixSetTrue = $"{ModEntry.ModId}_Toddler";
-            prefixSetFalse = $"{ModEntry.ModId}_Baby";
-        }
+        string prefixSetTrue = __instance.Age < 3 ? Appearances_Prefix_Baby : Appearances_Prefix_Toddler;
+        string prefixSetFalse = __instance.Age < 3 ? Appearances_Prefix_Toddler : Appearances_Prefix_Baby;
         foreach (var data in appearances)
         {
             if (data.Id.StartsWith(prefixSetTrue))
@@ -440,8 +433,8 @@ internal static class Patches
 
     private static bool ShouldHaveKids(NPC spouse, List<Child> children)
     {
-        if (AssetManager.GetKidIds(spouse.GetData()) is string[] kidIds)
-            return kidIds.Length > children.Count && children.Last().Age > 2;
+        if (AssetManager.PickKidId(spouse, newBorn: true) != null)
+            return children.Last().Age > 2;
         return false;
     }
 

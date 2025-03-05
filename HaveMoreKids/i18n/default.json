@@ -11,4 +11,6 @@
     "config.DaysCrawler.description": "Number of days until the baby becomes a crawler. Vanilla days is 14.",
     "config.DaysToddler.name": "Days until Toddler",
     "config.DaysToddler.description": "Number of days until the crawler becomes a toddler. Vanilla days is 13.",
+    "config.header.kids": "Spouse Specific Kids",
+    "config.header.chooseKids": "Choose which spouse specific kid to enable.",
 }

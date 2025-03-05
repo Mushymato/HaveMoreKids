@@ -29,16 +29,16 @@
           "DisplayName": "{{L@Kid}}",
           "Appearance": [
             {
+              "Id": "mushymato.HaveMoreKids_Toddler",
+              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}"
+            },
+            {
               "Id": "mushymato.HaveMoreKids_Toddler_Bow",
               "Portrait": "Portraits/{{ModId}}_{{L@Kid}}_Bow",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}_Bow",
               "Condition": "RANDOM 0.2",
               "Precedence": -10
-            },
-            {
-              "Id": "mushymato.HaveMoreKids_Toddler",
-              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}",
-              "Sprite": "Characters/{{ModId}}_{{L@Kid}}"
             },
             // can theoretically have different baby appearances too
             {
