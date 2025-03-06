@@ -1,0 +1,27 @@
+{
+  "Format": "2.5.0",
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "ConfigSchema": {
+    "AltBody": {
+      "AllowValues": "01,02,03,04,05,06,07,08,09,10,farmer,abigail,alex,elliott,emily,gregory,haley,harvey,john,leah,lyell,nikolai,maru,penny,sam,sandy,sebastian,shane,sheila,shiko,sorren,victor,wizard,custom01,custom02,custom03,custom04",
+      "Default": "06"
+    },
+    "EyeStyle": {
+      "AllowValues": "plain,vibrant",
+      "Default": "vibrant"
+    }
+  },
+  "Changes": [
+    {
+      "Action": "Include",
+      "FromFile": "data/spouse/abigail.json"
+    },
+    // {
+    //   "Action": "Include",
+    //   "FromFile": "data/spouse.json",
+    //   "LocalTokens": {
+    //     "L@Spouse": "Abigail"
+    //   }
+    // }
+  ]
+}

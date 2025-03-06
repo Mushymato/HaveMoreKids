@@ -1,0 +1,21 @@
+{
+  "Name": "Lumisteria Toddlers",
+  "Author": "Lumisteria",
+  "Version": "0.1.0",
+  "Description": "A lot of option for childrens, now with more kids in general.",
+  "UniqueID": "Lumisteria.Toddlers.HMK",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [
+    "Nexus:???"
+  ],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher",
+    "MinimumVersion": "2.5.0"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "mushymato.HaveMoreKids",
+      "IsRequired": true
+    }
+  ]
+}

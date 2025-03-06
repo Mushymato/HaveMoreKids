@@ -1,0 +1,72 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    // 6 babies
+    {
+      "Action": "Include",
+      "FromFile": "data/inc/child.json",
+      "LocalTokens": {
+        "L@Spouse": "Abigail",
+        "L@Seq": "A",
+        "L@Hair": "Boy",
+        "L@Eyes": "light",
+        "L@Body": "abigail"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/inc/child.json",
+      "LocalTokens": {
+        "L@Spouse": "Abigail",
+        "L@Seq": "A",
+        "L@Hair": "Girl",
+        "L@Eyes": "light",
+        "L@Body": "abigail"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/inc/child.json",
+      "LocalTokens": {
+        "L@Spouse": "Abigail",
+        "L@Seq": "A",
+        "L@Hair": "Neutral",
+        "L@Eyes": "light",
+        "L@Body": "abigail"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/inc/child.json",
+      "LocalTokens": {
+        "L@Spouse": "Abigail",
+        "L@Seq": "B",
+        "L@Hair": "Boy",
+        "L@Eyes": "dark",
+        "L@Body": "{{AltBody}}"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/inc/child.json",
+      "LocalTokens": {
+        "L@Spouse": "Abigail",
+        "L@Seq": "B",
+        "L@Hair": "Girl",
+        "L@Eyes": "dark",
+        "L@Body": "{{AltBody}}"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/inc/child.json",
+      "LocalTokens": {
+        "L@Spouse": "Abigail",
+        "L@Seq": "B",
+        "L@Hair": "Neutral",
+        "L@Eyes": "dark",
+        "L@Body": "{{AltBody}}"
+      }
+    }
+  ]
+}

@@ -65,7 +65,9 @@ internal static class AssetManager
         if (!newBorn && originalName != null && kidIds.Contains(originalName))
             return null;
         string[] availableKidIds = kidIds
-            .Where(id => !children.Contains(id) && !ModEntry.Config.DisabledKids.GetValueOrDefault(id))
+            .Where(id =>
+                !children.Contains(id) && !ModEntry.Config.DisabledKids.GetValueOrDefault(new(spouse.Name, id))
+            )
             .ToArray();
         if (availableKidIds.Length == 0)
             return null;

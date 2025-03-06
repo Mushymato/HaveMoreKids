@@ -20,6 +20,7 @@ internal record TempCAD(CharacterAppearanceData Data)
 internal static class Patches
 {
     internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
+    internal static string Child_ModData_DarkSkinned => $"{ModEntry.ModId}/DarkSkinned";
     internal static string Appearances_Prefix_Baby => $"{ModEntry.ModId}_Baby";
     internal static string Appearances_Prefix_Toddler => $"{ModEntry.ModId}_Toddler";
 
@@ -330,6 +331,13 @@ internal static class Patches
             return newKid;
         }
         newKid.Gender = data.Gender;
+        if (
+            (data?.CustomFields?.TryGetValue(Child_ModData_DarkSkinned, out string? darkSkinnedStr) ?? false)
+            && bool.TryParse(darkSkinnedStr, out bool darkSkinned)
+        )
+        {
+            newKid.darkSkinned.Value = darkSkinned;
+        }
         newKid.reloadSprite(onlyAppearance: true);
         ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.");
         return newKid;

@@ -7,8 +7,23 @@ using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids;
 
+internal sealed record KidIdent(string Spouse, string Kid)
+{
+    public static implicit operator KidIdent(string SpouseKid)
+    {
+        string[] parts = SpouseKid.Split('|');
+        return new(parts[0], parts[1]);
+    }
+
+    public override string ToString()
+    {
+        return $"{Spouse}|{Kid}";
+    }
+}
+
 internal sealed class ModConfig
 {
+    internal static string CustomFields_DisabledByDefault => $"{ModEntry.ModId}/DisabledByDefault";
     private Integration.IGenericModConfigMenuApi? GMCM;
     private IModHelper Helper = null!;
     private IManifest Mod = null!;
@@ -19,7 +34,7 @@ internal sealed class ModConfig
     public int DaysCrawler { get; set; } = 27 - 13;
     public int DaysToddler { get; set; } = 55 - 27;
     public int BaseMaxChildren { get; set; } = 4;
-    public Dictionary<string, bool> DisabledKids { get; set; } = [];
+    public Dictionary<KidIdent, bool> DisabledKids { get; set; } = [];
 
     /// <summary>Restore default config values</summary>
     private void Reset()
@@ -31,6 +46,27 @@ internal sealed class ModConfig
         DaysToddler = 55 - 27;
         BaseMaxChildren = 4;
         DisabledKids.Clear();
+        CheckDisabledByDefault();
+    }
+
+    private void CheckDisabledByDefault()
+    {
+        foreach (var kv in DataLoader.Characters(Game1.content))
+        {
+            if (AssetManager.GetKidIds(kv.Value) is not string[] kidIds)
+                continue;
+            foreach (string kidId in kidIds)
+            {
+                KidIdent kidKey = new(kv.Key, kidId);
+                if (
+                    !DisabledKids.ContainsKey(kidKey)
+                    && AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data)
+                )
+                {
+                    DisabledKids[kidKey] = data.CustomFields?.ContainsKey(CustomFields_DisabledByDefault) ?? false;
+                }
+            }
+        }
     }
 
     /// <summary>Add mod config to GMCM if available</summary>
@@ -41,6 +77,7 @@ internal sealed class ModConfig
         GMCM ??= helper.ModRegistry.GetApi<Integration.IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
         Helper = helper;
         Mod = mod;
+        CheckDisabledByDefault();
         if (GMCM == null)
         {
             helper.WriteConfig(this);
@@ -143,6 +180,8 @@ internal sealed class ModConfig
         GMCM.AddPage(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
         foreach (string kidId in kidIds)
         {
+            KidIdent kidKey = new(key, kidId);
+
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
             {
                 if (
@@ -159,8 +198,8 @@ internal sealed class ModConfig
                 }
                 GMCM.AddBoolOption(
                     Mod,
-                    () => !DisabledKids.GetValueOrDefault(kidId),
-                    (value) => DisabledKids[kidId] = !value,
+                    () => !DisabledKids[kidKey],
+                    (value) => DisabledKids[kidKey] = !value,
                     () => TokenParser.ParseText(data.DisplayName) ?? kidId
                 );
             }
@@ -202,6 +241,7 @@ internal sealed class ModConfig
         if (GMCM == null)
             return;
         GMCM.Unregister(Mod);
+        CheckDisabledByDefault();
         SetupMenu();
     }
 }

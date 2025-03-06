@@ -14,5 +14,5 @@
     "config.DaysToddler.description": "Number of days until the crawler becomes a toddler. Vanilla days is 13.",
     "config.page.spousekid.description": "Enable/Disable Spouse Specific Kids Below:",
     "config.page.spousekid.name": "{{Name}}'s Kids",
-    "config.page.nokids.description": "You do not have any spouse specific kid content packs installed.",
+    "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply.",
 }
