@@ -12,16 +12,16 @@
     }
   },
   "Changes": [
-    {
-      "Action": "Include",
-      "FromFile": "data/spouse/abigail.json"
-    },
     // {
     //   "Action": "Include",
     //   "FromFile": "data/spouse.json",
     //   "LocalTokens": {
     //     "L@Spouse": "Abigail"
     //   }
-    // }
+    // },
+    {
+      "Action": "Include",
+      "FromFile": "data/spouse/abigail.json"
+    },
   ]
 }

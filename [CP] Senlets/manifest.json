@@ -4,7 +4,7 @@
   "Author": "7thAxis",
   "Version": "0.1.0",
   "Description": "16 shadow goobers around the house.",
-  "UniqueID": "7thAxis.LitD.HMK.Senlets",
+  "UniqueID": "7thAxis.LitD.CP.Senlet",
   "UpdateKeys": [
     "Nexus:???"
   ],
@@ -14,6 +14,10 @@
     "UniqueID": "Pathoschild.ContentPatcher"
   },
   "Dependencies": [
+    {
+      "UniqueID": "7thAxis.LitD.CP",
+      "IsRequired": true
+    },
     {
       "UniqueID": "mushymato.HaveMoreKids",
       "IsRequired": true

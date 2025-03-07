@@ -1,0 +1,88 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    // Load Sprites and Portraits
+    {
+      "Action": "Load",
+      "Target": "Characters/{{ModId}}_{{L@Kid}}",
+      "FromFile": "Assets/Characters/Kids/Toddler_{{L@Kid}}.png"
+    },
+    {
+      "Action": "Load",
+      "Target": "Characters/{{ModId}}_{{L@Kid}}_Bow",
+      "FromFile": "Assets/Characters/Kids/Toddler_{{L@Kid}}_Bow.png"
+    },
+    {
+      "Action": "Load",
+      "Target": "Portraits/{{ModId}}_{{L@Kid}}",
+      "FromFile": "Assets/Portraits/Kids/Toddler_{{L@Kid}}.png"
+    },
+    {
+      "Action": "Load",
+      "Target": "Portraits/{{ModId}}_{{L@Kid}}_Bow",
+      "FromFile": "Assets/Portraits/Kids/Toddler_{{L@Kid}}_Bow.png"
+    },
+    // Edit mushymato.HaveMoreKids/ChildData to add the child entry
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/ChildData",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": {
+          "DisplayName": "{{L@Kid}}",
+          "Appearance": [
+            // // Could add spirit's eve costumes or whatever as desired, e.g.
+            // {
+            //   "Id": "{{ModId}}_Todder_<Special>",
+            //   "Portrait": "Portraits/{{ModId}}_{{L@Kid}}_<Special>",
+            //   "Sprite": "Characters/{{ModId}}_{{L@Kid}}_<Special>",
+            //   "Condition": "SEASON_DAY fall 28",
+            //   "Precedence": -1, // must be lower than 0, the default Precedence
+            // },
+            // Standard appearance
+            {
+              "Id": "{{ModId}}_Todder",
+              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}",
+              "Weight": 19,
+            },
+            // Bow appearance, weighted to appear 1/20 times
+            {
+              "Id": "{{ModId}}_Todder_Bow",
+              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}_Bow",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}_Bow",
+              "Weight": 1
+            },
+            // Baby appearance, using shared
+            {
+              // Any Id that starts with mushymato.HaveMoreKids_Baby forces Precedence -100 and condition TRUE when Age < 3
+              "Id": "mushymato.HaveMoreKids_Baby",
+              "Portrait": "Characters/{{ModId}}_The_Baby",
+              "Sprite": "Characters/{{ModId}}_The_Baby"
+            }
+          ]
+        }
+      }
+    },
+    // Add this senlet to SenS
+    // for dynamic token reasons, this will throw warning at title screen, it is safe to ignore
+    {
+      "Action": "EditData",
+      "Target": "Data/Characters",
+      "TargetField": [
+        "SenS",
+        "CustomFields"
+      ],
+      "Entries": {
+        "mushymato.HaveMoreKids/Kid.{{ModId}}_{{L@Kid}}": true
+      }
+    },
+    // Include this senlet's dialogue, if any exists
+    {
+      "Action": "Include",
+      "FromFile": "Data/Dialogue/Senlet/{{L@Kid}}.json",
+      "When": {
+        "HasFile:Data/Dialogue/Senlet/{{L@Kid}}.json": true
+      }
+    }
+  ]
+}

@@ -13,16 +13,19 @@ namespace HaveMoreKids;
 internal record TempCAD(CharacterAppearanceData Data)
 {
     readonly string? originalCondition = Data.Condition;
+    readonly int originalPrecedence = Data.Precedence;
 
-    public void Restore() => Data.Condition = originalCondition;
+    public void Restore()
+    {
+        Data.Condition = originalCondition;
+        Data.Precedence = originalPrecedence;
+    }
 }
 
 internal static class Patches
 {
-    internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
-    internal static string Child_ModData_DarkSkinned => $"{ModEntry.ModId}/DarkSkinned";
+    internal static string Condition_KidId => $"{ModEntry.ModId}_KidId";
     internal static string Appearances_Prefix_Baby => $"{ModEntry.ModId}_Baby";
-    internal static string Appearances_Prefix_Toddler => $"{ModEntry.ModId}_Toddler";
 
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
@@ -153,7 +156,7 @@ internal static class Patches
         }
         catch (Exception err)
         {
-            ModEntry.Log($"Error in BirthingEvent_tickUpdate_Transpiler:\n{err}", LogLevel.Error);
+            ModEntry.Log($"Error in Child_Dialogue_Transpiler:\n{err}", LogLevel.Error);
             return instructions;
         }
     }
@@ -196,7 +199,10 @@ internal static class Patches
     /// <param name="__result"></param>
     private static void Child_displayName_Postfix(Character __instance, ref string __result)
     {
-        if (__instance is Child && __instance.modData.TryGetValue(Child_ModData_DisplayName, out string displayName))
+        if (
+            __instance is Child
+            && __instance.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string displayName)
+        )
             __result = displayName;
     }
 
@@ -268,24 +274,29 @@ internal static class Patches
             return true;
         }
         List<TempCAD> tmpCADs = [];
-        string prefixSetTrue = __instance.Age < 3 ? Appearances_Prefix_Baby : Appearances_Prefix_Toddler;
-        string prefixSetFalse = __instance.Age < 3 ? Appearances_Prefix_Toddler : Appearances_Prefix_Baby;
         foreach (var data in appearances)
         {
-            if (data.Id.StartsWith(prefixSetTrue))
+            if (data.Id.StartsWith(Appearances_Prefix_Baby))
             {
                 tmpCADs.Add(new(data));
-                data.Condition ??= "TRUE";
-                data.Precedence = -100;
+                if (__instance.Age < 3)
+                {
+                    data.Precedence = Math.Min(data.Precedence, -100);
+                    data.Condition =
+                        data.Condition != null ? data.Condition.Replace(Condition_KidId, __instance.Name) : "TRUE";
+                }
+                else
+                {
+                    data.Precedence = Math.Max(data.Precedence, 100);
+                    data.Condition = "FALSE";
+                }
             }
-            if (data.Id.StartsWith(prefixSetFalse))
+            else if (data.Condition != null)
             {
                 tmpCADs.Add(new(data));
-                data.Condition = "FALSE";
-                data.Precedence = 0;
+                data.Condition = data.Condition.Replace(Condition_KidId, __instance.Name);
             }
         }
-
         NPC_ChooseAppearance_Call(__instance);
         if (__instance.Age < 3)
         {
@@ -318,30 +329,7 @@ internal static class Patches
         return false;
     }
 
-    private static Child ModifyKid(Child newKid, NPC spouse)
-    {
-        string kidName = newKid.Name;
-        if (AssetManager.PickKidId(spouse, kidName, true) is not string newKidId)
-            return newKid;
-        newKid.modData[Child_ModData_DisplayName] = kidName;
-        newKid.Name = newKidId;
-        if (newKid.GetData() is not CharacterData data)
-        {
-            ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);
-            return newKid;
-        }
-        newKid.Gender = data.Gender;
-        if (
-            (data?.CustomFields?.TryGetValue(Child_ModData_DarkSkinned, out string? darkSkinnedStr) ?? false)
-            && bool.TryParse(darkSkinnedStr, out bool darkSkinned)
-        )
-        {
-            newKid.darkSkinned.Value = darkSkinned;
-        }
-        newKid.reloadSprite(onlyAppearance: true);
-        ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.");
-        return newKid;
-    }
+    private static Child ModifyKid(Child newKid, NPC spouse) => AssetManager.ChooseAndApplyKidId(spouse, newKid, true);
 
     /// <summary>
     /// Change kid internal name to the character data entry id
@@ -518,11 +506,11 @@ internal static class Patches
 
     private static float ModifyPregnancyChance(float originalValue)
     {
-        ModEntry.Log($"Modify pregnancy chance: {originalValue} -> {ModEntry.Config.PregnancyChance}");
+        ModEntry.LogOnce($"Modify pregnancy chance: {originalValue} -> {ModEntry.Config.PregnancyChance / 100f}");
         return ModEntry.Config.PregnancyChance / 100f;
     }
 
-    /// <summary>Change pregnancy chance to 100%.</summary>
+    /// <summary>Change pregnancy chance to configured number.</summary>
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
     /// <returns></returns>

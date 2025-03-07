@@ -2,19 +2,24 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Characters;
-using StardewValley.GameData.Characters;
+using StardewValley.Delegates;
+using StardewValley.Triggers;
 
 namespace HaveMoreKids;
 
 internal static class Quirks
 {
-    internal static string Child_ModData_KidId => $"{ModEntry.ModId}/KidId";
+    internal static string GSQ_ChildAge => $"{ModEntry.ModId}_CHILD_AGE";
+    internal static string Action_SetChildBirth => $"{ModEntry.ModId}_SetChildBirth";
 
     internal static void Register(IModHelper helper)
     {
         // events
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
+        // delegates
+        GameStateQuery.Register(GSQ_ChildAge, CHILD_AGE);
+        TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
         // console commands
         helper.ConsoleCommands.Add(
             "hmk-unset_kids",
@@ -28,6 +33,65 @@ internal static class Quirks
         );
     }
 
+    private static bool CHILD_AGE(string[] query, GameStateQueryContext context)
+    {
+        if (
+            !ArgUtility.TryGet(query, 1, out string kidId, out string error)
+            || !ArgUtility.TryGetInt(query, 2, out int age, out error)
+        )
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+        return context.Player.getChildren().FirstOrDefault(child => child.Name == kidId)?.Age == age;
+    }
+
+    private static bool SetChildBirth(string[] args, TriggerActionContext context, out string error)
+    {
+        if (
+            !ArgUtility.TryGetInt(args, 1, out int daysUntilBirth, out error, name: "int daysUntilBirth")
+            || !ArgUtility.TryGetOptional(args, 2, out string? kidId, out error, name: "string? kidId")
+            || !ArgUtility.TryGetOptional(args, 3, out string? spouseName, out error, name: "string? spouseName")
+        )
+        {
+            return false;
+        }
+
+        NPC spouse;
+        if (string.IsNullOrEmpty(spouseName))
+        {
+            if ((spouse = Game1.player.getSpouse()) == null)
+            {
+                error = "Player does not have a spouse";
+                return false;
+            }
+        }
+        else
+        {
+            if ((spouse = Game1.getCharacterFromName(spouseName)) == null)
+            {
+                error = $"{spouseName} is not an NPC";
+                return false;
+            }
+            if (spouse.getSpouse() != Game1.player)
+            {
+                error = $"{spouse.Name} is not the player's spouse";
+                return false;
+            }
+        }
+
+        WorldDate worldDate = new(Game1.Date);
+        worldDate.TotalDays += daysUntilBirth;
+        Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
+
+        if (!string.IsNullOrEmpty(kidId) && AssetManager.ChildData.ContainsKey(kidId))
+        {
+            spouse.modData[AssetManager.NPC_ModData_NextKidId] = kidId;
+        }
+
+        return true;
+    }
+
     /// <summary>Apply unique kids to any existing children</summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
@@ -36,10 +100,10 @@ internal static class Quirks
     {
         foreach (Child kid in Game1.player.getChildren())
         {
-            if (kid.modData?.TryGetValue(Patches.Child_ModData_DisplayName, out string? displayName) ?? false)
+            if (kid.modData?.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName) ?? false)
             {
                 ModEntry.Log($"Unset '{displayName}' ({kid.Name})", LogLevel.Info);
-                kid.modData.Remove(Patches.Child_ModData_DisplayName);
+                kid.modData.Remove(AssetManager.Child_ModData_DisplayName);
                 kid.Name = displayName;
                 kid.reloadSprite(onlyAppearance: true);
             }
@@ -52,19 +116,9 @@ internal static class Quirks
     private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         foreach (Child kid in Game1.player.getChildren())
-            if (Game1.player.getSpouse() is NPC spouse && AssetManager.PickKidId(spouse, kid.Name) is string kidId)
+            if (Game1.player.getSpouse() is NPC spouse)
             {
-                kid.Name = kidId;
-                if (kid.GetData() is not CharacterData data)
-                {
-                    ModEntry.Log(
-                        $"Failed to get data for child ID '{kidId}', '{kid.displayName}' may be broken.",
-                        LogLevel.Error
-                    );
-                    continue;
-                }
-                kid.Gender = data.Gender;
-                ModEntry.Log($"Assigned '{kidId}' to child named '{kid.displayName}'.");
+                AssetManager.ChooseAndApplyKidId(spouse, kid, false);
             }
     }
 

@@ -52,7 +52,7 @@
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}{{L@Seq}}{{L@Hair}}",
-      "FromFile": "Assets/hairs/{{Lowercase:{{L@Spouse}}}}/{{Lowercase:{{L@Spouse}}}}{{L@Hair}}.png",
+      "FromFile": "Assets/hairs/{{Lowercase:{{L@Spouse}}}}/{{L@Hair}}.png",
       "PatchMode": "Overlay"
     },
     // toddlers (costume)
@@ -82,7 +82,7 @@
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}{{L@Seq}}{{L@Hair}}_Costume",
-      "FromFile": "Assets/hairs/{{Lowercase:{{L@Spouse}}}}/{{Lowercase:{{L@Spouse}}}}{{L@Hair}}.png",
+      "FromFile": "Assets/hairs/{{Lowercase:{{L@Spouse}}}}/{{L@Hair}}.png",
       "PatchMode": "Overlay"
     },
     // Child data
@@ -92,6 +92,7 @@
       "Entries": {
         "{{ModId}}_{{L@Spouse}}{{L@Seq}}{{L@Hair}}": {
           "DisplayName": "{{L@Seq}}{{L@Hair}}",
+          "IsDarkSkinned": "{{L@Body|contains={{AltSkin}}}}",
           "Appearance": [
             {
               "Id": "mushymato.HaveMoreKids_Toddler",
@@ -108,14 +109,11 @@
               "Portrait": "Characters/{{ModId}}_{{L@Spouse}}{{L@Seq}}{{L@Hair}}_Baby",
               "Sprite": "Characters/{{ModId}}_{{L@Spouse}}{{L@Seq}}{{L@Hair}}_Baby"
             }
-          ],
-          "CustomFields": {
-            "mushymato.HaveMoreKids/DarkSkinned": "{{L@Body|contains={{AltSkin}}}}"
-          }
+          ]
         }
       }
     },
-    // Append this kid
+    // Add this Child to spouse
     {
       "Action": "EditData",
       "Target": "Data/Characters",
@@ -123,17 +121,9 @@
         "{{L@Spouse}}",
         "CustomFields"
       ],
-      "TextOperations": [
-        {
-          "Operation": "Append",
-          "Target": [
-            "Entries",
-            "mushymato.HaveMoreKids/KidIds"
-          ],
-          "Value": "{{ModId}}_{{L@Spouse}}{{L@Seq}}{{L@Hair}}",
-          "Delimiter": ","
-        }
-      ]
+      "Entries": {
+        "mushymato.HaveMoreKids/Kid.{{L@Kid}}": true
+      }
     },
   ]
 }

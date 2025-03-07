@@ -13,8 +13,7 @@
   <PropertyGroup>
     <Name>Have More Kids</Name>
     <Authors>mushymato</Authors>
-    <Description>Allow you to have more kids, and allow content packs to make unique kids for you to
-      have.</Description>
+    <Description>Allow you to have more kids.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:???</UpdateKeys>
     <Version>0.1.0</Version>

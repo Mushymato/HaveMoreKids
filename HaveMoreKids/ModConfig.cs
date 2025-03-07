@@ -23,7 +23,6 @@ internal sealed record KidIdent(string Spouse, string Kid)
 
 internal sealed class ModConfig
 {
-    internal static string CustomFields_DisabledByDefault => $"{ModEntry.ModId}/DisabledByDefault";
     private Integration.IGenericModConfigMenuApi? GMCM;
     private IModHelper Helper = null!;
     private IManifest Mod = null!;
@@ -53,18 +52,18 @@ internal sealed class ModConfig
     {
         foreach (var kv in DataLoader.Characters(Game1.content))
         {
-            if (AssetManager.GetKidIds(kv.Value) is not string[] kidIds)
+            if (
+                !AssetManager.TryGetKidIds(
+                    kv.Value,
+                    out IList<string>? kidIds,
+                    out IDictionary<string, bool>? disabledByDefault
+                )
+            )
                 continue;
             foreach (string kidId in kidIds)
             {
                 KidIdent kidKey = new(kv.Key, kidId);
-                if (
-                    !DisabledKids.ContainsKey(kidKey)
-                    && AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data)
-                )
-                {
-                    DisabledKids[kidKey] = data.CustomFields?.ContainsKey(CustomFields_DisabledByDefault) ?? false;
-                }
+                DisabledKids[kidKey] = disabledByDefault[kidId];
             }
         }
     }
@@ -112,7 +111,7 @@ internal sealed class ModConfig
             (value) => PregnancyChance = value,
             I18n.Config_PregnancyChance_Name,
             I18n.Config_PregnancyChance_Description,
-            min: 5,
+            min: 0,
             max: 100
         );
         GMCM.AddNumberOption(
@@ -153,10 +152,10 @@ internal sealed class ModConfig
         );
         GMCM.AddPage(Mod, "");
 
-        List<ValueTuple<string, CharacterData, string[]>> needPageSetup = [];
+        List<ValueTuple<string, CharacterData, IList<string>>> needPageSetup = [];
         foreach (var kv in DataLoader.Characters(Game1.content))
         {
-            if (AssetManager.GetKidIds(kv.Value) is not string[] kidIds)
+            if (!AssetManager.TryGetKidIds(kv.Value, out IList<string>? kidIds, out _))
                 continue;
             needPageSetup.Add(new(kv.Key, kv.Value, kidIds));
         }
@@ -174,7 +173,7 @@ internal sealed class ModConfig
         }
     }
 
-    private void SetupSpouseKidsPage(string key, CharacterData chara, string[] kidIds)
+    private void SetupSpouseKidsPage(string key, CharacterData chara, IList<string> kidIds)
     {
         GMCM!.AddPageLink(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
         GMCM.AddPage(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
@@ -185,7 +184,7 @@ internal sealed class ModConfig
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
             {
                 if (
-                    data.Appearance?.FirstOrDefault(apr => apr.Id.StartsWith(Patches.Appearances_Prefix_Toddler))
+                    data.Appearance?.FirstOrDefault(apr => !apr.Id.StartsWith(Patches.Appearances_Prefix_Baby))
                     is CharacterAppearanceData appearanceData
                 )
                 {

@@ -1,5 +1,6 @@
 {
     "$schema": "https://smapi.io/schemas/i18n.json",
+    // config options
     "config.page.pregnancy.name": "Pregnancy & Child Growth",
     "config.page.pregnancy.description": "Settings for pregnancy chances, length, base max number of children, and child stage lengths.",
     "config.PregnancyChance.name": "Pregnancy Chance",
@@ -15,4 +16,6 @@
     "config.page.spousekid.description": "Enable/Disable Spouse Specific Kids Below:",
     "config.page.spousekid.name": "{{Name}}'s Kids",
     "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply.",
+    // gender neutral question for naming baby (overwrites String/Events:BabyNamingTitle_Male and String/Events:BabyNamingTitle_Female)
+    "StringEvents.BabyNamingTitle": "What should we name our baby?"
 }

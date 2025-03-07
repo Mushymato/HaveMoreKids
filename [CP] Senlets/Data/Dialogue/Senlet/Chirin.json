@@ -1,17 +1,18 @@
 {
   "$schema": "https://smapi.io/schemas/content-patcher.json",
   "Changes": [
-    // probably want to have per kid dialogue instead of shared thing
+    // Sample dialogue and gift tastes, for Chirin
     {
       "Action": "Load",
-      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
-      "FromFile": "data/blank.json"
+      "Target": "Characters/Dialogue/{{ModId}}_Chirin",
+      "FromFile": "Loaders/blank.json"
     },
     {
       "Action": "EditData",
-      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
+      "Target": "Characters/Dialogue/{{ModId}}_Chirin",
       "Entries": {
-        // these are Krobus' dialogue, here as an example
+        // These are Krobus dialogue, here as an example, regular ol NPC dialogue stuff
+        // Should probably i18n these
         "GreenRain": "The flow of water has been unusually strong today... what's going on up there?",
         "Fri": "...",
         "AcceptGift_(O)StardropTea": "Is that Stardrop Tea? Thank you! One drop makes my room smell good for the whole day.",
@@ -38,7 +39,9 @@
       "Action": "EditData",
       "Target": "Data/NPCGiftTastes",
       "Entries": {
-        "{{ModId}}_{{L@Kid}}": "This is an amazing gift. For my people it is a great honor to receive something like this./72 16 276 337 305 308 879 Book_Void/Thank you very much./66 265 336 340 203/Humans have... interesting tastes./-7 -81 330/Oh... Um. I guess I'll accept it.//Thank you.//",
+        // Also Krobus gift taste, here as example
+        // Should probably i18n these too
+        "{{ModId}}_Chirin": "This is an amazing gift. For my people it is a great honor to receive something like this./72 16 276 337 305 308 879 Book_Void/Thank you very much./66 265 336 340 203/Humans have... interesting tastes./-7 -81 330/Oh... Um. I guess I'll accept it.//Thank you.//",
       }
     }
   ]
