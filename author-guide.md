@@ -57,10 +57,12 @@ You can have child birth happen in non-standard ways by doing these two things:
 1. Set `SpouseWantsChildren` on your Spouse NPC's `Data/Characters` to `"FALSE"`, to block the vanilla nightly pregnancy question event.
 2. Use trigger action `mushymato.HaveMoreKids_SetChildBirth` to queue a birth event.
 
-This trigger action does not require unique child, though of course the childId argument does nothing in that case.
-
 ### Trigger Action mushymato.HaveMoreKids_SetChildBirth \<daysUntilBirth\> [childId] [spouse]
 
 - `daysUntilBirth`: Required argument, number of days until child birth happens. Setting 0 here means it happens tonight.
 - `childId`: Optional specific unique child, ignored if the child does not exist or had already been taken.
 - `spouse`: Optional specific spouse, only do the action if the spouse matches.
+
+Having a child this way skips the max child count checks entirely, but it does check that all existing child is age 3 and up.
+
+This trigger action does not require unique child, though of course the childId argument does nothing in that case.

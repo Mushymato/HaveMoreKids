@@ -92,6 +92,12 @@ internal static class Quirks
             }
         }
 
+        if (!spouse.canGetPregnant())
+        {
+            error = $"{spouse.Name} can't get pregnant right now";
+            return false;
+        }
+
         WorldDate worldDate = new(Game1.Date);
         worldDate.TotalDays += daysUntilBirth;
         Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
