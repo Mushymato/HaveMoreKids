@@ -430,7 +430,7 @@ internal static class Patches
     private static bool ShouldHaveKids(NPC spouse, List<Child> children)
     {
         if (AssetManager.PickKidId(spouse, newBorn: true) != null)
-            return children.Last().Age > 2;
+            return children.All(child => child.Age > 2);
         return false;
     }
 

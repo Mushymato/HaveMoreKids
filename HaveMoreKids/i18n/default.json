@@ -7,6 +7,8 @@
     "config.PregnancyChance.description": "When all other conditions are filled, chance that your spouse will ask to have/adopt a child each night. Vanilla chance is 5%.",
     "config.DaysPregnant.name": "Pregnancy Days",
     "config.DaysPregnant.description": "Time until the child arrives after answering the pregnancy question. Vanilla days is 14, must be changed prior to answering the pregnancy question.",
+    "config.BaseMaxChildren.name": "Base Max Children",
+    "config.BaseMaxChildren.description": "Max number of children to have if no custom babies are available for the spouse.",
     "config.DaysBaby.name": "Days until Baby",
     "config.DaysBaby.description": "Number of days until the newborn becomes a baby. Vanilla days is 13.",
     "config.DaysCrawler.name": "Days until Crawler",

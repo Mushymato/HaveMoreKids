@@ -57,6 +57,18 @@ internal static class Quirks
             return false;
         }
 
+        if (!Game1.player.getChildren().All(child => child.Age > 2))
+        {
+            error = "Crib is currently occupied, all children must be age 3/toddler before you can have another one";
+            return false;
+        }
+
+        if (daysUntilBirth < 0)
+        {
+            error = "daysUntilBirth cannot be negative.";
+            return false;
+        }
+
         NPC spouse;
         if (string.IsNullOrEmpty(spouseName))
         {

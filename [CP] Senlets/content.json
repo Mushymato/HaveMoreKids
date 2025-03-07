@@ -1,7 +1,7 @@
 {
   "$schema": "https://smapi.io/schemas/content-patcher.json",
   "Format": "2.5.0",
-  // Debugging a senlet into your test save:
+  // Debugging a specific senlet into your test save:
   // debug warp Farm
   // debug hu 2
   // debug marry SenS
@@ -20,112 +20,128 @@
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Auri"
+        "L@Kid": "Auri",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Chirin"
+        "L@Kid": "Chirin",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Disthen"
+        "L@Kid": "Disthen",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Eerie"
+        "L@Kid": "Eerie",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Elowen"
+        "L@Kid": "Elowen",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Freya"
+        "L@Kid": "Freya",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Laurel"
+        "L@Kid": "Laurel",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Loki"
+        "L@Kid": "Loki",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Nanu"
+        "L@Kid": "Nanu",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Opal"
+        "L@Kid": "Opal",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Petra"
+        "L@Kid": "Petra",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Psique"
+        "L@Kid": "Psique",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Senjr"
+        "L@Kid": "Senjr",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Telas"
+        "L@Kid": "Telas",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Willow"
+        "L@Kid": "Willow",
+        "L@Gender": "Undefined"
       }
     },
     {
       "Action": "Include",
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
-        "L@Kid": "Yvette"
+        "L@Kid": "Yvette",
+        "L@Gender": "Undefined"
       }
     },
   ]

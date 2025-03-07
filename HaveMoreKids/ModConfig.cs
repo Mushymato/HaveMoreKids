@@ -125,6 +125,15 @@ internal sealed class ModConfig
         );
         GMCM.AddNumberOption(
             Mod,
+            () => BaseMaxChildren,
+            (value) => BaseMaxChildren = value,
+            I18n.Config_BaseMaxChildren_Name,
+            I18n.Config_BaseMaxChildren_Description,
+            min: 2,
+            max: 6
+        );
+        GMCM.AddNumberOption(
+            Mod,
             () => DaysBaby,
             (value) => DaysBaby = value,
             I18n.Config_DaysBaby_Name,

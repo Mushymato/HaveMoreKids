@@ -28,7 +28,9 @@
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
+          // Should i18n this
           "DisplayName": "{{L@Kid}}",
+          "Gender": "{{L@Gender}}",
           "Appearance": [
             // // Could add spirit's eve costumes or whatever as desired, e.g.
             // {
@@ -56,7 +58,6 @@
             {
               // Any Id that starts with mushymato.HaveMoreKids_Baby forces Precedence -100 and condition TRUE when Age < 3
               "Id": "mushymato.HaveMoreKids_Baby",
-              "Portrait": "Characters/{{ModId}}_The_Baby",
               "Sprite": "Characters/{{ModId}}_The_Baby"
             }
           ]
