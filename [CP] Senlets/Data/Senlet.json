@@ -84,6 +84,43 @@
       "When": {
         "HasFile:Data/Dialogue/Senlet/{{L@Kid}}.json": true
       }
+    },
+    // Silly: Add machine rule to get a baby from the FishSmoker, do not question this :)
+    {
+      "Action": "EditData",
+      "Target": "Data/Machines",
+      "TargetField": [
+        "(BC)FishSmoker",
+        "OutputRules",
+      ],
+      "Entries": {
+        "{{ModId}}_MakeBaby": {
+          "Id": "{{ModId}}_MakeBaby",
+          "Triggers": [
+            {
+              "Id": "ItemPlacedInMachine",
+              "Trigger": "ItemPlacedInMachine",
+              "RequiredItemId": "{{L@Rock}}",
+              "RequiredCount": 1,
+            },
+          ],
+          "UseFirstValidOutput": true,
+          "OutputItem": [
+            {
+              "Id": "{{ModId}}_MakeBaby",
+              "ItemId": "DROP_IN",
+              "CustomData": {
+                "selph.ExtraMachineConfig.TriggerActionToRunWhenReady": "mushymato.HaveMoreKids_SetChildBirth 0 7thAxis.LitD.CP.Senlet_Chirin SenS Strings\\StringsFromCSFiles:NPC.cs.4439"
+              }
+            }
+          ],
+          "MinutesUntilReady": 1000,
+        }
+      },
+      "When": {
+        "HasValue:{{L@Rock}}": true,
+        "HasMod": "selph.ExtraMachineConfig"
+      }
     }
   ]
 }

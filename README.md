@@ -19,6 +19,10 @@ This mod's has features related to tweaking childbirth that will apply even if y
 - Unique Children Talk: Needs testing.
 - LittleNPC: Needs testing.
 
+## Uninstall
+
+If you have unique kids from a content pack using this mod's framework features, use the console command `hmk-unset_kids`, then sleep before you uninstall this mod to properly reset their internal names.
+
 ## For Modders
 
 See [author guide](author-guide.md) for how to make a content pack to have unique children for your spouse.

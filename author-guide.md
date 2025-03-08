@@ -55,14 +55,21 @@ These have same structure as regular [NPC dialogue](https://stardewvalleywiki.co
 
 You can have child birth happen in non-standard ways by doing these two things:
 1. Set `SpouseWantsChildren` on your Spouse NPC's `Data/Characters` to `"FALSE"`, to block the vanilla nightly pregnancy question event.
-2. Use trigger action `mushymato.HaveMoreKids_SetChildBirth` to queue a birth event.
+2. Use trigger action `mushymato.HaveMoreKids_SetChildBirth` to queue a birth event. Trigger actions can be called from a variety of places, please [refer to the wiki page](https://stardewvalleywiki.com/Modding:Trigger_actions).
 
-### Trigger Action mushymato.HaveMoreKids_SetChildBirth \<daysUntilBirth\> [childId] [spouse]
+### Trigger Action mushymato.HaveMoreKids_SetChildBirth \<daysUntilBirth\> [childId] [spouse] [message]
 
 - `daysUntilBirth`: Required argument, number of days until child birth happens. Setting 0 here means it happens tonight.
-- `childId`: Optional specific unique child, ignored if the child does not exist or had already been taken.
-- `spouse`: Optional specific spouse, only do the action if the spouse matches.
+- `childId`: Optional specific unique child, ignored if the child does not exist or had already been taken. Use `Any` to skip this argument.
+- `spouse`: Optional specific spouse, only do the action if the spouse matches. Use `Any` to skip this argument.
+- `message`: Optional HUD message that appear when child birth is successfully set. Can use translation key or LocalizedText.
 
-Having a child this way skips the max child count checks entirely, but it does check that all existing child is age 3 and up.
+This trigger action causes guarenteed child birth event to occur this night, or a night in the future, as long as normal can have kids rules pass (NPC.canGetPregnant).
 
-This trigger action does not require unique child, though of course the childId argument does nothing in that case.
+A unique child is not required to use this trigger, though of course the `childId` argument does nothing in that case.
+
+## Console Commands
+
+### hmk-set_ages \<age\>
+
+Set the age of all children in the house, in a way that will actually stick. Need to sleep before their sprites/behaviors update.

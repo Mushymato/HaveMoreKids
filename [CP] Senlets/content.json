@@ -21,7 +21,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Auri",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -29,7 +30,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Chirin",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": "(O)544"
       }
     },
     {
@@ -37,7 +39,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Disthen",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -45,7 +48,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Eerie",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -53,7 +57,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Elowen",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -61,7 +66,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Freya",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -69,7 +75,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Laurel",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -77,7 +84,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Loki",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -85,7 +93,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Nanu",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -93,7 +102,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Opal",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -101,7 +111,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Petra",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -109,7 +120,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Psique",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -117,7 +129,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Senjr",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -125,7 +138,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Telas",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -133,7 +147,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Willow",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
     {
@@ -141,7 +156,8 @@
       "FromFile": "Data/Senlet.json",
       "LocalTokens": {
         "L@Kid": "Yvette",
-        "L@Gender": "Undefined"
+        "L@Gender": "Undefined",
+        "L@Rock": ""
       }
     },
   ]

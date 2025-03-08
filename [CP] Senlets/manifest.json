@@ -21,6 +21,11 @@
     {
       "UniqueID": "mushymato.HaveMoreKids",
       "IsRequired": true
+    },
+    {
+      "UniqueID": "selph.ExtraMachineConfig",
+      // "MinimumVersion": "1.14.0",
+      "IsRequired": false
     }
   ]
 }
