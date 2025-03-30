@@ -8,6 +8,7 @@ using StardewValley.Events;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
+using StardewValley.Objects;
 
 namespace HaveMoreKids;
 
@@ -139,11 +140,22 @@ internal static class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.CanReceiveGifts)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CanReceiveGifts_Postfix))
         );
+        // Let child sleep on single beds
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.GetChildBed)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(FarmHouse_GetChildBed_Postfix))
+        );
+    }
+
+    private static void FarmHouse_GetChildBed_Postfix(FarmHouse __instance, ref BedFurniture __result)
+    {
+        if (ModEntry.Config.UseSingleBedAsChildBed)
+            __result ??= __instance.GetBed(BedFurniture.BedType.Single);
     }
 
     private static void NPC_CanReceiveGifts_Postfix(NPC __instance, ref bool __result)
     {
-        if (__instance is Child)
+        if (__instance is Child kid && kid.Age == 3)
         {
             __result = true;
         }
@@ -151,7 +163,7 @@ internal static class Patches
 
     private static void NPC_CurrentDialogue_Postfix(NPC __instance, ref Stack<Dialogue> __result)
     {
-        if (__instance is Child)
+        if (__instance is Child kid && kid.Age == 3)
         {
             Game1.npcDialogues.TryGetValue(__instance.Name, out var value);
             value ??= Game1.npcDialogues[__instance.Name] = NPC_loadCurrentDialogue_Call(__instance);
@@ -530,11 +542,6 @@ internal static class Patches
                         new(OpCodes.Ret),
                     ]
                 );
-
-            foreach (var inst in matcher.Instructions())
-            {
-                Console.WriteLine(inst);
-            }
 
             return matcher.Instructions();
         }

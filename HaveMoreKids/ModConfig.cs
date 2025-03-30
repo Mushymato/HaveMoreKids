@@ -33,6 +33,7 @@ internal sealed class ModConfig
     public int DaysCrawler { get; set; } = 27 - 13;
     public int DaysToddler { get; set; } = 55 - 27;
     public int BaseMaxChildren { get; set; } = 4;
+    public bool UseSingleBedAsChildBed { get; set; } = false;
     public Dictionary<KidIdent, bool> DisabledKids { get; set; } = [];
 
     /// <summary>Restore default config values</summary>
@@ -44,6 +45,7 @@ internal sealed class ModConfig
         DaysCrawler = 27 - 13;
         DaysToddler = 55 - 27;
         BaseMaxChildren = 4;
+        UseSingleBedAsChildBed = false;
         DisabledKids.Clear();
         CheckDisabledByDefault();
     }
@@ -162,6 +164,13 @@ internal sealed class ModConfig
             I18n.Config_DaysToddler_Description,
             min: 1,
             max: 56
+        );
+        GMCM.AddBoolOption(
+            Mod,
+            () => UseSingleBedAsChildBed,
+            (value) => UseSingleBedAsChildBed = value,
+            I18n.Config_UseSingleBedAsChildBed_Name,
+            I18n.Config_UseSingleBedAsChildBed_Description
         );
         GMCM.AddPage(Mod, "");
 

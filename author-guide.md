@@ -51,13 +51,13 @@ Toddler appearances should have `Portrait` set if you wish to give the child dia
 You can give the child dialogue by editing `Characters/Dialogue/<ChildId>` and gift tastes by adding a `<ChildId>` entry to `Data/NPCGiftTastes`.
 These have same structure as regular [NPC dialogue](https://stardewvalleywiki.com/Modding:Dialogue) and [gift tastes](https://stardewvalleywiki.com/Modding:NPC_data#Gift_tastes).
 
-## Special Birth Trigger
+## Trigger Actions
 
 You can have child birth happen in non-standard ways by doing these two things:
 1. Set `SpouseWantsChildren` on your Spouse NPC's `Data/Characters` to `"FALSE"`, to block the vanilla nightly pregnancy question event.
 2. Use trigger action `mushymato.HaveMoreKids_SetChildBirth` to queue a birth event. Trigger actions can be called from a variety of places, please [refer to the wiki page](https://stardewvalleywiki.com/Modding:Trigger_actions).
 
-### Trigger Action mushymato.HaveMoreKids_SetChildBirth \<daysUntilBirth\> [childId] [spouse] [message]
+### mushymato.HaveMoreKids_SetChildBirth \<daysUntilBirth\> [childId] [spouse] [message]
 
 - `daysUntilBirth`: Required argument, number of days until child birth happens. Setting 0 here means it happens tonight.
 - `childId`: Optional specific unique child, ignored if the child does not exist or had already been taken. Use `Any` to skip this argument.
@@ -68,8 +68,34 @@ This trigger action causes guarenteed child birth event to occur this night, or 
 
 A unique child is not required to use this trigger, though of course the `childId` argument does nothing in that case.
 
-## Console Commands
+### mushymato.HaveMoreKids_SetChildAge \<childId|childIndex\> \<Age\>
 
-### hmk-set_ages \<age\>
+This trigger action alters the age of a child, however, the effects only happens on day started. If the action is called in the middle of a day, you must sleep before changes take place.
+Thus, it's recommended to use this action with trigger `DayEnding`.
 
-Set the age of all children in the house, in a way that will actually stick. Need to sleep before their sprites/behaviors update.
+- `childId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `age`: A number corresponding to the age stages
+  - 0: Newborn (sleeping baby)
+  - 1: Baby (sitting baby)
+  - 2: Crawler (crawling around the house)
+  - 3: Toddler (running around the house)
+
+## Game State Queries
+
+### mushymato.HaveMoreKids_CHILD_AGE \<childId|childIndex\> \<Age\>
+
+Checks a child is at a certain age.
+
+- `childId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `age`: A number corresponding to the age stages
+  - 0: Newborn (sleeping baby)
+  - 1: Baby (sitting baby)
+  - 2: Crawler (crawling around the house)
+  - 3: Toddler (running around the house)
+
+### mushymato.HaveMoreKids_HAS_CHILD \<childId|childIndex\>
+
+Check that the player has a particular child.
+
+- `childId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+

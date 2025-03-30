@@ -15,6 +15,7 @@ internal static class Quirks
     internal static string GSQ_CHILD_AGE => $"{ModEntry.ModId}_CHILD_AGE";
     internal static string GSQ_HAS_CHILD => $"{ModEntry.ModId}_HAS_CHILD";
     internal static string Action_SetChildBirth => $"{ModEntry.ModId}_SetChildBirth";
+    internal static string Action_SetChildAge => $"{ModEntry.ModId}_SetChildAge";
     internal static string Stats_daysUntilBirth => $"{ModEntry.ModId}_daysUntilBirth";
 
     internal static void Register(IModHelper helper)
@@ -26,17 +27,21 @@ internal static class Quirks
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
+        TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
         // console commands
         helper.ConsoleCommands.Add(
             "hmk-unset_kids",
             "Unset the internal names for unique kids, use this if you want to uninstall this mod completely.",
             ConsoleUnsetKids
         );
-        helper.ConsoleCommands.Add(
-            "hmk-set_ages",
-            "Set kids age and daysOld, need to sleep for this to work properly.",
-            ConsoleAgeKids
-        );
+    }
+
+    private static Child? FindChild(Farmer player, string kidId)
+    {
+        List<Child> children = player.getChildren();
+        if (kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
+            return children[index];
+        return children.FirstOrDefault(child => child.Name == kidId);
     }
 
     private static bool HAS_CHILD(string[] query, GameStateQueryContext context)
@@ -46,7 +51,7 @@ internal static class Quirks
             ModEntry.Log(error, LogLevel.Error);
             return false;
         }
-        return context.Player.getChildren().FirstOrDefault(child => child.Name == kidId) != null;
+        return FindChild(context.Player, kidId) != null;
     }
 
     private static bool CHILD_AGE(string[] query, GameStateQueryContext context)
@@ -59,7 +64,40 @@ internal static class Quirks
             ModEntry.Log(error, LogLevel.Error);
             return false;
         }
-        return context.Player.getChildren().FirstOrDefault(child => child.Name == kidId)?.Age == age;
+        return FindChild(context.Player, kidId)?.Age == age;
+    }
+
+    private static bool SetChildAge(string[] args, TriggerActionContext context, out string error)
+    {
+        if (
+            !ArgUtility.TryGet(args, 1, out string kidId, out error)
+            || !ArgUtility.TryGetInt(args, 2, out int age, out error)
+        )
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+        if (FindChild(Game1.player, kidId) is Child kid)
+        {
+            switch (age)
+            {
+                case 3:
+                    kid.daysOld.Value =
+                        ModEntry.Config.DaysBaby + ModEntry.Config.DaysCrawler + ModEntry.Config.DaysToddler;
+                    break;
+                case 2:
+                    kid.daysOld.Value = ModEntry.Config.DaysBaby + ModEntry.Config.DaysCrawler;
+                    break;
+                case 1:
+                    kid.daysOld.Value = ModEntry.Config.DaysBaby;
+                    break;
+                case 0:
+                    kid.daysOld.Value = 0;
+                    break;
+            }
+            return true;
+        }
+        return false;
     }
 
     private static bool SetChildBirth(string[] args, TriggerActionContext context, out string error)
@@ -202,32 +240,5 @@ internal static class Quirks
         foreach (Child kid in Game1.player.getChildren())
             kid.reloadSprite();
         Game1.player.stats.Decrement(Stats_daysUntilBirth);
-    }
-
-    private static void ConsoleAgeKids(string arg1, string[] arg2)
-    {
-        if (!Context.IsWorldReady)
-            return;
-        if (arg2.Length < 1)
-            return;
-        int age = int.Parse(arg2[0]);
-        foreach (Child kid in Game1.player.getChildren())
-        {
-            if (kid.Age != age)
-            {
-                switch (age)
-                {
-                    case 3:
-                        kid.daysOld.Value = ModEntry.Config.DaysToddler;
-                        break;
-                    case 2:
-                        kid.daysOld.Value = ModEntry.Config.DaysCrawler;
-                        break;
-                    case 1:
-                        kid.daysOld.Value = ModEntry.Config.DaysBaby;
-                        break;
-                }
-            }
-        }
     }
 }

@@ -12,6 +12,7 @@ This mod's has features related to tweaking childbirth that will apply even if y
 - `Days until Baby`: Number of days until the newborn becomes a baby. Vanilla days is 13.
 - `Days until Crawler`: Number of days until the baby becomes a crawler. Vanilla days is 14.
 - `Days until Toddler`: Number of days until the crawler becomes a toddler. Vanilla days is 13.
+- `Use Single Bed As Child Bed`: Allow children to sleep on single beds instead of special child beds.
 
 ## Compatibility
 
