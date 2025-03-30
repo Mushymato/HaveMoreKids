@@ -14,7 +14,7 @@ internal static class AssetManager
     private static string Asset_ChildData => $"{ModEntry.ModId}/ChildData";
     internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
     internal static string Child_ModData_NPCParent => $"{ModEntry.ModId}/NPCParent";
-    internal static string NPC_ModData_NextKidId => $"{ModEntry.ModId}/NextKidId";
+    internal static string ModData_NextKidId => $"{ModEntry.ModId}/NextKidId";
 
     private static Dictionary<string, CharacterData>? childData = null;
     private static ITranslationHelper translation = null!;
@@ -49,18 +49,27 @@ internal static class AssetManager
             e.LoadFrom(() => new Dictionary<string, CharacterData>(), AssetLoadPriority.Low);
         if (e.NameWithoutLocale.IsEquivalentTo("Strings/Events") && e.Name.LocaleCode == translation.Locale)
         {
+            // make these strings gender neutral so I don't have to deal with them :)
             e.Edit(
                 (asset) =>
                 {
+                    IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
                     if (
                         translation
                             .GetInAllLocales("StringEvents.BabyNamingTitle")
                             .TryGetValue(translation.Locale, out var babyNaming)
                     )
                     {
-                        IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
                         data["BabyNamingTitle_Male"] = babyNaming;
                         data["BabyNamingTitle_Female"] = babyNaming;
+                    }
+                    if (data.TryGetValue("BirthMessage_PlayerMother", out string? playerMother))
+                    {
+                        data["BirthMessage_PlayerMother"] = playerMother.Replace("{0}", "");
+                    }
+                    if (data.TryGetValue("BirthMessage_SpouseMother", out string? spouseMother))
+                    {
+                        data["BirthMessage_SpouseMother"] = spouseMother.Replace("{0}", "");
                     }
                 },
                 AssetEditPriority.Early
@@ -134,12 +143,9 @@ internal static class AssetManager
         if (availableKidIds.Length == 0)
             return null;
         // Prioritize the kid id set by trigger action, if it is valid
-        if (
-            spouse.modData.TryGetValue(NPC_ModData_NextKidId, out string? nextKidId)
-            && availableKidIds.Contains(nextKidId)
-        )
+        if (spouse.modData.TryGetValue(ModData_NextKidId, out string? nextKidId) && availableKidIds.Contains(nextKidId))
         {
-            spouse.modData.Remove(NPC_ModData_NextKidId);
+            spouse.modData.Remove(ModData_NextKidId);
             return nextKidId;
         }
         // Prioritize "real name" if found
@@ -171,6 +177,7 @@ internal static class AssetManager
         newKid.modData[Child_ModData_DisplayName] = kidName;
         newKid.modData[Child_ModData_NPCParent] = spouse.Name;
         newKid.Name = newKidId;
+        newKid.displayName = kidName;
         if (newKid.GetData() is not CharacterData data)
         {
             ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);

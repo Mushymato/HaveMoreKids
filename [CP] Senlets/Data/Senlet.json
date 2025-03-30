@@ -114,7 +114,7 @@
               }
             }
           ],
-          "MinutesUntilReady": 1000,
+          "MinutesUntilReady": 100,
         }
       },
       "When": {

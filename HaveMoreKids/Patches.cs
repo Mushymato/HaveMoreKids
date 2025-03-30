@@ -7,6 +7,7 @@ using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
+using StardewValley.Locations;
 
 namespace HaveMoreKids;
 
@@ -61,6 +62,7 @@ internal static class Patches
         // Change pregnancy chance
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.pickPersonalFarmEvent)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Prefix)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Transpiler))
         );
         // Change pregnancy time needed
@@ -73,20 +75,40 @@ internal static class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.canGetPregnant)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(NPC_canGetPregnant_Transpiler))
         );
+        // Allow pregnancy past the second child for players
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.playersCanGetPregnantHere)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_playersCanGetPregnantHere_Transpiler))
+        );
         // Modify the child on birth event
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(BirthingEvent), nameof(BirthingEvent.tickUpdate)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(BirthingEvent_tickUpdate_Transpiler))
         );
+        // Make player couple birthing event to not actually require a player spouse
+        harmony.Patch(
+            original: AccessTools.DeclaredConstructor(typeof(PlayerCoupleBirthingEvent)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(PlayerCoupleBirthingEvent_ctor_Prefix))
+        );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(
+                typeof(PlayerCoupleBirthingEvent),
+                nameof(PlayerCoupleBirthingEvent.setUp)
+            ),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(PlayerCoupleBirthingEvent_setUp_Transpiler))
+        );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(
+                typeof(PlayerCoupleBirthingEvent),
+                nameof(PlayerCoupleBirthingEvent.afterMessage)
+            ),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(PlayerCoupleBirthingEvent_afterMessage_Prefix)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(PlayerCoupleBirthingEvent_afterMessage_Transpiler))
+        );
         // Make the child use appearance system
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.reloadSprite)),
             prefix: new HarmonyMethod(typeof(Patches), nameof(Child_reloadSprite_Prefix))
-        );
-        // Make the child use their assigned name from mod data
-        harmony.Patch(
-            original: AccessTools.PropertyGetter(typeof(Character), nameof(Character.displayName)),
-            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_displayName_Postfix))
         );
         // Alter rate of child aging
         harmony.Patch(
@@ -190,20 +212,6 @@ internal static class Patches
         {
             __result = data;
         }
-    }
-
-    /// <summary>
-    /// Restore the display name for the child
-    /// </summary>
-    /// <param name="__instance"></param>
-    /// <param name="__result"></param>
-    private static void Child_displayName_Postfix(Character __instance, ref string __result)
-    {
-        if (
-            __instance is Child
-            && __instance.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string displayName)
-        )
-            __result = displayName;
     }
 
     private static sbyte ModifyDaysBaby(sbyte days) => (sbyte)ModEntry.Config.DaysBaby;
@@ -403,6 +411,140 @@ internal static class Patches
         }
     }
 
+    private static bool PlayerCoupleBirthingEvent_ctor_Prefix(
+        ref long ___spouseID,
+        ref Farmer ___spouse,
+        ref FarmHouse ___farmHouse,
+        ref bool ___isPlayersTurn
+    )
+    {
+        if (Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) == null)
+        {
+            ___spouseID = Game1.player.UniqueMultiplayerID;
+            ___spouse = Game1.player;
+            ___farmHouse = Utility.getHomeOfFarmer(Game1.player);
+            ___isPlayersTurn = true;
+            return false;
+        }
+        return true;
+    }
+
+    private static IEnumerable<CodeInstruction> PlayerCoupleBirthingEvent_setUp_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+
+            matcher
+                .MatchEndForward(
+                    [
+                        new(OpCodes.Stfld, AccessTools.Field(typeof(PlayerCoupleBirthingEvent), "isPlayersTurn")),
+                        new(OpCodes.Ldarg_0),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'isPlayersTurn = '")
+                .CreateLabel(out Label lbl);
+
+            // IL_008a: call class StardewValley.Farmer StardewValley.Game1::get_player()
+            // IL_008f: callvirt instance class StardewValley.Friendship StardewValley.Farmer::GetSpouseFriendship()
+            // IL_0094: stloc.1
+            // IL_0095: ldarg.0
+            // IL_0096: ldloc.1
+            // IL_0097: callvirt instance int64 StardewValley.Friendship::get_Proposer()
+            matcher
+                .MatchEndBackwards(
+                    [
+                        new(OpCodes.Call, AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.player))),
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.GetSpouseFriendship))
+                        ),
+                        new(inst => inst.IsStloc()),
+                        new(OpCodes.Ldarg_0),
+                        new(inst => inst.IsLdloc()),
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.PropertyGetter(typeof(Friendship), nameof(Friendship.Proposer))
+                        ),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'spouseFriendship.Proposer'");
+            CodeInstruction friendshipLoc = matcher.InstructionAt(-1);
+            friendshipLoc = new(friendshipLoc.opcode, friendshipLoc.operand);
+            matcher.Advance(-2).InsertAndAdvance([friendshipLoc, new(OpCodes.Brfalse_S, lbl)]);
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in PlayerCoupleBirthingEvent_setUp_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
+    private static void PlayerCoupleBirthingEvent_afterMessage_Prefix(
+        ref long ___spouseID,
+        ref Farmer ___spouse,
+        ref FarmHouse ___farmHouse,
+        ref bool ___isPlayersTurn
+    )
+    {
+        ModEntry.Log($"___spouseID: {___spouseID}");
+        ModEntry.Log($"___spouse: {___spouse}");
+        ModEntry.Log($"___farmHouse: {___farmHouse}");
+        ModEntry.Log($"___isPlayersTurn: {___isPlayersTurn}");
+    }
+
+    private static IEnumerable<CodeInstruction> PlayerCoupleBirthingEvent_afterMessage_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            matcher
+                .MatchStartForward(
+                    [
+                        new(OpCodes.Call, AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.player))),
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.GetSpouseFriendship))
+                        ),
+                        new(OpCodes.Ldnull),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'Game1.player.GetSpouseFriendship()'")
+                .CreateLabel(out Label lbl)
+                .InsertAndAdvance(
+                    [
+                        new(OpCodes.Call, AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.player))),
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.GetSpouseFriendship))
+                        ),
+                        new(OpCodes.Brtrue_S, lbl),
+                        new(OpCodes.Ret),
+                    ]
+                );
+
+            foreach (var inst in matcher.Instructions())
+            {
+                Console.WriteLine(inst);
+            }
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in PlayerCoupleBirthingEvent_afterMessage_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
     private static sbyte ModifyDaysPregnant(sbyte days) => (sbyte)ModEntry.Config.DaysPregnant;
 
     private static IEnumerable<CodeInstruction> QuestionEvent_answerPregnancyQuestion_Transpiler(
@@ -427,6 +569,13 @@ internal static class Patches
         }
     }
 
+    /// <summary>
+    /// Check should have kids for NPC that have unique kids
+    /// If they don't have unique kids, fall down to the base kid count logic
+    /// </summary>
+    /// <param name="spouse"></param>
+    /// <param name="children"></param>
+    /// <returns></returns>
     private static bool ShouldHaveKids(NPC spouse, List<Child> children)
     {
         if (AssetManager.PickKidId(spouse, newBorn: true) != null)
@@ -504,10 +653,103 @@ internal static class Patches
         }
     }
 
+    /// <summary>
+    /// Check all kids are of right arge
+    /// </summary>
+    /// <param name="children"></param>
+    /// <returns></returns>
+    private static bool ShouldHaveKidsPlayer(List<Child> children)
+    {
+        return children.All(child => child.Age > 2);
+    }
+
+    private static IEnumerable<CodeInstruction> Utility_playersCanGetPregnantHere_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+
+            matcher
+                .MatchEndForward(
+                    [
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.getChildrenCount))
+                        ),
+                        new(OpCodes.Ldc_I4_2),
+                        new(OpCodes.Bge_S),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'farmHouse.getChildrenCount() < 2'")
+                .InsertAndAdvance(
+                    [new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyBaseKidCount)))]
+                );
+
+            matcher
+                .MatchEndForward(
+                    [
+                        new(inst => inst.IsLdloc()),
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
+                        ),
+                        new(OpCodes.Ldc_I4_2),
+                        new(OpCodes.Bge_S),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'children.Count < 2'");
+            CodeInstruction ldlocChildren = matcher.InstructionAt(-3);
+            ldlocChildren = new(ldlocChildren.opcode, ldlocChildren.operand);
+            matcher.InsertAndAdvance(
+                [new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyBaseKidCount)))]
+            );
+            matcher
+                .MatchEndForward(
+                    [
+                        new(inst => inst.IsLdloc()),
+                        new(
+                            OpCodes.Callvirt,
+                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
+                        ),
+                        new(OpCodes.Brfalse_S),
+                        new(inst => inst.IsLdloc()),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find 'children.Count != 0'")
+                .Insert(
+                    [
+                        ldlocChildren,
+                        new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ShouldHaveKidsPlayer))),
+                        new(OpCodes.Ret),
+                    ]
+                );
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in Utility_playersCanGetPregnantHere_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
     private static float ModifyPregnancyChance(float originalValue)
     {
         ModEntry.LogOnce($"Modify pregnancy chance: {originalValue} -> {ModEntry.Config.PregnancyChance / 100f}");
         return ModEntry.Config.PregnancyChance / 100f;
+    }
+
+    private static bool Utility_pickPersonalFarmEvent_Prefix(ref FarmEvent __result)
+    {
+        if (Game1.player.stats.Get(Quirks.Stats_daysUntilBirth) == 1)
+        {
+            Game1.player.stats.Set(Quirks.Stats_daysUntilBirth, 0);
+            __result = new PlayerCoupleBirthingEvent();
+            return false;
+        }
+        return true;
     }
 
     /// <summary>Change pregnancy chance to configured number.</summary>
@@ -529,7 +771,16 @@ internal static class Patches
                         new(OpCodes.Ldc_R8, 0.05),
                     ]
                 )
-                .ThrowIfNotMatch("Did not find 'random.NextDouble() < 0.05'")
+                .ThrowIfNotMatch("Did not find first 'random.NextDouble() < 0.05'")
+                .Advance(1)
+                .Insert([new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))])
+                .MatchEndForward(
+                    [
+                        new(OpCodes.Callvirt, AccessTools.DeclaredMethod(typeof(Random), nameof(Random.NextDouble))),
+                        new(OpCodes.Ldc_R8, 0.05),
+                    ]
+                )
+                .ThrowIfNotMatch("Did not find second 'random.NextDouble() < 0.05'")
                 .Advance(1)
                 .Insert([new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))]);
             return matcher.Instructions();

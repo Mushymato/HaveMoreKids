@@ -1,5 +1,7 @@
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
+using StardewValley.Characters;
 
 namespace HaveMoreKids;
 
@@ -30,7 +32,18 @@ public class ModEntry : Mod
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
         Config.Register(Helper, ModManifest);
+        // Register a content patcher token for getting the display names of kids
+        if (
+            Helper.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")
+            is Integration.IContentPatcherAPI CP
+        )
+        {
+            CP.RegisterToken(ModManifest, "ChildDisplayName", CPTokenChildDisplayNames);
+        }
     }
+
+    private static IEnumerable<string>? CPTokenChildDisplayNames() =>
+        Context.IsWorldReady ? Game1.player.getChildren().Select(child => child.displayName) : null;
 
     /// <summary>SMAPI static monitor Log wrapper</summary>
     /// <param name="msg"></param>

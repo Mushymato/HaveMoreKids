@@ -1,8 +1,10 @@
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Delegates;
+using StardewValley.Extensions;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
@@ -13,6 +15,7 @@ internal static class Quirks
     internal static string GSQ_CHILD_AGE => $"{ModEntry.ModId}_CHILD_AGE";
     internal static string GSQ_HAS_CHILD => $"{ModEntry.ModId}_HAS_CHILD";
     internal static string Action_SetChildBirth => $"{ModEntry.ModId}_SetChildBirth";
+    internal static string Stats_daysUntilBirth => $"{ModEntry.ModId}_daysUntilBirth";
 
     internal static void Register(IModHelper helper)
     {
@@ -73,7 +76,7 @@ internal static class Quirks
 
         if (!Game1.player.getChildren().All(child => child.Age > 2))
         {
-            error = "Crib is currently occupied, all children must be age 3/toddler before you can have another one";
+            error = "Crib is currently occupied, all children must be age 3/toddler before you can have more kids";
             return false;
         }
 
@@ -83,43 +86,66 @@ internal static class Quirks
             return false;
         }
 
-        NPC spouse;
-        if (string.IsNullOrEmpty(spouseName) || spouseName == "Any")
+        if (Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) is long spouseId)
         {
-            if ((spouse = Game1.player.getSpouse()) == null)
-            {
-                error = "Player does not have a spouse";
-                return false;
-            }
+            // player couple path
+            Friendship friendship = Game1.player.team.GetFriendship(Game1.player.UniqueMultiplayerID, spouseId);
+            WorldDate worldDate = new(Game1.Date);
+            worldDate.TotalDays += daysUntilBirth;
+            friendship.NextBirthingDate = worldDate;
+        }
+        else if (spouseName.EqualsIgnoreCase("Player"))
+        {
+            // solo adopt path
+            // this is +1 because stats get unset at 0
+            Game1.player.stats.Set(Stats_daysUntilBirth, daysUntilBirth + 1);
         }
         else
         {
-            if ((spouse = Game1.getCharacterFromName(spouseName)) == null)
+            // npc spouse path
+            NPC? spouse;
+            if (string.IsNullOrEmpty(spouseName) || spouseName.EqualsIgnoreCase("Any"))
             {
-                error = $"{spouseName} is not an NPC";
+                if ((spouse = Game1.player.getSpouse()) == null)
+                {
+                    error = "Player does not have a spouse";
+                    return false;
+                }
+            }
+            else
+            {
+                if ((spouse = Game1.getCharacterFromName(spouseName)) == null)
+                {
+                    error = $"{spouseName} is not an NPC";
+                    return false;
+                }
+                if (spouse.getSpouse() != Game1.player)
+                {
+                    error = $"{spouse.Name} is not the player's spouse";
+                    return false;
+                }
+            }
+
+            if (!spouse.canGetPregnant())
+            {
+                error = $"{spouse.Name} can't get pregnant right now";
                 return false;
             }
-            if (spouse.getSpouse() != Game1.player)
+
+            WorldDate worldDate = new(Game1.Date);
+            worldDate.TotalDays += daysUntilBirth;
+            Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
+
+            if (
+                !string.IsNullOrEmpty(kidId)
+                && kidId.EqualsIgnoreCase("Any")
+                && AssetManager.ChildData.ContainsKey(kidId)
+            )
             {
-                error = $"{spouse.Name} is not the player's spouse";
-                return false;
+                spouse.modData[AssetManager.ModData_NextKidId] = kidId;
             }
         }
 
-        if (!spouse.canGetPregnant())
-        {
-            error = $"{spouse.Name} can't get pregnant right now";
-            return false;
-        }
-
-        WorldDate worldDate = new(Game1.Date);
-        worldDate.TotalDays += daysUntilBirth;
-        Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
-
-        if (!string.IsNullOrEmpty(kidId) && kidId != "Any" && AssetManager.ChildData.ContainsKey(kidId))
-        {
-            spouse.modData[AssetManager.NPC_ModData_NextKidId] = kidId;
-        }
         if (message != null)
         {
             string? parsedMessage = null;
@@ -163,6 +189,8 @@ internal static class Quirks
             if (Game1.player.getSpouse() is NPC spouse)
             {
                 AssetManager.ChooseAndApplyKidId(spouse, kid, false);
+                if (kid.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName))
+                    kid.displayName = displayName;
             }
     }
 
@@ -173,6 +201,7 @@ internal static class Quirks
     {
         foreach (Child kid in Game1.player.getChildren())
             kid.reloadSprite();
+        Game1.player.stats.Decrement(Stats_daysUntilBirth);
     }
 
     private static void ConsoleAgeKids(string arg1, string[] arg2)

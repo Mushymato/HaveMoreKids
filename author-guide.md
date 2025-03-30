@@ -61,7 +61,7 @@ You can have child birth happen in non-standard ways by doing these two things:
 
 - `daysUntilBirth`: Required argument, number of days until child birth happens. Setting 0 here means it happens tonight.
 - `childId`: Optional specific unique child, ignored if the child does not exist or had already been taken. Use `Any` to skip this argument.
-- `spouse`: Optional specific spouse, only do the action if the spouse matches. Use `Any` to skip this argument.
+- `spouse`: Optional specific spouse, only do the action if the spouse matches. Use `Any` to skip this argument. For player couples or solo adoption, use `Player`.
 - `message`: Optional HUD message that appear when child birth is successfully set. Can use translation key or LocalizedText.
 
 This trigger action causes guarenteed child birth event to occur this night, or a night in the future, as long as normal can have kids rules pass (NPC.canGetPregnant).

@@ -117,7 +117,11 @@ internal sealed class ModConfig
         GMCM.AddNumberOption(
             Mod,
             () => DaysPregnant,
-            (value) => DaysPregnant = value,
+            (value) =>
+            {
+                DaysPregnant = value;
+                Helper.GameContent.InvalidateCache("Strings/UI");
+            },
             I18n.Config_DaysPregnant_Name,
             I18n.Config_DaysPregnant_Description,
             min: 1,
