@@ -186,6 +186,7 @@ internal static class Patches
                 .MatchEndForward([new(OpCodes.Ldarg_0), new(OpCodes.Isinst, typeof(Child)), new(OpCodes.Brfalse_S)])
                 .ThrowIfNotMatch("Did not find 'this is Child'");
             matcher.Opcode = OpCodes.Brtrue_S;
+            matcher.Advance(-1).Operand = typeof(NPC);
             return matcher.Instructions();
         }
         catch (Exception err)

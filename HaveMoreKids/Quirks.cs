@@ -93,6 +93,7 @@ internal static class Quirks
                     break;
                 case 0:
                     kid.daysOld.Value = 0;
+                    kid.Age = 0;
                     break;
             }
             return true;
@@ -164,11 +165,11 @@ internal static class Quirks
                 }
             }
 
-            if (!spouse.canGetPregnant())
-            {
-                error = $"{spouse.Name} can't get pregnant right now";
-                return false;
-            }
+            // if (!spouse.canGetPregnant())
+            // {
+            //     error = $"{spouse.Name} can't have a child right now";
+            //     return false;
+            // }
 
             WorldDate worldDate = new(Game1.Date);
             worldDate.TotalDays += daysUntilBirth;
