@@ -10,11 +10,11 @@ namespace HaveMoreKids;
 
 internal static class AssetManager
 {
-    private static string NPC_CustomFields_KidId_Prefix => $"{ModEntry.ModId}/Kid.";
-    private static string Asset_ChildData => $"{ModEntry.ModId}/ChildData";
-    internal static string Child_ModData_DisplayName => $"{ModEntry.ModId}/DisplayName";
-    internal static string Child_ModData_NPCParent => $"{ModEntry.ModId}/NPCParent";
-    internal static string ModData_NextKidId => $"{ModEntry.ModId}/NextKidId";
+    private const string NPC_CustomFields_KidId_Prefix = $"{ModEntry.ModId}/Kid.";
+    private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
+    internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
+    internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
+    internal const string ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
 
     private static Dictionary<string, CharacterData>? childData = null;
     private static ITranslationHelper translation = null!;
@@ -26,10 +26,17 @@ internal static class AssetManager
             if (childData == null)
             {
                 childData = Game1.content.Load<Dictionary<string, CharacterData>>(Asset_ChildData);
-                foreach (var kv in childData)
+                foreach ((string key, CharacterData value) in childData)
                 {
-                    kv.Value.Age = NpcAge.Child;
-                    kv.Value.CanBeRomanced = false;
+                    value.Age = NpcAge.Child;
+                    value.CanBeRomanced = false;
+                    foreach (CharacterAppearanceData appearance in value.Appearance)
+                    {
+                        if (string.IsNullOrEmpty(appearance.Portrait))
+                        {
+                            appearance.Portrait = appearance.Sprite;
+                        }
+                    }
                 }
             }
             return childData;

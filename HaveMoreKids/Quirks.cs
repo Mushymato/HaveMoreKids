@@ -12,11 +12,11 @@ namespace HaveMoreKids;
 
 internal static class Quirks
 {
-    internal static string GSQ_CHILD_AGE => $"{ModEntry.ModId}_CHILD_AGE";
-    internal static string GSQ_HAS_CHILD => $"{ModEntry.ModId}_HAS_CHILD";
-    internal static string Action_SetChildBirth => $"{ModEntry.ModId}_SetChildBirth";
-    internal static string Action_SetChildAge => $"{ModEntry.ModId}_SetChildAge";
-    internal static string Stats_daysUntilBirth => $"{ModEntry.ModId}_daysUntilBirth";
+    internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
+    internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
+    internal const string Action_SetChildBirth = $"{ModEntry.ModId}_SetChildBirth";
+    internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
+    internal const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
 
     internal static void Register(IModHelper helper)
     {

@@ -15,13 +15,12 @@ public class ModEntry : Mod
     private static IMonitor? mon;
     internal static ModConfig Config = null!;
 
-    internal static string ModId { get; private set; } = null!;
+    internal const string ModId = "mushymato.HaveMoreKids";
 
     public override void Entry(IModHelper helper)
     {
         I18n.Init(helper.Translation);
         mon = Monitor;
-        ModId = ModManifest.UniqueID;
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         Config = helper.ReadConfig<ModConfig>();
         Patches.Apply();
