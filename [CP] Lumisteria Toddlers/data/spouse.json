@@ -4,63 +4,21 @@
     // 6 babies
     {
       "Action": "Include",
-      "FromFile": "data/inc/child.json",
+      "FromFile": "data/child-3tuple.json",
       "LocalTokens": {
-        // "L@Spouse": "{{LL@Spouse}}",
         "L@Seq": "A",
-        "L@Hair": "Boy",
-        "L@Eyes": "light"
+        "L@Eyes": "light",
+        "L@Body": "{{Lowercase:{{L@Spouse}}}}"
       }
     },
     {
       "Action": "Include",
-      "FromFile": "data/inc/child.json",
+      "FromFile": "data/child-3tuple.json",
       "LocalTokens": {
-        // "L@Spouse": "{{LL@Spouse}}",
-        "L@Seq": "A",
-        "L@Hair": "Girl",
-        "L@Eyes": "light"
-      }
-    },
-    {
-      "Action": "Include",
-      "FromFile": "data/inc/child.json",
-      "LocalTokens": {
-        // "L@Spouse": "{{LL@Spouse}}",
-        "L@Seq": "A",
-        "L@Hair": "Neutral",
-        "L@Eyes": "light"
-      }
-    },
-    {
-      "Action": "Include",
-      "FromFile": "data/inc/child.json",
-      "LocalTokens": {
-        // "L@Spouse": "{{LL@Spouse}}",
         "L@Seq": "B",
-        "L@Hair": "Boy",
-        "L@Eyes": "dark"
+        "L@Eyes": "dark",
+        "L@Body": "{{AltBody}}"
       }
     },
-    {
-      "Action": "Include",
-      "FromFile": "data/inc/child.json",
-      "LocalTokens": {
-        // "L@Spouse": "{{LL@Spouse}}",
-        "L@Seq": "B",
-        "L@Hair": "Girl",
-        "L@Eyes": "dark"
-      }
-    },
-    {
-      "Action": "Include",
-      "FromFile": "data/inc/child.json",
-      "LocalTokens": {
-        // "L@Spouse": "{{LL@Spouse}}",
-        "L@Seq": "B",
-        "L@Hair": "Neutral",
-        "L@Eyes": "dark"
-      }
-    }
   ]
 }

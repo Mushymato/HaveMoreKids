@@ -1,0 +1,21 @@
+{
+  "config.page.pregnancy.name": "Pregnancy & Child Growth",
+  "config.page.pregnancy.description": "Settings for pregnancy chances, length, base max number of children, and child stage lengths.",
+  "config.PregnancyChance.name": "Pregnancy Chance",
+  "config.PregnancyChance.description": "When all other conditions are filled, chance that your spouse will ask to have/adopt a child each night. Vanilla chance is 5%.",
+  "config.DaysPregnant.name": "Pregnancy Days",
+  "config.DaysPregnant.description": "Time until the child arrives after answering the pregnancy question. Vanilla days is 14, must be changed prior to answering the pregnancy question. This feature does not work for player couples.",
+  "config.BaseMaxChildren.name": "Base Max Children",
+  "config.BaseMaxChildren.description": "Max number of children to have if no custom babies are available for the spouse.",
+  "config.DaysBaby.name": "Days until Baby",
+  "config.DaysBaby.description": "Number of days until the newborn becomes a baby. Vanilla days is 13.",
+  "config.DaysCrawler.name": "Days until Crawler",
+  "config.DaysCrawler.description": "Number of days until the baby becomes a crawler. Vanilla days is 14.",
+  "config.DaysToddler.name": "Days until Toddler",
+  "config.DaysToddler.description": "Number of days until the crawler becomes a toddler. Vanilla days is 13.",
+  "config.UseSingleBedAsChildBed.name": "Use Single Bed as Child Bed",
+  "config.UseSingleBedAsChildBed.description": "Allow children to sleep on single beds instead of special child beds.",
+  "config.page.spousekid.description": "Enable/Disable Spouse Specific Kids Below:",
+  "config.page.spousekid.name": "{{Name}}'s Kids",
+  "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply."
+}

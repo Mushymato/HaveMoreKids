@@ -1,0 +1,27 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    // 6 babies
+    {
+      "Action": "Include",
+      "FromFile": "data/child.json",
+      "LocalTokens": {
+        "L@Hair": "{{Lowercase:{{L@Spouse}}}}Boy",
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/child.json",
+      "LocalTokens": {
+        "L@Hair": "{{Lowercase:{{L@Spouse}}}}Girl",
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/child.json",
+      "LocalTokens": {
+        "L@Hair": "{{Lowercase:{{L@Spouse}}}}Neutral",
+      }
+    },
+  ]
+}

@@ -1,5 +1,7 @@
+using HaveMoreKids.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Characters;
 
@@ -23,9 +25,9 @@ public class ModEntry : Mod
         mon = Monitor;
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         Config = helper.ReadConfig<ModConfig>();
-        Patches.Apply();
         AssetManager.Register(helper);
         Quirks.Register(helper);
+        Patches.Apply();
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)

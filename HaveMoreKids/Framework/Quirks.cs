@@ -8,7 +8,7 @@ using StardewValley.Extensions;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
-namespace HaveMoreKids;
+namespace HaveMoreKids.Framework;
 
 internal static class Quirks
 {

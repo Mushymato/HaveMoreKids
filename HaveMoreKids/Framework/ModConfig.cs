@@ -5,7 +5,7 @@ using StardewValley;
 using StardewValley.GameData.Characters;
 using StardewValley.TokenizableStrings;
 
-namespace HaveMoreKids;
+namespace HaveMoreKids.Framework;
 
 internal sealed record KidIdent(string Spouse, string Kid)
 {
