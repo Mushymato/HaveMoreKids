@@ -1,4 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using Force.DeepCloner;
+using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -14,10 +16,12 @@ internal static class AssetManager
     private const string NPC_CustomFields_KidId_Prefix = $"{ModEntry.ModId}/Kid.";
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
     private const string Asset_SharedKids = $"{ModEntry.ModId}/SharedKids";
-    private const string Asset_Strings = $"{ModEntry.ModId}\\Strings";
+    private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
+    internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
     internal const string Child_ModData_Birthday = $"{ModEntry.ModId}/Birthday";
+    internal const string Child_ModData_AsNPC = $"{ModEntry.ModId}/AsNPC";
     internal const string ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
 
     private static Dictionary<string, CharacterData>? childData = null;
@@ -33,6 +37,11 @@ internal static class AssetManager
                 {
                     value.Age = NpcAge.Child;
                     value.CanBeRomanced = false;
+                    value.Calendar = CalendarBehavior.HiddenAlways;
+                    value.SocialTab = SocialTabBehavior.HiddenAlways;
+                    value.EndSlideShow = EndSlideShowBehavior.Hidden;
+                    value.FlowerDanceCanDance = false;
+                    value.PerfectionScore = false;
                     foreach (CharacterAppearanceData appearance in value.Appearance)
                     {
                         if (string.IsNullOrEmpty(appearance.Portrait))
@@ -68,10 +77,42 @@ internal static class AssetManager
         return new MarriageDialogueReference(Asset_Strings, key, true);
     }
 
+    private static IModHelper Helper = null!;
+
     internal static void Register(IModHelper helper)
     {
-        helper.Events.Content.AssetRequested += OnAssetRequested;
-        helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
+        Helper = helper;
+        Helper.Events.Content.AssetRequested += OnAssetRequested;
+        Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
+        Helper.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
+    }
+
+    private static readonly List<(long, string, string)> ChildToNPC = [];
+
+    private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
+    {
+        if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
+        {
+            foreach (Farmer farmer in Game1.getAllFarmers())
+            {
+                foreach (Child child in farmer.getChildren())
+                {
+                    if (child.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
+                    {
+                        child.displayName = displayName;
+                    }
+                    if (ChildData.ContainsKey(child.Name))
+                    {
+                        ChildToNPC.Add(new(farmer.UniqueMultiplayerID, child.Name, child.displayName));
+                        ModEntry.Log($"ADD ChildToNPC {ChildToNPC.Last()}", LogLevel.Info);
+                    }
+                }
+            }
+            if (ChildToNPC.Any())
+            {
+                Helper.GameContent.InvalidateCache(Asset_DataCharacters);
+            }
+        }
     }
 
     private static void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -81,9 +122,39 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo(Asset_SharedKids))
             e.LoadFrom(() => new Dictionary<string, bool>(), AssetLoadPriority.Low);
         if (e.Name.IsEquivalentTo(Asset_Strings))
-        {
             e.LoadFromModFile<Dictionary<string, string>>("i18n/default/strings.json", AssetLoadPriority.Exclusive);
-            // make these strings gender neutral so I don't have to deal with them :)
+
+        if (e.Name.IsEquivalentTo(Asset_DataCharacters) && ChildToNPC.Any())
+        {
+            e.Edit(
+                (asset) =>
+                {
+                    IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
+                    foreach ((long farmerId, string childId, string childName) in ChildToNPC)
+                    {
+                        if (ChildData.TryGetValue(childId, out CharacterData? childCharaData))
+                        {
+                            childCharaData = childCharaData.ShallowClone();
+                            string charaId = $"{childId}@{farmerId}";
+                            ModEntry.Log($"ADD {Asset_DataCharacters} {charaId}", LogLevel.Info);
+                            childCharaData.DisplayName = childName;
+                            childCharaData.TextureName = "Abigail";
+                            childCharaData.SpawnIfMissing = true;
+                            foreach (
+                                CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance)
+                            )
+                            {
+                                if (appearanceData.Id.StartsWith(Patches.Appearances_Prefix_Baby))
+                                {
+                                    childCharaData.Appearance.Remove(appearanceData);
+                                }
+                            }
+                            data[charaId] = childCharaData;
+                        }
+                    }
+                },
+                AssetEditPriority.Early
+            );
         }
     }
 
@@ -93,8 +164,9 @@ internal static class AssetManager
         {
             childData = null;
             ModEntry.Config.ResetMenu();
+            Helper.GameContent.InvalidateCache(Asset_DataCharacters);
         }
-        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo("Data/Characters")))
+        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_DataCharacters)))
         {
             ModEntry.Config.ResetMenu();
         }

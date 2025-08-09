@@ -225,12 +225,12 @@ internal static class Quirks
     private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         foreach (Child kid in Game1.player.getChildren())
+        {
             if (Game1.player.getSpouse() is NPC spouse)
             {
                 AssetManager.ChooseAndApplyKidId(spouse, kid, false);
-                if (kid.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName))
-                    kid.displayName = displayName;
             }
+        }
     }
 
     /// <summary>Do reload sprite on day started, to properly deal with newborns (y r they like this)</summary>

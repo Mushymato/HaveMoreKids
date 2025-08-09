@@ -6,7 +6,6 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Events;
-using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.Objects;
@@ -27,8 +26,8 @@ internal record TempCAD(CharacterAppearanceData Data)
 
 internal static class Patches
 {
-    internal static string Condition_KidId => $"{ModEntry.ModId}_KidId";
-    internal static string Appearances_Prefix_Baby => $"{ModEntry.ModId}_Baby";
+    internal const string Condition_KidId = $"{ModEntry.ModId}_KidId";
+    internal const string Appearances_Prefix_Baby = $"{ModEntry.ModId}_Baby";
 
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever

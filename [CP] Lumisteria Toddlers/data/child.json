@@ -70,7 +70,7 @@
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
-      "FromFile": "Assets/costumes/{{Random:fairy,flower,fortuneteller,ghost,mouse,mummy,owl,queensauce,snowman.witch}}.png",
+      "FromFile": "Assets/costumes/{{Random:fairy,flower,fortuneteller,ghost,mouse,mummy,owl,queensauce,snowman,witch}}.png",
       "PatchMode": "Overlay"
     },
     {

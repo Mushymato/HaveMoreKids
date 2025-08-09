@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework;
 using StardewValley;
-using StardewValley.BellsAndWhistles;
 using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
