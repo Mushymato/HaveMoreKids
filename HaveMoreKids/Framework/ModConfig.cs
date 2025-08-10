@@ -23,6 +23,7 @@ internal sealed record KidIdent(string Spouse, string Kid)
 
 internal sealed class ModConfig
 {
+    public const string SHARED_KEY = "#SHARED";
     private Integration.IGenericModConfigMenuApi? GMCM;
     private IModHelper Helper = null!;
     private IManifest Mod = null!;
@@ -32,9 +33,11 @@ internal sealed class ModConfig
     public int DaysBaby { get; set; } = 13;
     public int DaysCrawler { get; set; } = 27 - 13;
     public int DaysToddler { get; set; } = 55 - 27;
+    public int DaysChild { get; set; } = 84 - 55;
     public int BaseMaxChildren { get; set; } = 4;
     public bool UseSingleBedAsChildBed { get; set; } = false;
-    public Dictionary<KidIdent, bool> DisabledKids { get; set; } = [];
+    public Dictionary<KidIdent, bool> EnabledKids { get; set; } = [];
+    private Dictionary<string, IList<string>> EnabledKidsPages { get; set; } = [];
 
     /// <summary>Restore default config values</summary>
     private void Reset()
@@ -44,30 +47,40 @@ internal sealed class ModConfig
         DaysBaby = 13;
         DaysCrawler = 27 - 13;
         DaysToddler = 55 - 27;
+        DaysChild = 84 - 55;
         BaseMaxChildren = 4;
         UseSingleBedAsChildBed = false;
-        DisabledKids.Clear();
-        CheckDisabledByDefault();
+        EnabledKids.Clear();
+        CheckEnabledByDefault();
     }
 
-    private void CheckDisabledByDefault()
+    private void CheckEnabledByDefault()
     {
-        foreach (var kv in DataLoader.Characters(Game1.content))
+        foreach ((string key, CharacterData charaData) in DataLoader.Characters(Game1.content))
         {
             if (
                 !AssetManager.TryGetKidIds(
-                    kv.Value,
+                    charaData,
                     out IList<string>? kidIds,
-                    out IDictionary<string, bool>? disabledByDefault
+                    out IDictionary<string, bool>? enabledByDefault
                 )
             )
                 continue;
             foreach (string kidId in kidIds)
             {
-                KidIdent kidKey = new(kv.Key, kidId);
-                DisabledKids[kidKey] = disabledByDefault[kidId];
+                KidIdent kidKey = new(key, kidId);
+                EnabledKids[kidKey] = enabledByDefault[kidId];
             }
+            if (kidIds.Any())
+                EnabledKidsPages[key] = kidIds;
         }
+        foreach ((string kidId, bool enabled) in AssetManager.SharedKids)
+        {
+            KidIdent kidKey = new("#SHARED", kidId);
+            EnabledKids[kidKey] = enabled;
+        }
+        if (AssetManager.SharedKids.Any())
+            EnabledKidsPages[SHARED_KEY] = AssetManager.SharedKids.Keys.ToList();
     }
 
     /// <summary>Add mod config to GMCM if available</summary>
@@ -78,7 +91,7 @@ internal sealed class ModConfig
         GMCM ??= helper.ModRegistry.GetApi<Integration.IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
         Helper = helper;
         Mod = mod;
-        CheckDisabledByDefault();
+        CheckEnabledByDefault();
         if (GMCM == null)
         {
             helper.WriteConfig(this);
@@ -135,8 +148,8 @@ internal sealed class ModConfig
             (value) => BaseMaxChildren = value,
             I18n.Config_BaseMaxChildren_Name,
             I18n.Config_BaseMaxChildren_Description,
-            min: 2,
-            max: 6
+            min: 1,
+            max: 8
         );
         GMCM.AddNumberOption(
             Mod,
@@ -144,7 +157,7 @@ internal sealed class ModConfig
             (value) => DaysBaby = value,
             I18n.Config_DaysBaby_Name,
             I18n.Config_DaysBaby_Description,
-            min: 1,
+            min: 0,
             max: 28
         );
         GMCM.AddNumberOption(
@@ -153,7 +166,7 @@ internal sealed class ModConfig
             (value) => DaysCrawler = value,
             I18n.Config_DaysCrawler_Name,
             I18n.Config_DaysCrawler_Description,
-            min: 1,
+            min: 0,
             max: 28
         );
         GMCM.AddNumberOption(
@@ -162,7 +175,16 @@ internal sealed class ModConfig
             (value) => DaysToddler = value,
             I18n.Config_DaysToddler_Name,
             I18n.Config_DaysToddler_Description,
-            min: 1,
+            min: 0,
+            max: 56
+        );
+        GMCM.AddNumberOption(
+            Mod,
+            () => DaysChild,
+            (value) => DaysChild = value,
+            I18n.Config_DaysChild_Name,
+            I18n.Config_DaysChild_Description,
+            min: -1,
             max: 56
         );
         GMCM.AddBoolOption(
@@ -174,19 +196,24 @@ internal sealed class ModConfig
         );
         GMCM.AddPage(Mod, "");
 
-        List<ValueTuple<string, CharacterData, IList<string>>> needPageSetup = [];
-        foreach (var kv in DataLoader.Characters(Game1.content))
+        if (EnabledKidsPages.Any())
         {
-            if (!AssetManager.TryGetKidIds(kv.Value, out IList<string>? kidIds, out _))
-                continue;
-            needPageSetup.Add(new(kv.Key, kv.Value, kidIds));
-        }
-        if (needPageSetup.Any())
-        {
-            GMCM.AddParagraph(Mod, I18n.Config_Page_Spousekid_Description);
-            foreach (var tpl in needPageSetup)
+            GMCM.AddParagraph(Mod, I18n.Config_Page_SpecificKids_Description);
+            var characterDatas = DataLoader.Characters(Game1.content);
+            foreach ((string key, IList<string> kidIds) in EnabledKidsPages)
             {
-                SetupSpouseKidsPage(tpl.Item1, tpl.Item2, tpl.Item3);
+                if (key == SHARED_KEY)
+                {
+                    SetupSpouseKidsPage(key, I18n.Config_Page_SharedKids_Name, kidIds);
+                }
+                else if (characterDatas.TryGetValue(key, out CharacterData? charaData))
+                {
+                    SetupSpouseKidsPage(
+                        key,
+                        () => I18n.Config_Page_Spousekids_Name(TokenParser.ParseText(charaData.DisplayName)),
+                        kidIds
+                    );
+                }
             }
         }
         else
@@ -195,18 +222,17 @@ internal sealed class ModConfig
         }
     }
 
-    private void SetupSpouseKidsPage(string key, CharacterData chara, IList<string> kidIds)
+    private void SetupSpouseKidsPage(string key, Func<string> labelFunc, IList<string> kidIds)
     {
-        GMCM!.AddPageLink(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
-        GMCM.AddPage(Mod, key, () => I18n.Config_Page_Spousekid_Name(TokenParser.ParseText(chara.DisplayName)));
+        GMCM!.AddPageLink(Mod, key, labelFunc);
+        GMCM.AddPage(Mod, key, labelFunc);
         foreach (string kidId in kidIds)
         {
             KidIdent kidKey = new(key, kidId);
-
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
             {
                 if (
-                    data.Appearance?.FirstOrDefault(apr => !apr.Id.StartsWith(Patches.Appearances_Prefix_Baby))
+                    data.Appearance?.FirstOrDefault(apr => !apr.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
                     is CharacterAppearanceData appearanceData
                 )
                 {
@@ -219,8 +245,8 @@ internal sealed class ModConfig
                 }
                 GMCM.AddBoolOption(
                     Mod,
-                    () => !DisabledKids[kidKey],
-                    (value) => DisabledKids[kidKey] = !value,
+                    () => EnabledKids[kidKey],
+                    (value) => EnabledKids[kidKey] = !value,
                     () => TokenParser.ParseText(data.DisplayName) ?? kidId
                 );
             }
@@ -262,7 +288,7 @@ internal sealed class ModConfig
         if (GMCM == null)
             return;
         GMCM.Unregister(Mod);
-        CheckDisabledByDefault();
+        CheckEnabledByDefault();
         SetupMenu();
     }
 }

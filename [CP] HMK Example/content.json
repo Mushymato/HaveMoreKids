@@ -1,0 +1,33 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Format": "2.7.0",
+  "ConfigSchema": {
+    // controls whether the kids are for anyone, or for a particular NPC only
+    "SharedKids": {
+      "AllowValues": "true,false",
+      "Default": true
+    },
+    // when SharedKids=false, set this NPC as the kid's parent
+    "NPCParent": {
+      "Default": "Abigail"
+    }
+  },
+  "Changes": [
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "boy1",
+        "L@Gender": "Male"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "girl1",
+        "L@Gender": "Female"
+      }
+    },
+  ]
+}

@@ -56,8 +56,8 @@
             },
             // Baby appearance, using shared
             {
-              // Any Id that starts with mushymato.HaveMoreKids_Baby forces Precedence -100 and condition TRUE when Age < 3
-              "Id": "mushymato.HaveMoreKids_Baby",
+              // Any Id that starts with HMK_BABY forces Precedence -100 and condition TRUE when Age < 3
+              "Id": "HMK_BABY",
               "Sprite": "Characters/{{ModId}}_The_Baby"
             }
           ]

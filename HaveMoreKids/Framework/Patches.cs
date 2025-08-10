@@ -26,9 +26,7 @@ internal record TempCAD(CharacterAppearanceData Data)
 
 internal static class Patches
 {
-    internal const string Condition_KidId = $"{ModEntry.ModId}_KidId";
-    internal const string Appearances_Prefix_Baby = $"{ModEntry.ModId}_Baby";
-
+    internal const string Condition_KidId = "KID_ID";
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
 
@@ -90,7 +88,8 @@ internal static class Patches
         // Alter rate of child aging
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.dayUpdate)),
-            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler))
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Postfix))
         );
         // Use special child data for the child form
         harmony.Patch(
@@ -131,7 +130,7 @@ internal static class Patches
 
     private static void NPC_CanReceiveGifts_Postfix(NPC __instance, ref bool __result)
     {
-        if (__instance is Child kid && kid.Age == 3)
+        if (__instance is Child kid && kid.Age >= 3)
         {
             __result = true;
         }
@@ -139,7 +138,7 @@ internal static class Patches
 
     private static void NPC_CurrentDialogue_Postfix(NPC __instance, ref Stack<Dialogue> __result)
     {
-        if (__instance is Child kid && kid.Age == 3)
+        if (__instance is Child kid && kid.Age >= 3)
         {
             Game1.npcDialogues.TryGetValue(__instance.Name, out var value);
             value ??= Game1.npcDialogues[__instance.Name] = NPC_loadCurrentDialogue_Call(__instance);
@@ -257,6 +256,31 @@ internal static class Patches
         }
     }
 
+    private static void Child_dayUpdate_Postfix(Child __instance)
+    {
+        if (
+            ModEntry.Config.DaysChild >= 0
+            && __instance.daysOld.Value
+                >= ModEntry.Config.DaysBaby
+                    + ModEntry.Config.DaysCrawler
+                    + ModEntry.Config.DaysToddler
+                    + ModEntry.Config.DaysChild
+        )
+        {
+            __instance.Age = 4;
+            __instance.IsInvisible = true;
+            __instance.daysUntilNotInvisible = 1;
+        }
+        if (
+            __instance.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
+            && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
+        )
+        {
+            childAsNPC.IsInvisible = !__instance.IsInvisible;
+            childAsNPC.daysUntilNotInvisible = 1;
+        }
+    }
+
     /// <summary>
     /// Apply appearances on the kid
     /// </summary>
@@ -273,7 +297,7 @@ internal static class Patches
         List<TempCAD> tmpCADs = [];
         foreach (var data in appearances)
         {
-            if (data.Id.StartsWith(Appearances_Prefix_Baby))
+            if (data.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
             {
                 tmpCADs.Add(new(data));
                 if (__instance.Age < 3)
@@ -528,7 +552,11 @@ internal static class Patches
         {
             return true;
         }
-
+        if (Game1.player.stats.Get(Quirks.Stats_daysUntilBirth) == 1)
+        {
+            __result = new HMKBirthingEvent();
+            return false;
+        }
         return true;
     }
 
@@ -574,6 +602,7 @@ internal static class Patches
 
     private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
     {
+        ModEntry.Log($"Utility_pickPersonalFarmEvent_Postfix {__result}");
         if (__result is BirthingEvent)
         {
             __result = new HMKBirthingEvent();

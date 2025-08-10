@@ -1,0 +1,77 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    // load all the needed textures
+    {
+      "Action": "Load",
+      "Target": "Characters/{{ModId}}_{{L@Kid}}/baby, Characters/{{ModId}}_{{L@Kid}}/costume, Characters/{{ModId}}_{{L@Kid}}/toddler",
+      "FromFile": "assets/{{L@Kid}}/characters/{{TargetWithoutPath}}.png"
+    },
+    {
+      "Action": "Load",
+      "Target": "Portraits/{{ModId}}_{{L@Kid}}/costume, Portraits/{{ModId}}_{{L@Kid}}/toddler",
+      "FromFile": "assets/{{L@Kid}}/portraits/{{TargetWithoutPath}}.png"
+    },
+    // Child data for HMK has a similar format as Data/Characters
+    // The difference is that this targets "mushymato.HaveMoreKids/ChildData"
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/ChildData",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": {
+          "DisplayName": "Example{{L@Kid}}",
+          "Gender": "{{L@Gender}}",
+          "Appearance": [
+            // BABY APPEARANCE
+            {
+              // Any Id that starts with "HMK_BABY" is used specifically for the baby stages.
+              // You may have several baby appearances, as long as the naming scheme is followed
+              "Id": "HMK_BABY_1",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}/baby"
+            },
+            {
+              // this is the normal toddler/npc sprite
+              // for tecnical reasons, all HMK children need at least one unconditional Appearance entry like this
+              "Id": "Toddler",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}/toddler"
+            },
+            {
+              // this is the normal toddler/npc sprite with a GSQ
+              "Id": "Toddler_Costume",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}/costume",
+              "Condition": "DAY_OF_WEEK Friday",
+              "Precedence": -1000,
+            },
+          ]
+        }
+      }
+    },
+    // At this point, the kid is defined, but you need to add them to an NPC or the shared kids pool
+    // Case NPC Parent
+    {
+      "Action": "EditData",
+      "Target": "Data/Characters",
+      "TargetField": [
+        "{{NPCParent}}",
+        "CustomFields"
+      ],
+      "Entries": {
+        "mushymato.HaveMoreKids/Kid.{{ModId}}_{{L@Kid}}": true
+      },
+      "When": {
+        "SharedKids": false
+      }
+    },
+    // Case Shared Kids
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/SharedKids",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": true
+      },
+      "When": {
+        "SharedKids": true
+      }
+    },
+  ]
+}

@@ -93,9 +93,8 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
             Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
             bool isDarkSkinned = random.NextDouble() < num;
 
-            string[] sharedKids = AssetManager.SharedKids;
             if (
-                sharedKids.Length > 0
+                AssetManager.TryGetAvailableSharedKidIds(out string[]? sharedKids)
                 && AssetManager.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null) is string newKidId
                 && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData)
             )

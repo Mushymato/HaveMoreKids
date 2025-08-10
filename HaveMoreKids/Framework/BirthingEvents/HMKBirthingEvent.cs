@@ -46,14 +46,9 @@ public class HMKBirthingEvent : BaseFarmEvent
         else
         {
             isDarkSkinned = random.NextBool(Game1.player.hasDarkSkin() ? 0.75 : 0.25);
-            string[] sharedKids = AssetManager.SharedKids;
-            if (sharedKids.Length > 0)
+            if (AssetManager.TryGetAvailableSharedKidIds(out string[]? sharedKids))
             {
                 newKidId = AssetManager.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
-            }
-            else
-            {
-                newKidId = null;
             }
         }
 

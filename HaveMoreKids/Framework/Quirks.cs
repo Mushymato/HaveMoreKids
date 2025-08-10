@@ -1,4 +1,3 @@
-using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -57,14 +56,23 @@ internal static class Quirks
     private static bool CHILD_AGE(string[] query, GameStateQueryContext context)
     {
         if (
-            !ArgUtility.TryGet(query, 1, out string kidId, out string error)
-            || !ArgUtility.TryGetInt(query, 2, out int age, out error)
+            !ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "int kidId")
+            || !ArgUtility.TryGetInt(query, 2, out int ageMin, out error, name: "int ageMin")
+            || !ArgUtility.TryGetOptionalInt(
+                query,
+                3,
+                out int ageMax,
+                out error,
+                defaultValue: ageMin,
+                name: "int ageMax"
+            )
         )
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;
         }
-        return FindChild(context.Player, kidId)?.Age == age;
+        int age = FindChild(context.Player, kidId)?.Age ?? 0;
+        return age >= ageMin && age <= ageMax;
     }
 
     private static bool SetChildAge(string[] args, TriggerActionContext context, out string error)

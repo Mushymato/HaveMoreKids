@@ -1,11 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using Force.DeepCloner;
-using HarmonyLib;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.TokenizableStrings;
 
@@ -14,10 +15,14 @@ namespace HaveMoreKids.Framework;
 internal static class AssetManager
 {
     private const string NPC_CustomFields_KidId_Prefix = $"{ModEntry.ModId}/Kid.";
+    internal const string Appearances_Prefix_Baby = "HMK_BABY";
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
     private const string Asset_SharedKids = $"{ModEntry.ModId}/SharedKids";
     private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
+    private const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
+    private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
     internal const string Asset_DataCharacters = "Data/Characters";
+    internal const string Asset_StringsUI = "Strings/UI";
     internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
     internal const string Child_ModData_Birthday = $"{ModEntry.ModId}/Birthday";
@@ -32,6 +37,7 @@ internal static class AssetManager
         {
             if (childData == null)
             {
+                HashSet<string> invalidKidEntries = [];
                 childData = Game1.content.Load<Dictionary<string, CharacterData>>(Asset_ChildData);
                 foreach ((string key, CharacterData value) in childData)
                 {
@@ -42,20 +48,52 @@ internal static class AssetManager
                     value.EndSlideShow = EndSlideShowBehavior.Hidden;
                     value.FlowerDanceCanDance = false;
                     value.PerfectionScore = false;
+
+                    byte isValidKidEntry = 0b00;
                     foreach (CharacterAppearanceData appearance in value.Appearance)
                     {
-                        if (string.IsNullOrEmpty(appearance.Portrait))
+                        if (!Game1.content.DoesAssetExist<Texture2D>(appearance.Portrait))
                         {
-                            appearance.Portrait = appearance.Sprite;
+                            appearance.Portrait = Asset_NoPortrait;
+                        }
+                        // check for an unconditional appearance entry
+                        if (
+                            isValidKidEntry != 0b11
+                            && Game1.content.DoesAssetExist<Texture2D>(appearance.Sprite)
+                            && (string.IsNullOrEmpty(appearance.Condition) || appearance.Condition == "TRUE")
+                            && appearance.Indoors
+                            && appearance.Outdoors
+                            && !appearance.IsIslandAttire
+                        )
+                        {
+                            if (appearance.Id?.StartsWith(Appearances_Prefix_Baby) ?? false)
+                            {
+                                isValidKidEntry |= 0b01;
+                            }
+                            else
+                            {
+                                isValidKidEntry |= 0b10;
+                            }
                         }
                     }
+                    if (isValidKidEntry != 0b11)
+                        invalidKidEntries.Add(key);
+                }
+                if (invalidKidEntries.Any())
+                {
+                    ModEntry.Log(
+                        $"Removed {invalidKidEntries.Count} invalid entries that lack an unconditional Appearance in {Asset_ChildData}: {string.Join(", ", invalidKidEntries)}",
+                        LogLevel.Warn
+                    );
+                    childData.RemoveWhere(kv => invalidKidEntries.Contains(kv.Key));
                 }
             }
             return childData;
         }
     }
 
-    internal static string[] SharedKids => Game1.content.Load<string[]>(Asset_SharedKids);
+    internal static Dictionary<string, bool> SharedKids =>
+        Game1.content.Load<Dictionary<string, bool>>(Asset_SharedKids);
 
     internal static string LoadString(string key) => Game1.content.LoadString($"{Asset_Strings}:{key}");
 
@@ -101,10 +139,13 @@ internal static class AssetManager
                     {
                         child.displayName = displayName;
                     }
-                    if (ChildData.ContainsKey(child.Name))
+                    if (
+                        ChildData.TryGetValue(child.Name, out CharacterData? childCharaData)
+                        && childCharaData.SpawnIfMissing
+                    )
                     {
                         ChildToNPC.Add(new(farmer.UniqueMultiplayerID, child.Name, child.displayName));
-                        ModEntry.Log($"ADD ChildToNPC {ChildToNPC.Last()}", LogLevel.Info);
+                        child.modData[Child_ModData_AsNPC] = $"{child.Name}@{farmer.UniqueMultiplayerID}";
                     }
                 }
             }
@@ -123,38 +164,54 @@ internal static class AssetManager
             e.LoadFrom(() => new Dictionary<string, bool>(), AssetLoadPriority.Low);
         if (e.Name.IsEquivalentTo(Asset_Strings))
             e.LoadFromModFile<Dictionary<string, string>>("i18n/default/strings.json", AssetLoadPriority.Exclusive);
+        if (e.Name.IsEquivalentTo(Asset_NoPortrait))
+            e.LoadFromModFile<Texture2D>("assets/no_portrait.png", AssetLoadPriority.Exclusive);
 
+        if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == Helper.Translation.Locale)
+            e.Edit(Edit_StringsUI, AssetEditPriority.Late);
         if (e.Name.IsEquivalentTo(Asset_DataCharacters) && ChildToNPC.Any())
+            e.Edit(Edit_DataCharacters, AssetEditPriority.Early);
+    }
+
+    private static void Edit_StringsUI(IAssetData asset)
+    {
+        IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
+        foreach (
+            string key in new string[]
+            {
+                "AskedToHaveBaby_Accepted_Male",
+                "AskedToHaveBaby_Accepted_Female",
+                "AskedToAdoptBaby_Accepted_Male",
+                "AskedToAdoptBaby_Accepted_Female",
+            }
+        )
         {
-            e.Edit(
-                (asset) =>
+            data[key] = data[key].Replace("14", ModEntry.Config.DaysPregnant.ToString());
+        }
+    }
+
+    private static void Edit_DataCharacters(IAssetData asset)
+    {
+        IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
+        foreach ((long farmerId, string childId, string childName) in ChildToNPC)
+        {
+            if (ChildData.TryGetValue(childId, out CharacterData? childCharaData))
+            {
+                childCharaData = childCharaData.ShallowClone();
+                string charaId = $"{childId}@{farmerId}";
+                childCharaData.DisplayName = childName;
+                childCharaData.TextureName ??= Asset_DefaultTextureName;
+                childCharaData.SpawnIfMissing = true;
+                foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))
                 {
-                    IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
-                    foreach ((long farmerId, string childId, string childName) in ChildToNPC)
+                    if (appearanceData.Id.StartsWith(Appearances_Prefix_Baby))
                     {
-                        if (ChildData.TryGetValue(childId, out CharacterData? childCharaData))
-                        {
-                            childCharaData = childCharaData.ShallowClone();
-                            string charaId = $"{childId}@{farmerId}";
-                            ModEntry.Log($"ADD {Asset_DataCharacters} {charaId}", LogLevel.Info);
-                            childCharaData.DisplayName = childName;
-                            childCharaData.TextureName = "Abigail";
-                            childCharaData.SpawnIfMissing = true;
-                            foreach (
-                                CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance)
-                            )
-                            {
-                                if (appearanceData.Id.StartsWith(Patches.Appearances_Prefix_Baby))
-                                {
-                                    childCharaData.Appearance.Remove(appearanceData);
-                                }
-                            }
-                            data[charaId] = childCharaData;
-                        }
+                        childCharaData.Appearance.Remove(appearanceData);
                     }
-                },
-                AssetEditPriority.Early
-            );
+                    childCharaData.TextureName ??= appearanceData.Portrait;
+                }
+                data[charaId] = childCharaData;
+            }
         }
     }
 
@@ -178,15 +235,15 @@ internal static class AssetManager
     internal static bool TryGetKidIds(
         CharacterData? data,
         [NotNullWhen(true)] out IList<string>? kidIds,
-        [NotNullWhen(true)] out IDictionary<string, bool>? disabledByDefault
+        [NotNullWhen(true)] out IDictionary<string, bool>? enabledByDefault
     )
     {
         kidIds = null;
-        disabledByDefault = null;
+        enabledByDefault = null;
         if (data?.CustomFields is Dictionary<string, string> customFields)
         {
             kidIds = [];
-            disabledByDefault = new Dictionary<string, bool>();
+            enabledByDefault = new Dictionary<string, bool>();
             foreach (var kv in customFields)
             {
                 if (kv.Key.StartsWith(NPC_CustomFields_KidId_Prefix))
@@ -195,7 +252,7 @@ internal static class AssetManager
                     if (ChildData.ContainsKey(kidId))
                     {
                         kidIds.Add(kidId);
-                        disabledByDefault[kidId] = bool.TryParse(kv.Value, out bool enabled) && !enabled;
+                        enabledByDefault[kidId] = !bool.TryParse(kv.Value, out bool enabled) || enabled;
                     }
                 }
             }
@@ -210,7 +267,10 @@ internal static class AssetManager
     /// <returns></returns>
     internal static string? PickKidId(NPC spouse, Child? child = null, bool? darkSkinned = null)
     {
-        if (!TryGetAvailableKidIds(spouse, out string[]? availableKidIds))
+        if (
+            !TryGetAvailableKidIds(spouse, out string[]? availableKidIds)
+            && !TryGetAvailableSharedKidIds(out availableKidIds)
+        )
         {
             return null;
         }
@@ -243,10 +303,25 @@ internal static class AssetManager
             .Where(id =>
                 ChildData.ContainsKey(id)
                 && !children.Contains(id)
-                && !ModEntry.Config.DisabledKids.GetValueOrDefault(new(spouse.Name, id))
+                && ModEntry.Config.EnabledKids.GetValueOrDefault(new(spouse.Name, id))
             )
             .ToArray();
         return availableKidIds.Length > 0;
+    }
+
+    internal static bool TryGetAvailableSharedKidIds([NotNullWhen(true)] out string[]? sharedKidIds)
+    {
+        HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
+        ModEntry.Log($"SharedKids.Keys: {string.Join(",", SharedKids.Keys)}");
+        sharedKidIds = SharedKids
+            .Keys.Where(id =>
+                ChildData.ContainsKey(id)
+                && !children.Contains(id)
+                && ModEntry.Config.EnabledKids.GetValueOrDefault(new(ModConfig.SHARED_KEY, id))
+            )
+            .ToArray();
+        ModEntry.Log($"Available sharedKidIds: {string.Join(",", SharedKids.Keys)}");
+        return sharedKidIds.Length > 0;
     }
 
     internal static string PickMostLikelyKidId(

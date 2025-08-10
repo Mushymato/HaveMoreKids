@@ -41,7 +41,7 @@ Here are the actually used fields:
 
 This mod makes your child use NPC appearances.
 
-- Baby sprites should have `Id` that begin with `mushymato.HaveMoreKids_Baby`. This forces those appearance entry to be prioritized while child's is not a toddler.
+- Baby sprites should have `Id` that begin with `HMK_BABY`. This forces those appearance entry to be prioritized while child's is not a toddler.
 - Toddler sprites works like [normal NPC appearance](https://stardewvalleywiki.com/Modding:NPC_data#Appearance_.26_sprite). Though of course, children do not leave farm house.
 
 Toddler appearances should have `Portrait` set if you wish to give the child dialogue, otherwise their dialogue will appear but without portrait.
