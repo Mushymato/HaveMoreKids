@@ -21,8 +21,12 @@ internal static class AssetManager
     private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
     private const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
-    internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Asset_StringsUI = "Strings/UI";
+    internal const string Asset_DataCharacters = "Data/Characters";
+    internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
+    internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
+    internal const string Asset_CharactersSchedule = "Characters/Schedule/";
+    internal static string[] ChildForwardedAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
     internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
     internal const string Child_ModData_Birthday = $"{ModEntry.ModId}/Birthday";
@@ -125,7 +129,12 @@ internal static class AssetManager
         Helper.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
     }
 
-    private static readonly List<(long, string, string)> ChildToNPC = [];
+    private static readonly Dictionary<string, (string, string)> ChildToNPC = [];
+
+    private static string FormChildNPCId(string childName, long uniqueMultiplayerId)
+    {
+        return $"{ModEntry.ModId}@{childName}@{uniqueMultiplayerId}";
+    }
 
     private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
     {
@@ -139,13 +148,11 @@ internal static class AssetManager
                     {
                         child.displayName = displayName;
                     }
-                    if (
-                        ChildData.TryGetValue(child.Name, out CharacterData? childCharaData)
-                        && childCharaData.SpawnIfMissing
-                    )
+                    if (ChildData.ContainsKey(child.Name))
                     {
-                        ChildToNPC.Add(new(farmer.UniqueMultiplayerID, child.Name, child.displayName));
-                        child.modData[Child_ModData_AsNPC] = $"{child.Name}@{farmer.UniqueMultiplayerID}";
+                        string childNPCId = FormChildNPCId(child.Name, farmer.UniqueMultiplayerID);
+                        ChildToNPC[childNPCId] = new(child.Name, child.displayName);
+                        child.modData[Child_ModData_AsNPC] = childNPCId;
                     }
                 }
             }
@@ -169,8 +176,25 @@ internal static class AssetManager
 
         if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == Helper.Translation.Locale)
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
-        if (e.Name.IsEquivalentTo(Asset_DataCharacters) && ChildToNPC.Any())
-            e.Edit(Edit_DataCharacters, AssetEditPriority.Early);
+
+        if (ChildToNPC.Any())
+        {
+            if (e.Name.IsEquivalentTo(Asset_DataCharacters))
+                e.Edit(Edit_DataCharacters, AssetEditPriority.Early);
+            if (e.NameWithoutLocale.IsEquivalentTo(Asset_DataNPCGiftTastes))
+                e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
+            foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
+            {
+                foreach (string fwdAsset in ChildForwardedAssets)
+                {
+                    string fwdAssetName = string.Join(fwdAsset, childId);
+                    if (e.NameWithoutLocale.IsEquivalentTo(fwdAssetName))
+                    {
+                        e.LoadFrom(() => ForwardFrom_ChildIdAsset(fwdAssetName), AssetLoadPriority.Low);
+                    }
+                }
+            }
+        }
     }
 
     private static void Edit_StringsUI(IAssetData asset)
@@ -193,12 +217,11 @@ internal static class AssetManager
     private static void Edit_DataCharacters(IAssetData asset)
     {
         IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
-        foreach ((long farmerId, string childId, string childName) in ChildToNPC)
+        foreach ((string childNPCId, (string childId, string childName)) in ChildToNPC)
         {
             if (ChildData.TryGetValue(childId, out CharacterData? childCharaData))
             {
                 childCharaData = childCharaData.ShallowClone();
-                string charaId = $"{childId}@{farmerId}";
                 childCharaData.DisplayName = childName;
                 childCharaData.TextureName ??= Asset_DefaultTextureName;
                 childCharaData.SpawnIfMissing = true;
@@ -208,11 +231,31 @@ internal static class AssetManager
                     {
                         childCharaData.Appearance.Remove(appearanceData);
                     }
-                    childCharaData.TextureName ??= appearanceData.Portrait;
                 }
-                data[charaId] = childCharaData;
+                data[childNPCId] = childCharaData;
             }
         }
+    }
+
+    private static void Edit_DataNPCGiftTastes(IAssetData asset)
+    {
+        IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
+        foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
+        {
+            if (data.TryGetValue(childId, out string? giftTastes))
+            {
+                data[childNPCId] = giftTastes;
+            }
+        }
+    }
+
+    private static object ForwardFrom_ChildIdAsset(string assetName)
+    {
+        if (Game1.content.DoesAssetExist<Dictionary<string, string>>(assetName))
+        {
+            return Game1.content.Load<Dictionary<string, string>>(assetName).ShallowClone();
+        }
+        return new Dictionary<string, string>();
     }
 
     private static void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
@@ -226,6 +269,16 @@ internal static class AssetManager
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_DataCharacters)))
         {
             ModEntry.Config.ResetMenu();
+        }
+        foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
+        {
+            foreach (string fwdAsset in ChildForwardedAssets)
+            {
+                if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Join(fwdAsset, childId))))
+                {
+                    Helper.GameContent.InvalidateCache(string.Join(fwdAsset, childNPCId));
+                }
+            }
         }
     }
 

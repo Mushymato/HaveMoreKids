@@ -21,6 +21,8 @@
         "{{ModId}}_{{L@Kid}}": {
           "DisplayName": "Example{{L@Kid}}",
           "Gender": "{{L@Gender}}",
+          // This determines whether the child will become an NPC
+          "CanSocialize": "FALSE",
           "Appearance": [
             // BABY APPEARANCE
             {
@@ -33,11 +35,13 @@
               // this is the normal toddler/npc sprite
               // for tecnical reasons, all HMK children need at least one unconditional Appearance entry like this
               "Id": "Toddler",
+              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/toddler",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}/toddler"
             },
             {
               // this is the normal toddler/npc sprite with a GSQ
               "Id": "Toddler_Costume",
+              "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/costume",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}/costume",
               "Condition": "DAY_OF_WEEK Friday",
               "Precedence": -1000,
@@ -73,5 +77,12 @@
         "SharedKids": true
       }
     },
+    // Finally, you can add various NPC style features to your kids
+    {
+      // This allows your child to talk to you, without becoming a full fledged NPC
+      // It is active while the child is in the toddler phase
+      "Action": "Include",
+      "FromFile": "data/kid-talk.json",
+    }
   ]
 }

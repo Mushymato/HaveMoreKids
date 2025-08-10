@@ -265,13 +265,16 @@ internal static class Patches
                     + ModEntry.Config.DaysCrawler
                     + ModEntry.Config.DaysToddler
                     + ModEntry.Config.DaysChild
+            && __instance.GetData() is CharacterData childCharaData
+            && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+            && GameStateQuery.CheckConditions(childCharaData.CanSocialize)
         )
         {
             __instance.Age = 4;
             __instance.IsInvisible = true;
             __instance.daysUntilNotInvisible = 1;
         }
-        if (
+        else if (
             __instance.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
             && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
         )
