@@ -16,7 +16,7 @@
     <Description>Allow you to have more kids.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:36459</UpdateKeys>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <MinimumApiVersion_Behavior>UpdateFull</MinimumApiVersion_Behavior>
     <MinimumGameVersion_Behavior>UpdateFull</MinimumGameVersion_Behavior>
     <Dependencies_VersionBehavior>UpdateFull</Dependencies_VersionBehavior>

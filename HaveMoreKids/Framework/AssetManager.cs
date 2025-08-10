@@ -146,9 +146,18 @@ internal static class AssetManager
                 {
                     if (child.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
                     {
+                        ModEntry.Log($"child.displayName: {child.displayName} -> {displayName}");
                         child.displayName = displayName;
                     }
-                    if (ChildData.ContainsKey(child.Name))
+                    else
+                    {
+                        ModEntry.Log($"child.displayName: {child.displayName}");
+                    }
+                    if (
+                        ChildData.TryGetValue(child.Name, out CharacterData? childCharaData)
+                        && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+                        && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
+                    )
                     {
                         string childNPCId = FormChildNPCId(child.Name, farmer.UniqueMultiplayerID);
                         ChildToNPC[childNPCId] = new(child.Name, child.displayName);
@@ -188,7 +197,7 @@ internal static class AssetManager
                 foreach (string fwdAsset in ChildForwardedAssets)
                 {
                     string fwdAssetName = string.Join(fwdAsset, childId);
-                    if (e.NameWithoutLocale.IsEquivalentTo(fwdAssetName))
+                    if (e.NameWithoutLocale.IsEquivalentTo(string.Join(fwdAsset, childNPCId)))
                     {
                         e.LoadFrom(() => ForwardFrom_ChildIdAsset(fwdAssetName), AssetLoadPriority.Low);
                     }
@@ -276,6 +285,7 @@ internal static class AssetManager
             {
                 if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Join(fwdAsset, childId))))
                 {
+                    ModEntry.Log($"{fwdAsset}{childId} -> {fwdAsset}{childNPCId}");
                     Helper.GameContent.InvalidateCache(string.Join(fwdAsset, childNPCId));
                 }
             }
@@ -285,7 +295,7 @@ internal static class AssetManager
     /// <summary>Get and validate kid id</summary>
     /// <param name="data"></param>
     /// <returns></returns>
-    internal static bool TryGetKidIds(
+    internal static bool TryGetSpouseKidIds(
         CharacterData? data,
         [NotNullWhen(true)] out IList<string>? kidIds,
         [NotNullWhen(true)] out IDictionary<string, bool>? enabledByDefault
@@ -348,7 +358,7 @@ internal static class AssetManager
     private static bool TryGetAvailableKidIds(NPC spouse, [NotNullWhen(true)] out string[]? availableKidIds)
     {
         availableKidIds = null;
-        if (!TryGetKidIds(spouse.GetData(), out IList<string>? kidIds, out _))
+        if (!TryGetSpouseKidIds(spouse.GetData(), out IList<string>? kidIds, out _))
             return false;
 
         HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
@@ -365,7 +375,6 @@ internal static class AssetManager
     internal static bool TryGetAvailableSharedKidIds([NotNullWhen(true)] out string[]? sharedKidIds)
     {
         HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
-        ModEntry.Log($"SharedKids.Keys: {string.Join(",", SharedKids.Keys)}");
         sharedKidIds = SharedKids
             .Keys.Where(id =>
                 ChildData.ContainsKey(id)
@@ -428,12 +437,13 @@ internal static class AssetManager
     internal static Child ChooseAndApplyKidId(NPC spouse, Child newKid, bool newBorn = false)
     {
         string kidName = newKid.Name;
-        if (
-            TryGetKidIds(spouse.GetData(), out IList<string>? kidIds, out _)
-            && newKid.Name != null
-            && kidIds.Contains(newKid.Name)
-        )
+        if (kidName == null)
             return newKid;
+        if (SharedKids.ContainsKey(kidName))
+            return newKid;
+        if (TryGetSpouseKidIds(spouse.GetData(), out IList<string>? kidIds, out _) && kidIds.Contains(newKid.Name))
+            return newKid;
+
         if (PickKidId(spouse, newKid) is not string newKidId)
             return newKid;
         return ApplyKidId(spouse.Name, newKid, newBorn, kidName, newKidId);

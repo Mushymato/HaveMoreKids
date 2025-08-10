@@ -88,8 +88,7 @@ internal static class Patches
         // Alter rate of child aging
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.dayUpdate)),
-            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler)),
-            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Postfix))
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler))
         );
         // Use special child data for the child form
         harmony.Patch(
@@ -175,6 +174,7 @@ internal static class Patches
     {
         if (__instance.Age >= 3 && who.IsLocalPlayer)
         {
+            ModEntry.Log(__instance.displayName);
             if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
             {
                 __result = __instance.tryToReceiveActiveObject(who);
@@ -256,34 +256,6 @@ internal static class Patches
         }
     }
 
-    private static void Child_dayUpdate_Postfix(Child __instance)
-    {
-        if (
-            ModEntry.Config.DaysChild >= 0
-            && __instance.daysOld.Value
-                >= ModEntry.Config.DaysBaby
-                    + ModEntry.Config.DaysCrawler
-                    + ModEntry.Config.DaysToddler
-                    + ModEntry.Config.DaysChild
-            && __instance.GetData() is CharacterData childCharaData
-            && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-            && GameStateQuery.CheckConditions(childCharaData.CanSocialize)
-        )
-        {
-            __instance.Age = 4;
-            __instance.IsInvisible = true;
-            __instance.daysUntilNotInvisible = 1;
-        }
-        else if (
-            __instance.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
-            && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
-        )
-        {
-            childAsNPC.IsInvisible = !__instance.IsInvisible;
-            childAsNPC.daysUntilNotInvisible = 1;
-        }
-    }
-
     /// <summary>
     /// Apply appearances on the kid
     /// </summary>
@@ -300,10 +272,10 @@ internal static class Patches
         List<TempCAD> tmpCADs = [];
         foreach (var data in appearances)
         {
-            if (data.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
+            if (__instance.Age < 3)
             {
                 tmpCADs.Add(new(data));
-                if (__instance.Age < 3)
+                if (data.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
                 {
                     data.Precedence = Math.Min(data.Precedence, -100);
                     data.Condition =
@@ -315,10 +287,19 @@ internal static class Patches
                     data.Condition = "FALSE";
                 }
             }
-            else if (data.Condition != null)
+            else
             {
-                tmpCADs.Add(new(data));
-                data.Condition = data.Condition.Replace(Condition_KidId, __instance.Name);
+                if (data.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
+                {
+                    tmpCADs.Add(new(data));
+                    data.Precedence = Math.Max(data.Precedence, 100);
+                    data.Condition = "FALSE";
+                }
+                else if (data.Condition != null)
+                {
+                    tmpCADs.Add(new(data));
+                    data.Condition = data.Condition.Replace(Condition_KidId, __instance.Name);
+                }
             }
         }
         NPC_ChooseAppearance_Call(__instance);

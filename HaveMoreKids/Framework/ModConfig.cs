@@ -59,7 +59,7 @@ internal sealed class ModConfig
         foreach ((string key, CharacterData charaData) in DataLoader.Characters(Game1.content))
         {
             if (
-                !AssetManager.TryGetKidIds(
+                !AssetManager.TryGetSpouseKidIds(
                     charaData,
                     out IList<string>? kidIds,
                     out IDictionary<string, bool>? enabledByDefault

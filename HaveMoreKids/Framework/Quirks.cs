@@ -4,6 +4,7 @@ using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Delegates;
 using StardewValley.Extensions;
+using StardewValley.GameData.Characters;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
@@ -247,7 +248,33 @@ internal static class Quirks
     private static void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
         foreach (Child kid in Game1.player.getChildren())
+        {
             kid.reloadSprite();
+            if (
+                ModEntry.Config.DaysChild >= 0
+                && kid.daysOld.Value
+                    >= ModEntry.Config.DaysBaby
+                        + ModEntry.Config.DaysCrawler
+                        + ModEntry.Config.DaysToddler
+                        + ModEntry.Config.DaysChild
+                && kid.GetData() is CharacterData childCharaData
+                && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+                && GameStateQuery.CheckConditions(childCharaData.CanSocialize)
+            )
+            {
+                kid.Age = 4;
+                kid.IsInvisible = true;
+                kid.daysUntilNotInvisible = 1;
+            }
+            else if (
+                kid.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
+                && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
+            )
+            {
+                childAsNPC.IsInvisible = !kid.IsInvisible;
+                childAsNPC.daysUntilNotInvisible = 1;
+            }
+        }
         Game1.player.stats.Decrement(Stats_daysUntilBirth);
     }
 }
