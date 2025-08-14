@@ -1,9 +1,7 @@
 using HaveMoreKids.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
-using StardewValley.Characters;
 
 namespace HaveMoreKids;
 
@@ -15,6 +13,7 @@ public class ModEntry : Mod
     private const LogLevel DEFAULT_LOG_LEVEL = LogLevel.Trace;
 #endif
     private static IMonitor? mon;
+    internal static IModHelper help = null!;
     internal static ModConfig Config = null!;
 
     internal const string ModId = "mushymato.HaveMoreKids";
@@ -23,16 +22,18 @@ public class ModEntry : Mod
     {
         I18n.Init(helper.Translation);
         mon = Monitor;
-        helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+        help = helper;
+        help.Events.GameLoop.GameLaunched += OnGameLaunched;
         Config = helper.ReadConfig<ModConfig>();
-        AssetManager.Register(helper);
-        Quirks.Register(helper);
+        MultiplayerSync.Register();
+        AssetManager.Register();
+        Quirks.Register();
         Patches.Apply();
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
-        Config.Register(Helper, ModManifest);
+        Config.Register(ModManifest);
         // Register a content patcher token for getting the display names of kids
         if (
             Helper.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")

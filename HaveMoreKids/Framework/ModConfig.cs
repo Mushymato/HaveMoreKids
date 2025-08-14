@@ -25,13 +25,8 @@ internal sealed record KidIdent(string Spouse, string Kid)
     }
 }
 
-internal sealed class ModConfig
+internal class ModConfigValues
 {
-    public const string SHARED_KEY = "#SHARED";
-    private Integration.IGenericModConfigMenuApi? GMCM;
-    private IModHelper Helper = null!;
-    private IManifest Mod = null!;
-
     public int PregnancyChance { get; set; } = 20;
     public int DaysPregnant { get; set; } = 14;
     public int DaysBaby { get; set; } = 13;
@@ -41,6 +36,14 @@ internal sealed class ModConfig
     public int BaseMaxChildren { get; set; } = 4;
     public bool UseSingleBedAsChildBed { get; set; } = false;
     public Dictionary<KidIdent, bool> EnabledKids { get; set; } = [];
+}
+
+internal sealed class ModConfig : ModConfigValues
+{
+    public const string SHARED_KEY = "#SHARED";
+    private Integration.IGenericModConfigMenuApi? GMCM;
+    private IManifest Mod = null!;
+
     private Dictionary<string, IList<string>> EnabledKidsPages { get; set; } = [];
 
     /// <summary>Restore default config values</summary>
@@ -58,6 +61,21 @@ internal sealed class ModConfig
         CheckEnabledByDefault();
     }
 
+    public void SyncAndUnregister(ModConfigValues other)
+    {
+        GMCM?.Unregister(Mod);
+        PregnancyChance = other.PregnancyChance;
+        DaysPregnant = other.DaysPregnant;
+        DaysBaby = other.DaysBaby;
+        DaysCrawler = other.DaysCrawler;
+        DaysToddler = other.DaysToddler;
+        DaysChild = other.DaysChild;
+        BaseMaxChildren = other.BaseMaxChildren;
+        UseSingleBedAsChildBed = other.UseSingleBedAsChildBed;
+        EnabledKids = other.EnabledKids;
+        ModEntry.help.WriteConfig(this);
+    }
+
     private void CheckEnabledByDefault()
     {
         foreach ((string key, CharacterData charaData) in DataLoader.Characters(Game1.content))
@@ -73,7 +91,8 @@ internal sealed class ModConfig
             foreach (string kidId in kidIds)
             {
                 KidIdent kidKey = new(key, kidId);
-                EnabledKids[kidKey] = enabledByDefault[kidId];
+                if (!EnabledKids.ContainsKey(kidKey))
+                    EnabledKids[kidKey] = enabledByDefault[kidId];
             }
             if (kidIds.Any())
                 EnabledKidsPages[key] = kidIds;
@@ -81,7 +100,8 @@ internal sealed class ModConfig
         foreach ((string kidId, bool enabled) in AssetManager.SharedKids)
         {
             KidIdent kidKey = new("#SHARED", kidId);
-            EnabledKids[kidKey] = enabled;
+            if (!EnabledKids.ContainsKey(kidKey))
+                EnabledKids[kidKey] = enabled;
         }
         if (AssetManager.SharedKids.Any())
             EnabledKidsPages[SHARED_KEY] = AssetManager.SharedKids.Keys.ToList();
@@ -90,15 +110,16 @@ internal sealed class ModConfig
     /// <summary>Add mod config to GMCM if available</summary>
     /// <param name="helper"></param>
     /// <param name="mod"></param>
-    public void Register(IModHelper helper, IManifest mod)
+    public void Register(IManifest mod)
     {
-        GMCM ??= helper.ModRegistry.GetApi<Integration.IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
-        Helper = helper;
+        GMCM ??= ModEntry.help.ModRegistry.GetApi<Integration.IGenericModConfigMenuApi>(
+            "spacechase0.GenericModConfigMenu"
+        );
         Mod = mod;
         CheckEnabledByDefault();
         if (GMCM == null)
         {
-            helper.WriteConfig(this);
+            ModEntry.help.WriteConfig(this);
             return;
         }
         SetupMenu();
@@ -113,11 +134,13 @@ internal sealed class ModConfig
             reset: () =>
             {
                 Reset();
-                Helper.WriteConfig(this);
+                ModEntry.help.WriteConfig(this);
+                MultiplayerSync.SendModConfig(null);
             },
             save: () =>
             {
-                Helper.WriteConfig(this);
+                ModEntry.help.WriteConfig(this);
+                MultiplayerSync.SendModConfig(null);
             },
             titleScreenOnly: false
         );
@@ -136,11 +159,7 @@ internal sealed class ModConfig
         GMCM.AddNumberOption(
             Mod,
             () => DaysPregnant,
-            (value) =>
-            {
-                DaysPregnant = value;
-                Helper.GameContent.InvalidateCache("Strings/UI");
-            },
+            (value) => DaysPregnant = value,
             I18n.Config_DaysPregnant_Name,
             I18n.Config_DaysPregnant_Description,
             min: 1,
@@ -309,6 +328,9 @@ internal sealed class ModConfig
             return;
         GMCM.Unregister(Mod);
         CheckEnabledByDefault();
-        SetupMenu();
+        if (!Context.IsWorldReady || Context.IsMainPlayer)
+        {
+            SetupMenu();
+        }
     }
 }

@@ -20,18 +20,18 @@ internal static class Quirks
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
     internal const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
 
-    internal static void Register(IModHelper helper)
+    internal static void Register()
     {
         // events
-        helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-        helper.Events.GameLoop.DayStarted += OnDayStarted;
+        ModEntry.help.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+        ModEntry.help.Events.GameLoop.DayStarted += OnDayStarted;
         // delegates
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
         // console commands
-        helper.ConsoleCommands.Add(
+        ModEntry.help.ConsoleCommands.Add(
             "hmk-unset_kids",
             "Unset the internal names for unique kids, use this if you want to uninstall this mod completely.",
             ConsoleUnsetKids

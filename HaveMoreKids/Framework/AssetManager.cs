@@ -150,17 +150,14 @@ internal static class AssetManager
         return new MarriageDialogueReference(Asset_Strings, key, true);
     }
 
-    private static IModHelper Helper = null!;
-
-    internal static void Register(IModHelper helper)
+    internal static void Register()
     {
-        Helper = helper;
-        Helper.Events.Content.AssetRequested += OnAssetRequested;
-        Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
-        Helper.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
+        ModEntry.help.Events.Content.AssetRequested += OnAssetRequested;
+        ModEntry.help.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
+        ModEntry.help.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
     }
 
-    private static readonly Dictionary<string, (string, string)> ChildToNPC = [];
+    internal static Dictionary<string, (string, string)> ChildToNPC = [];
 
     private static string FormChildNPCId(string childName, long uniqueMultiplayerId)
     {
@@ -171,6 +168,7 @@ internal static class AssetManager
     {
         if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
         {
+            ChildToNPC.Clear();
             foreach (Farmer farmer in Game1.getAllFarmers())
             {
                 foreach (Child child in farmer.getChildren())
@@ -197,16 +195,22 @@ internal static class AssetManager
                 }
             }
             ChildNPCSetup();
+            MultiplayerSync.SendChildToNPC(null);
         }
     }
 
-    private static void ChildNPCSetup()
+    internal static void ChildNPCSetup()
     {
         if (ChildToNPC.Any())
         {
-            Helper.GameContent.InvalidateCache(Asset_DataCharacters);
-            Helper.GameContent.InvalidateCache(Asset_DataNPCGiftTastes);
+            ModEntry.help.GameContent.InvalidateCache(Asset_DataCharacters);
+            ModEntry.help.GameContent.InvalidateCache(Asset_DataNPCGiftTastes);
         }
+    }
+
+    private static void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
+    {
+        throw new NotImplementedException();
     }
 
     private static void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -220,7 +224,7 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo(Asset_NoPortrait))
             e.LoadFromModFile<Texture2D>("assets/no_portrait.png", AssetLoadPriority.Exclusive);
 
-        if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == Helper.Translation.Locale)
+        if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == ModEntry.help.Translation.Locale)
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
 
         if (e.Name.StartsWith(Asset_PortraitPrefix) || e.Name.StartsWith(Asset_SpritePrefix))
@@ -312,7 +316,7 @@ internal static class AssetManager
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
         {
             childData = null;
-            Helper.GameContent.InvalidateCache(Asset_DataCharacters);
+            ModEntry.help.GameContent.InvalidateCache(Asset_DataCharacters);
             ModEntry.Config.ResetMenu();
         }
         if (
@@ -330,7 +334,7 @@ internal static class AssetManager
                 if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, childId))))
                 {
                     ModEntry.Log($"{fwdAsset}{childId} -> {fwdAsset}{childNPCId}");
-                    Helper.GameContent.InvalidateCache(string.Concat(fwdAsset, childNPCId));
+                    ModEntry.help.GameContent.InvalidateCache(string.Concat(fwdAsset, childNPCId));
                 }
             }
         }
