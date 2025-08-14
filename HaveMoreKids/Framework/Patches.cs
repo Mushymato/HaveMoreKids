@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using HaveMoreKids.Framework.BirthingEvents;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
@@ -119,6 +120,19 @@ internal static class Patches
             original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.GetChildBed)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(FarmHouse_GetChildBed_Postfix))
         );
+        // Fix mugshot for Child Age>3
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.getMugShotSourceRect)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_getMugShotSourceRect_Postfix))
+        );
+    }
+
+    private static void Child_getMugShotSourceRect_Postfix(Child __instance, ref Rectangle __result)
+    {
+        if (__instance.Age > 3)
+        {
+            __result = __instance.GetData()?.MugShotSourceRect ?? new Rectangle(0, 4, 16, 24);
+        }
     }
 
     private static void FarmHouse_GetChildBed_Postfix(FarmHouse __instance, ref BedFurniture __result)
@@ -174,7 +188,6 @@ internal static class Patches
     {
         if (__instance.Age >= 3 && who.IsLocalPlayer)
         {
-            ModEntry.Log(__instance.displayName);
             if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
             {
                 __result = __instance.tryToReceiveActiveObject(who);

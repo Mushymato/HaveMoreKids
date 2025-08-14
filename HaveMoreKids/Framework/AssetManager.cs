@@ -224,7 +224,7 @@ internal static class AssetManager
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
 
         if (e.Name.StartsWith(Asset_PortraitPrefix) || e.Name.StartsWith(Asset_SpritePrefix))
-            e.LoadFromModFile<Texture2D>("assets/no_portrait.png", AssetLoadPriority.Exclusive);
+            e.LoadFrom(() => Game1.content.Load<Texture2D>(Asset_NoPortrait), AssetLoadPriority.Low);
 
         if (ChildToNPC.Any())
         {

@@ -291,8 +291,12 @@ internal static class Quirks
                         Game1.player.friendshipData[kid.Name] = childFriendship;
                     }
                     Game1.player.friendshipData[childAsNPCId] = childFriendship;
+                    childAsNPC.reloadSprite(onlyAppearance: true);
                     childAsNPC.InvalidateMasterSchedule();
-                    childAsNPC.reloadSprite();
+                    childAsNPC.TryLoadSchedule();
+                    childAsNPC.performSpecialScheduleChanges();
+                    childAsNPC.resetSeasonalDialogue();
+                    childAsNPC.resetCurrentDialogue();
                     childAsNPC.Sprite.UpdateSourceRect();
                 }
             }
