@@ -73,11 +73,12 @@ internal sealed class ModConfig : ModConfigValues
         BaseMaxChildren = other.BaseMaxChildren;
         UseSingleBedAsChildBed = other.UseSingleBedAsChildBed;
         EnabledKids = other.EnabledKids;
-        ModEntry.help.WriteConfig(this);
+        CheckEnabledByDefault();
     }
 
     private void CheckEnabledByDefault()
     {
+        EnabledKidsPages.Clear();
         foreach ((string key, CharacterData charaData) in DataLoader.Characters(Game1.content))
         {
             if (
@@ -272,7 +273,7 @@ internal sealed class ModConfig : ModConfigValues
                 GMCM.AddBoolOption(
                     Mod,
                     () => EnabledKids[kidKey],
-                    (value) => EnabledKids[kidKey] = !value,
+                    (value) => EnabledKids[kidKey] = value,
                     () => TokenParser.ParseText(data.DisplayName) ?? kidId
                 );
             }

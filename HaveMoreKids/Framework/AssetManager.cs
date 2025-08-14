@@ -166,45 +166,55 @@ internal static class AssetManager
 
     private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
     {
-        if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
+        if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations)
         {
-            ChildToNPC.Clear();
-            foreach (Farmer farmer in Game1.getAllFarmers())
+            if (Context.IsMainPlayer)
             {
-                foreach (Child child in farmer.getChildren())
+                ChildToNPC.Clear();
+                foreach (Farmer farmer in Game1.getAllFarmers())
                 {
-                    if (child.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
+                    foreach (Child kid in farmer.getChildren())
                     {
-                        ModEntry.Log($"child.displayName: {child.displayName} -> {displayName}");
-                        child.displayName = displayName;
-                    }
-                    else
-                    {
-                        ModEntry.Log($"child.displayName: {child.displayName}");
-                    }
-                    if (
-                        ChildData.TryGetValue(child.Name, out CharacterData? childCharaData)
-                        && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                        && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
-                    )
-                    {
-                        string childNPCId = FormChildNPCId(child.Name, farmer.UniqueMultiplayerID);
-                        ChildToNPC[childNPCId] = new(child.Name, child.displayName);
-                        child.modData[Child_ModData_AsNPC] = childNPCId;
+                        if (
+                            ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                            && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+                            && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
+                        )
+                        {
+                            string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
+                            ChildToNPC[childNPCId] = new(kid.Name, kid.displayName);
+                            kid.modData[Child_ModData_AsNPC] = childNPCId;
+                        }
                     }
                 }
+                ChildNPCSetup();
+                MultiplayerSync.SendChildToNPC(null);
             }
-            ChildNPCSetup();
-            MultiplayerSync.SendChildToNPC(null);
         }
     }
 
     internal static void ChildNPCSetup()
     {
-        if (ChildToNPC.Any())
+        if (!ChildToNPC.Any())
         {
-            ModEntry.help.GameContent.InvalidateCache(Asset_DataCharacters);
-            ModEntry.help.GameContent.InvalidateCache(Asset_DataNPCGiftTastes);
+            return;
+        }
+        foreach (var kv in ChildToNPC)
+        {
+            ModEntry.Log($"{kv.Key}: {kv.Value}");
+        }
+        ModEntry.help.GameContent.InvalidateCache(Asset_DataCharacters);
+        ModEntry.help.GameContent.InvalidateCache(Asset_DataNPCGiftTastes);
+        if (!Context.IsMainPlayer)
+        {
+            foreach (string childAsNPCId in ChildToNPC.Keys)
+            {
+                if (Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC)
+                {
+                    childAsNPC.reloadSprite(onlyAppearance: true);
+                    childAsNPC.Sprite.UpdateSourceRect();
+                }
+            }
         }
     }
 

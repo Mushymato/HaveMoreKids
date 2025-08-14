@@ -120,11 +120,24 @@ internal static class Patches
             original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.GetChildBed)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(FarmHouse_GetChildBed_Postfix))
         );
+        // Fix display name
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), "translateName"),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_translateName_Postfix))
+        );
         // Fix mugshot for Child Age>3
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.getMugShotSourceRect)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_getMugShotSourceRect_Postfix))
         );
+    }
+
+    private static void Child_translateName_Postfix(Child __instance, ref string __result)
+    {
+        if (__instance.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName))
+        {
+            __result = displayName;
+        }
     }
 
     private static void Child_getMugShotSourceRect_Postfix(Child __instance, ref Rectangle __result)
