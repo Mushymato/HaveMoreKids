@@ -19,10 +19,8 @@
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
-          "DisplayName": "Example{{L@Kid}}",
+          "DisplayName": "{{i18n:{{L@Kid}}.DisplayName}}",
           "Gender": "{{L@Gender}}",
-          // This determines whether the child will become an NPC
-          "CanSocialize": "FALSE",
           "Appearance": [
             // BABY APPEARANCE
             {
@@ -83,6 +81,17 @@
       // It is active while the child is in the toddler phase
       "Action": "Include",
       "FromFile": "data/kid-talk.json",
+      "When": {
+        "GrowupMode": "talk"
+      }
+    },
+    {
+      // This turns your child into a full NPC
+      "Action": "Include",
+      "FromFile": "data/kid-npc.json",
+      "When": {
+        "GrowupMode": "npc"
+      }
     }
   ]
 }

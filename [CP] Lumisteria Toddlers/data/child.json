@@ -5,7 +5,7 @@
     {
       "Action": "Load",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Baby",
-      "FromFile": "Assets/base/Baby.png"
+      "FromFile": "Assets/base/Baby.png",
     },
     {
       "Action": "EditImage",
@@ -29,13 +29,7 @@
     {
       "Action": "Load",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
-      "FromFile": "Assets/base/Toddler.png"
-    },
-    {
-      "Action": "EditImage",
-      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
       "FromFile": "Assets/body/{{L@Body}}.png",
-      "PatchMode": "Overlay"
     },
     {
       "Action": "EditImage",
@@ -59,14 +53,14 @@
     {
       "Action": "Load",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
-      "FromFile": "Assets/base/Toddler.png"
-    },
-    {
-      "Action": "EditImage",
-      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
       "FromFile": "Assets/body/{{L@Body}}.png",
-      "PatchMode": "Overlay"
     },
+    // {
+    //   "Action": "EditImage",
+    //   "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
+    //   "FromFile": "Assets/body/{{L@Body}}.png",
+    //   "PatchMode": "Overlay"
+    // },
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",

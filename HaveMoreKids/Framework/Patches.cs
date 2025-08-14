@@ -275,7 +275,7 @@ internal static class Patches
             if (__instance.Age < 3)
             {
                 tmpCADs.Add(new(data));
-                if (data.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
+                if (AssetManager.AppearanceIsBaby(data))
                 {
                     data.Precedence = Math.Min(data.Precedence, -100);
                     data.Condition =
@@ -289,7 +289,7 @@ internal static class Patches
             }
             else
             {
-                if (data.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
+                if (AssetManager.AppearanceIsBaby(data))
                 {
                     tmpCADs.Add(new(data));
                     data.Precedence = Math.Max(data.Precedence, 100);
@@ -367,8 +367,12 @@ internal static class Patches
     /// <returns></returns>
     private static bool ShouldHaveKids(NPC spouse, List<Child> children)
     {
-        if (AssetManager.PickKidId(spouse) != null)
+        string? kidId = AssetManager.PickKidId(spouse);
+        ModEntry.Log($"Checking ShouldHaveKids for '{spouse.Name}': {kidId}");
+        if (kidId != null)
+        {
             return children.All(child => child.Age > 2);
+        }
         return false;
     }
 
@@ -587,6 +591,7 @@ internal static class Patches
     private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
     {
         ModEntry.Log($"Utility_pickPersonalFarmEvent_Postfix {__result}");
+        if (__result is QuestionEvent) { }
         if (__result is BirthingEvent)
         {
             __result = new HMKBirthingEvent();

@@ -21,11 +21,13 @@ internal static class AssetManager
     private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
     private const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
+    private const string Asset_PortraitPrefix = $"Portraits/{ModEntry.ModId}@";
+    private const string Asset_SpritePrefix = $"Characters/{ModEntry.ModId}@";
     internal const string Asset_StringsUI = "Strings/UI";
     internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
     internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
-    internal const string Asset_CharactersSchedule = "Characters/Schedule/";
+    internal const string Asset_CharactersSchedule = "Characters/schedules/";
     internal static string[] ChildForwardedAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
     internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
@@ -34,6 +36,28 @@ internal static class AssetManager
     internal const string ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
 
     private static Dictionary<string, CharacterData>? childData = null;
+
+    internal static bool AppearanceIsValid(CharacterAppearanceData appearance)
+    {
+        return Game1.content.DoesAssetExist<Texture2D>(appearance.Sprite);
+    }
+
+    internal static bool AppearanceIsUnconditional(CharacterAppearanceData appearance)
+    {
+        ModEntry.LogOnce(
+            $"{appearance.Id}: {appearance.Condition} {appearance.Indoors} {appearance.Outdoors} {appearance.IsIslandAttire}",
+            LogLevel.Debug
+        );
+        return (string.IsNullOrEmpty(appearance.Condition) || GameStateQuery.IsImmutablyTrue(appearance.Condition))
+            && appearance.Indoors
+            && appearance.Outdoors
+            && !appearance.IsIslandAttire;
+    }
+
+    internal static bool AppearanceIsBaby(CharacterAppearanceData appearance)
+    {
+        return appearance.Id?.StartsWith(Appearances_Prefix_Baby) ?? false;
+    }
 
     internal static Dictionary<string, CharacterData> ChildData
     {
@@ -53,24 +77,23 @@ internal static class AssetManager
                     value.FlowerDanceCanDance = false;
                     value.PerfectionScore = false;
 
+                    HashSet<CharacterAppearanceData> invalidAppearances = [];
                     byte isValidKidEntry = 0b00;
                     foreach (CharacterAppearanceData appearance in value.Appearance)
                     {
+                        if (!AppearanceIsValid(appearance))
+                        {
+                            invalidAppearances.Add(appearance);
+                            continue;
+                        }
                         if (!Game1.content.DoesAssetExist<Texture2D>(appearance.Portrait))
                         {
                             appearance.Portrait = Asset_NoPortrait;
                         }
                         // check for an unconditional appearance entry
-                        if (
-                            isValidKidEntry != 0b11
-                            && Game1.content.DoesAssetExist<Texture2D>(appearance.Sprite)
-                            && (string.IsNullOrEmpty(appearance.Condition) || appearance.Condition == "TRUE")
-                            && appearance.Indoors
-                            && appearance.Outdoors
-                            && !appearance.IsIslandAttire
-                        )
+                        if (isValidKidEntry != 0b11 && AppearanceIsUnconditional(appearance))
                         {
-                            if (appearance.Id?.StartsWith(Appearances_Prefix_Baby) ?? false)
+                            if (AppearanceIsBaby(appearance))
                             {
                                 isValidKidEntry |= 0b01;
                             }
@@ -79,6 +102,14 @@ internal static class AssetManager
                                 isValidKidEntry |= 0b10;
                             }
                         }
+                    }
+                    if (invalidAppearances.Any())
+                    {
+                        ModEntry.Log(
+                            $"Removed child appearances with invalid sprites from '{key}': {string.Join(',', invalidAppearances.Select(apr => apr.Id))}",
+                            LogLevel.Warn
+                        );
+                        value.Appearance.RemoveAll(invalidAppearances.Contains);
                     }
                     if (isValidKidEntry != 0b11)
                         invalidKidEntries.Add(key);
@@ -165,10 +196,16 @@ internal static class AssetManager
                     }
                 }
             }
-            if (ChildToNPC.Any())
-            {
-                Helper.GameContent.InvalidateCache(Asset_DataCharacters);
-            }
+            ChildNPCSetup();
+        }
+    }
+
+    private static void ChildNPCSetup()
+    {
+        if (ChildToNPC.Any())
+        {
+            Helper.GameContent.InvalidateCache(Asset_DataCharacters);
+            Helper.GameContent.InvalidateCache(Asset_DataNPCGiftTastes);
         }
     }
 
@@ -186,6 +223,9 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == Helper.Translation.Locale)
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
 
+        if (e.Name.StartsWith(Asset_PortraitPrefix) || e.Name.StartsWith(Asset_SpritePrefix))
+            e.LoadFromModFile<Texture2D>("assets/no_portrait.png", AssetLoadPriority.Exclusive);
+
         if (ChildToNPC.Any())
         {
             if (e.Name.IsEquivalentTo(Asset_DataCharacters))
@@ -196,10 +236,10 @@ internal static class AssetManager
             {
                 foreach (string fwdAsset in ChildForwardedAssets)
                 {
-                    string fwdAssetName = string.Join(fwdAsset, childId);
-                    if (e.NameWithoutLocale.IsEquivalentTo(string.Join(fwdAsset, childNPCId)))
+                    string fwdSrcAsset = string.Concat(fwdAsset, childId);
+                    if (e.NameWithoutLocale.IsEquivalentTo(string.Concat(fwdAsset, childNPCId)))
                     {
-                        e.LoadFrom(() => ForwardFrom_ChildIdAsset(fwdAssetName), AssetLoadPriority.Low);
+                        e.LoadFrom(() => ForwardFrom_ChildIdAsset(fwdSrcAsset), AssetLoadPriority.Low);
                     }
                 }
             }
@@ -236,7 +276,7 @@ internal static class AssetManager
                 childCharaData.SpawnIfMissing = true;
                 foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))
                 {
-                    if (appearanceData.Id.StartsWith(Appearances_Prefix_Baby))
+                    if (AppearanceIsBaby(appearanceData))
                     {
                         childCharaData.Appearance.Remove(appearanceData);
                     }
@@ -262,7 +302,7 @@ internal static class AssetManager
     {
         if (Game1.content.DoesAssetExist<Dictionary<string, string>>(assetName))
         {
-            return Game1.content.Load<Dictionary<string, string>>(assetName).ShallowClone();
+            return Game1.content.Load<Dictionary<string, string>>(assetName).DeepClone();
         }
         return new Dictionary<string, string>();
     }
@@ -272,10 +312,14 @@ internal static class AssetManager
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
         {
             childData = null;
-            ModEntry.Config.ResetMenu();
             Helper.GameContent.InvalidateCache(Asset_DataCharacters);
+            ModEntry.Config.ResetMenu();
         }
-        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_DataCharacters)))
+        if (
+            e.NamesWithoutLocale.Any(name =>
+                name.IsEquivalentTo(Asset_DataCharacters) || name.IsEquivalentTo(Asset_SharedKids)
+            )
+        )
         {
             ModEntry.Config.ResetMenu();
         }
@@ -283,10 +327,10 @@ internal static class AssetManager
         {
             foreach (string fwdAsset in ChildForwardedAssets)
             {
-                if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Join(fwdAsset, childId))))
+                if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, childId))))
                 {
                     ModEntry.Log($"{fwdAsset}{childId} -> {fwdAsset}{childNPCId}");
-                    Helper.GameContent.InvalidateCache(string.Join(fwdAsset, childNPCId));
+                    Helper.GameContent.InvalidateCache(string.Concat(fwdAsset, childNPCId));
                 }
             }
         }

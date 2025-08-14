@@ -10,6 +10,11 @@
     // when SharedKids=false, set this NPC as the kid's parent
     "NPCParent": {
       "Default": "Abigail"
+    },
+    // when GrowupMode=none, do not load either kid-npc.json or kid-talk.json
+    "GrowupMode": {
+      "AllowValues": "talk,npc",
+      "Default": "talk"
     }
   },
   "Changes": [

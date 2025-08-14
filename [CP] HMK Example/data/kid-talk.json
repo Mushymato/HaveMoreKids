@@ -3,6 +3,7 @@
   "Changes": [
     // The toddler can have dialogue and gift tastes, but no schedules
     {
+      // load blank.json
       "Action": "Load",
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
       "FromFile": "data/blank.json"

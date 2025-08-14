@@ -1,3 +1,5 @@
+using System.Reflection;
+using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -249,30 +251,54 @@ internal static class Quirks
     {
         foreach (Child kid in Game1.player.getChildren())
         {
-            kid.reloadSprite();
+            // check if Child should be invisible today
             if (
-                ModEntry.Config.DaysChild >= 0
-                && kid.daysOld.Value
-                    >= ModEntry.Config.DaysBaby
-                        + ModEntry.Config.DaysCrawler
-                        + ModEntry.Config.DaysToddler
-                        + ModEntry.Config.DaysChild
-                && kid.GetData() is CharacterData childCharaData
-                && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                && GameStateQuery.CheckConditions(childCharaData.CanSocialize)
-            )
-            {
-                kid.Age = 4;
-                kid.IsInvisible = true;
-                kid.daysUntilNotInvisible = 1;
-            }
-            else if (
-                kid.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
+                kid.GetData() is CharacterData childCharaData
+                && kid.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
                 && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
             )
             {
+                if (
+                    ModEntry.Config.DaysChild >= 0
+                    && kid.daysOld.Value
+                        >= ModEntry.Config.DaysBaby
+                            + ModEntry.Config.DaysCrawler
+                            + ModEntry.Config.DaysToddler
+                            + ModEntry.Config.DaysChild
+                    && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+                    && GameStateQuery.CheckConditions(childCharaData.CanSocialize)
+                )
+                {
+                    ModEntry.Log($"Hide Child '{kid.Name}'");
+                    kid.Age = 4;
+                    kid.IsInvisible = true;
+                    kid.daysUntilNotInvisible = 1;
+                }
+
                 childAsNPC.IsInvisible = !kid.IsInvisible;
-                childAsNPC.daysUntilNotInvisible = 1;
+                if (childAsNPC.IsInvisible)
+                {
+                    ModEntry.Log($"Hide ChildNPC '{childAsNPC.Name}'");
+                    childAsNPC.daysUntilNotInvisible = 1;
+                }
+                else
+                {
+                    ModEntry.Log($"Show ChildNPC '{childAsNPC.Name}'");
+                    childAsNPC.GetData();
+                    if (!Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship childFriendship))
+                    {
+                        childFriendship = new Friendship(0);
+                        Game1.player.friendshipData[kid.Name] = childFriendship;
+                    }
+                    Game1.player.friendshipData[childAsNPCId] = childFriendship;
+                    childAsNPC.InvalidateMasterSchedule();
+                    childAsNPC.reloadSprite();
+                    childAsNPC.Sprite.UpdateSourceRect();
+                }
+            }
+            else
+            {
+                kid.reloadSprite();
             }
         }
         Game1.player.stats.Decrement(Stats_daysUntilBirth);

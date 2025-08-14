@@ -12,6 +12,10 @@ internal sealed record KidIdent(string Spouse, string Kid)
     public static implicit operator KidIdent(string SpouseKid)
     {
         string[] parts = SpouseKid.Split('|');
+        if (parts.Length < 2)
+        {
+            throw new InvalidDataException($"Malformed KidIdent: {SpouseKid}");
+        }
         return new(parts[0], parts[1]);
     }
 
@@ -232,14 +236,17 @@ internal sealed class ModConfig
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
             {
                 if (
-                    data.Appearance?.FirstOrDefault(apr => !apr.Id.StartsWith(AssetManager.Appearances_Prefix_Baby))
-                    is CharacterAppearanceData appearanceData
+                    data.Appearance?.FirstOrDefault(apr =>
+                        AssetManager.AppearanceIsUnconditional(apr) && !AssetManager.AppearanceIsBaby(apr)
+                    )
+                    is CharacterAppearanceData toddlerApr
                 )
                 {
+                    CharacterAppearanceData? babyApr = data.Appearance?.FirstOrDefault(AssetManager.AppearanceIsBaby);
                     GMCM.AddComplexOption(
                         Mod,
                         name: () => "",
-                        draw: new KidPreview(appearanceData, data.Size).Draw,
+                        draw: new KidPreview(toddlerApr, data.Size, babyApr).Draw,
                         height: () => 0
                     );
                 }
@@ -254,24 +261,37 @@ internal sealed class ModConfig
         GMCM.AddPage(Mod, "");
     }
 
-    private sealed record KidPreview(CharacterAppearanceData Apr, Point Size)
+    private sealed record KidPreview(CharacterAppearanceData Apr, Point Size, CharacterAppearanceData? BabyApr)
     {
-        private readonly Texture2D? spriteTx = Game1.content.DoesAssetExist<Texture2D>(Apr.Sprite)
-            ? Game1.content.Load<Texture2D>(Apr.Sprite)
-            : null;
+        private readonly Texture2D spriteTx = Game1.content.Load<Texture2D>(Apr.Sprite);
+
+        private readonly Texture2D? babySpriteTx =
+            (BabyApr != null && Game1.content.DoesAssetExist<Texture2D>(BabyApr.Sprite))
+                ? Game1.content.Load<Texture2D>(BabyApr.Sprite)
+                : null;
 
         public void Draw(SpriteBatch b, Vector2 origin)
         {
+            Rectangle drawRect = new((int)origin.X + 64, (int)origin.Y - Size.Y * 2, Size.X * 4, Size.Y * 4);
+            if (babySpriteTx != null)
+            {
+                Rectangle drawRectBaby = new(drawRect.X + Size.X * 4 + 4, (int)origin.Y - 12, 22 * 4, 16 * 4);
+                b.Draw(
+                    babySpriteTx,
+                    drawRectBaby,
+                    new(0, 160, 22, 16),
+                    Color.White,
+                    0f,
+                    Vector2.Zero,
+                    SpriteEffects.None,
+                    1f
+                );
+            }
             if (spriteTx != null)
             {
                 b.Draw(
                     spriteTx,
-                    new(
-                        (int)origin.X - Size.X * 4 - Game1.tileSize,
-                        (int)origin.Y - Size.Y * 2,
-                        Size.X * 4,
-                        Size.Y * 4
-                    ),
+                    drawRect,
                     new(0, 0, Size.X, Size.Y),
                     Color.White,
                     0f,
