@@ -40,7 +40,6 @@ internal class ModConfigValues
 
 internal sealed class ModConfig : ModConfigValues
 {
-    public const string SHARED_KEY = "#SHARED";
     private Integration.IGenericModConfigMenuApi? GMCM;
     private IManifest Mod = null!;
 
@@ -79,13 +78,14 @@ internal sealed class ModConfig : ModConfigValues
     private void CheckEnabledByDefault()
     {
         EnabledKidsPages.Clear();
-        foreach ((string key, CharacterData charaData) in DataLoader.Characters(Game1.content))
+        string[] kidListKeys = [.. DataLoader.Characters(Game1.content).Keys, AssetManager.Asset_Kids_Shared];
+        foreach (string key in kidListKeys)
         {
             if (
-                !AssetManager.TryGetSpouseKidIds(
-                    charaData,
-                    out IList<string>? kidIds,
-                    out IDictionary<string, bool>? enabledByDefault
+                !AssetManager.TryGetKidIds(
+                    key,
+                    out List<string>? kidIds,
+                    out Dictionary<string, bool>? enabledByDefault
                 )
             )
                 continue;
@@ -98,14 +98,6 @@ internal sealed class ModConfig : ModConfigValues
             if (kidIds.Any())
                 EnabledKidsPages[key] = kidIds;
         }
-        foreach ((string kidId, bool enabled) in AssetManager.SharedKids)
-        {
-            KidIdent kidKey = new("#SHARED", kidId);
-            if (!EnabledKids.ContainsKey(kidKey))
-                EnabledKids[kidKey] = enabled;
-        }
-        if (AssetManager.SharedKids.Any())
-            EnabledKidsPages[SHARED_KEY] = AssetManager.SharedKids.Keys.ToList();
     }
 
     /// <summary>Add mod config to GMCM if available</summary>
@@ -226,7 +218,7 @@ internal sealed class ModConfig : ModConfigValues
             var characterDatas = DataLoader.Characters(Game1.content);
             foreach ((string key, IList<string> kidIds) in EnabledKidsPages)
             {
-                if (key == SHARED_KEY)
+                if (key == AssetManager.Asset_Kids_Shared)
                 {
                     SetupSpouseKidsPage(key, I18n.Config_Page_SharedKids_Name, kidIds);
                 }

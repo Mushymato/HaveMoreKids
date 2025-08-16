@@ -130,6 +130,54 @@ internal static class Patches
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.getMugShotSourceRect)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_getMugShotSourceRect_Postfix))
         );
+
+        // Portraiture Compat (sigh)
+        try
+        {
+            var modInfo = ModEntry.help.ModRegistry.Get("Platonymous.Portraiture");
+            if (modInfo?.GetType().GetProperty("Mod")?.GetValue(modInfo) is IMod mod)
+            {
+                var assembly = mod.GetType().Assembly;
+                if (
+                    assembly.GetType("Portraiture.TextureLoader") is Type portraitureTxLoaderType
+                    && AccessTools.DeclaredMethod(portraitureTxLoaderType, "getPortrait")
+                        is MethodInfo portraitureGetPortrait
+                )
+                {
+                    ModEntry.Log($"Patching Portraiture: {portraitureGetPortrait}");
+                    harmony.Patch(
+                        portraitureGetPortrait,
+                        prefix: new HarmonyMethod(typeof(Patches), nameof(PortraitureTextureLoader_getPortrait_Prefix)),
+                        finalizer: new HarmonyMethod(
+                            typeof(Patches),
+                            nameof(PortraitureTextureLoader_getPortrait_Finalizer)
+                        )
+                    );
+                }
+            }
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Failed to patch Portraiture Portraiture.getPortrait:\n{err}");
+        }
+    }
+
+    private static void PortraitureTextureLoader_getPortrait_Prefix(NPC npc, ref string? __state)
+    {
+        if (npc.Name != null && AssetManager.ChildToNPC.TryGetValue(npc.Name, out (string, string) kidIdName))
+        {
+            ModEntry.LogOnce($"PortraitureTextureLoader_getPortrait_Prefix: {npc.Name} -> {kidIdName.Item1}");
+            __state = npc.Name;
+            npc.Name = kidIdName.Item1;
+        }
+    }
+
+    private static void PortraitureTextureLoader_getPortrait_Finalizer(NPC npc, ref string? __state)
+    {
+        if (__state != null)
+        {
+            npc.Name = __state;
+        }
     }
 
     private static void Child_translateName_Postfix(Child __instance, ref string __result)

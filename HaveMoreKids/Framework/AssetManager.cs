@@ -14,10 +14,10 @@ namespace HaveMoreKids.Framework;
 
 internal static class AssetManager
 {
-    private const string NPC_CustomFields_KidId_Prefix = $"{ModEntry.ModId}/Kid.";
-    internal const string Appearances_Prefix_Baby = "HMK_BABY";
+    private const string Appearances_Prefix_Baby = "HMK_BABY";
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
-    private const string Asset_SharedKids = $"{ModEntry.ModId}/SharedKids";
+    private const string Asset_WhoseKids = $"{ModEntry.ModId}/WhoseKid";
+    internal const string Asset_Kids_Shared = $"{ModEntry.ModId}#SHARED";
     private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
     private const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
@@ -29,13 +29,12 @@ internal static class AssetManager
     internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
     internal const string Asset_CharactersSchedule = "Characters/schedules/";
     internal static string[] ChildForwardedAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
+    internal const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
     internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
     internal const string Child_ModData_Birthday = $"{ModEntry.ModId}/Birthday";
     internal const string Child_ModData_AsNPC = $"{ModEntry.ModId}/AsNPC";
     internal const string ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
-
-    private static Dictionary<string, CharacterData>? childData = null;
 
     internal static bool AppearanceIsValid(CharacterAppearanceData appearance)
     {
@@ -58,6 +57,8 @@ internal static class AssetManager
     {
         return appearance.Id?.StartsWith(Appearances_Prefix_Baby) ?? false;
     }
+
+    private static Dictionary<string, CharacterData>? childData = null;
 
     internal static Dictionary<string, CharacterData> ChildData
     {
@@ -127,8 +128,10 @@ internal static class AssetManager
         }
     }
 
-    internal static Dictionary<string, bool> SharedKids =>
-        Game1.content.Load<Dictionary<string, bool>>(Asset_SharedKids);
+    private static Dictionary<string, Dictionary<string, bool>>? whoseKids = null;
+
+    internal static Dictionary<string, Dictionary<string, bool>> WhoseKids =>
+        whoseKids ??= Game1.content.Load<Dictionary<string, Dictionary<string, bool>>>(Asset_WhoseKids);
 
     internal static string LoadString(string key) => Game1.content.LoadString($"{Asset_Strings}:{key}");
 
@@ -166,30 +169,32 @@ internal static class AssetManager
 
     private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
     {
-        if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations)
+        if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
         {
-            if (Context.IsMainPlayer)
+            ChildToNPC.Clear();
+            foreach (Farmer farmer in Game1.getAllFarmers())
             {
-                ChildToNPC.Clear();
-                foreach (Farmer farmer in Game1.getAllFarmers())
+                foreach (Child kid in farmer.getChildren())
                 {
-                    foreach (Child kid in farmer.getChildren())
+                    if (kid.modData.TryGetValue(Child_ModData_Id, out string kidId))
                     {
-                        if (
-                            ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
-                            && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                            && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
-                        )
-                        {
-                            string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
-                            ChildToNPC[childNPCId] = new(kid.Name, kid.displayName);
-                            kid.modData[Child_ModData_AsNPC] = childNPCId;
-                        }
+                        kid.modData[Child_ModData_DisplayName] = kid.Name;
+                        kid.Name = kidId;
+                    }
+                    if (
+                        ChildData.TryGetValue(kidId, out CharacterData? childCharaData)
+                        && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+                        && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
+                    )
+                    {
+                        string childNPCId = FormChildNPCId(kidId, farmer.UniqueMultiplayerID);
+                        ChildToNPC[childNPCId] = new(kidId, kid.displayName);
+                        kid.modData[Child_ModData_AsNPC] = childNPCId;
                     }
                 }
-                ChildNPCSetup();
-                MultiplayerSync.SendChildToNPC(null);
             }
+            ChildNPCSetup();
+            MultiplayerSync.SendChildToNPC(null);
         }
     }
 
@@ -199,6 +204,7 @@ internal static class AssetManager
         {
             return;
         }
+        ModEntry.Log("Child to NPC setup");
         foreach (var kv in ChildToNPC)
         {
             ModEntry.Log($"{kv.Key}: {kv.Value}");
@@ -227,8 +233,8 @@ internal static class AssetManager
     {
         if (e.Name.IsEquivalentTo(Asset_ChildData))
             e.LoadFrom(() => new Dictionary<string, CharacterData>(), AssetLoadPriority.Low);
-        if (e.Name.IsEquivalentTo(Asset_SharedKids))
-            e.LoadFrom(() => new Dictionary<string, bool>(), AssetLoadPriority.Low);
+        if (e.Name.IsEquivalentTo(Asset_WhoseKids))
+            e.LoadFrom(() => new Dictionary<string, Dictionary<string, bool>>(), AssetLoadPriority.Low);
         if (e.Name.IsEquivalentTo(Asset_Strings))
             e.LoadFromModFile<Dictionary<string, string>>("i18n/default/strings.json", AssetLoadPriority.Exclusive);
         if (e.Name.IsEquivalentTo(Asset_NoPortrait))
@@ -326,15 +332,12 @@ internal static class AssetManager
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
         {
             childData = null;
-            ModEntry.help.GameContent.InvalidateCache(Asset_DataCharacters);
+            ModEntry.help.GameContent.InvalidateCache(Asset_WhoseKids);
             ModEntry.Config.ResetMenu();
         }
-        if (
-            e.NamesWithoutLocale.Any(name =>
-                name.IsEquivalentTo(Asset_DataCharacters) || name.IsEquivalentTo(Asset_SharedKids)
-            )
-        )
+        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_WhoseKids)))
         {
+            whoseKids = null;
             ModEntry.Config.ResetMenu();
         }
         foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
@@ -353,31 +356,17 @@ internal static class AssetManager
     /// <summary>Get and validate kid id</summary>
     /// <param name="data"></param>
     /// <returns></returns>
-    internal static bool TryGetSpouseKidIds(
-        CharacterData? data,
-        [NotNullWhen(true)] out IList<string>? kidIds,
-        [NotNullWhen(true)] out IDictionary<string, bool>? enabledByDefault
+    internal static bool TryGetKidIds(
+        string spouseId,
+        [NotNullWhen(true)] out List<string>? kidIds,
+        [NotNullWhen(true)] out Dictionary<string, bool>? enabledByDefault
     )
     {
         kidIds = null;
-        enabledByDefault = null;
-        if (data?.CustomFields is Dictionary<string, string> customFields)
+        if (WhoseKids.TryGetValue(spouseId, out enabledByDefault))
         {
-            kidIds = [];
-            enabledByDefault = new Dictionary<string, bool>();
-            foreach (var kv in customFields)
-            {
-                if (kv.Key.StartsWith(NPC_CustomFields_KidId_Prefix))
-                {
-                    string kidId = kv.Key[NPC_CustomFields_KidId_Prefix.Length..];
-                    if (ChildData.ContainsKey(kidId))
-                    {
-                        kidIds.Add(kidId);
-                        enabledByDefault[kidId] = !bool.TryParse(kv.Value, out bool enabled) || enabled;
-                    }
-                }
-            }
-            return kidIds.Count > 0;
+            kidIds = enabledByDefault.Keys.ToList();
+            return enabledByDefault.Values.Where(value => value).Any();
         }
         return false;
     }
@@ -389,11 +378,17 @@ internal static class AssetManager
     internal static string? PickKidId(NPC spouse, Child? child = null, bool? darkSkinned = null)
     {
         if (
-            !TryGetAvailableKidIds(spouse, out string[]? availableKidIds)
+            !TryGetAvailableSpouseKidIds(spouse, out string[]? availableKidIds)
             && !TryGetAvailableSharedKidIds(out availableKidIds)
         )
         {
             return null;
+        }
+
+        // already a HMK child, try to apply the changes
+        if (child != null && availableKidIds.Contains(child.Name))
+        {
+            return child.Name;
         }
 
         // Prioritize the kid id set by trigger action, if it is valid
@@ -413,10 +408,10 @@ internal static class AssetManager
         return PickMostLikelyKidId(availableKidIds, darkSkinned, gender, name);
     }
 
-    private static bool TryGetAvailableKidIds(NPC spouse, [NotNullWhen(true)] out string[]? availableKidIds)
+    private static bool TryGetAvailableKidIds(string key, [NotNullWhen(true)] out string[]? availableKidIds)
     {
         availableKidIds = null;
-        if (!TryGetSpouseKidIds(spouse.GetData(), out IList<string>? kidIds, out _))
+        if (!TryGetKidIds(key, out List<string>? kidIds, out _))
             return false;
 
         HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
@@ -424,24 +419,23 @@ internal static class AssetManager
             .Where(id =>
                 ChildData.ContainsKey(id)
                 && !children.Contains(id)
-                && ModEntry.Config.EnabledKids.GetValueOrDefault(new(spouse.Name, id))
+                && ModEntry.Config.EnabledKids.GetValueOrDefault(new(key, id))
             )
             .ToArray();
         return availableKidIds.Length > 0;
     }
 
-    internal static bool TryGetAvailableSharedKidIds([NotNullWhen(true)] out string[]? sharedKidIds)
+    private static bool TryGetAvailableSpouseKidIds(NPC spouse, [NotNullWhen(true)] out string[]? availableKidIds)
     {
-        HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
-        sharedKidIds = SharedKids
-            .Keys.Where(id =>
-                ChildData.ContainsKey(id)
-                && !children.Contains(id)
-                && ModEntry.Config.EnabledKids.GetValueOrDefault(new(ModConfig.SHARED_KEY, id))
-            )
-            .ToArray();
-        ModEntry.Log($"Available sharedKidIds: {string.Join(",", SharedKids.Keys)}");
-        return sharedKidIds.Length > 0;
+        availableKidIds = null;
+        if (spouse?.Name == null)
+            return false;
+        return TryGetAvailableKidIds(spouse.Name, out availableKidIds);
+    }
+
+    internal static bool TryGetAvailableSharedKidIds([NotNullWhen(true)] out string[]? availableKidIds)
+    {
+        return TryGetAvailableKidIds(Asset_Kids_Shared, out availableKidIds);
     }
 
     internal static string PickMostLikelyKidId(
@@ -477,7 +471,7 @@ internal static class AssetManager
     internal static string? PickForSpecificKidId(NPC spouse, string name)
     {
         // Check for "real name" kid
-        if (!TryGetAvailableKidIds(spouse, out string[]? availableKidIds))
+        if (!TryGetAvailableSpouseKidIds(spouse, out string[]? availableKidIds))
         {
             return null;
         }
@@ -492,23 +486,17 @@ internal static class AssetManager
         return null;
     }
 
-    internal static Child ChooseAndApplyKidId(NPC spouse, Child newKid, bool newBorn = false)
+    internal static Child ChooseAndApplyKidId(NPC spouse, Child kid)
     {
-        string kidName = newKid.Name;
-        if (kidName == null)
-            return newKid;
-        if (SharedKids.ContainsKey(kidName))
-            return newKid;
-        if (TryGetSpouseKidIds(spouse.GetData(), out IList<string>? kidIds, out _) && kidIds.Contains(newKid.Name))
-            return newKid;
-
-        if (PickKidId(spouse, newKid) is not string newKidId)
-            return newKid;
-        return ApplyKidId(spouse.Name, newKid, newBorn, kidName, newKidId);
+        string kidName = kid.Name;
+        if (kidName == null || PickKidId(spouse, kid) is not string newKidId)
+            return kid;
+        return ApplyKidId(spouse.Name, kid, false, kidName, newKidId);
     }
 
     internal static Child ApplyKidId(string? spouseName, Child newKid, bool newBorn, string kidName, string newKidId)
     {
+        newKid.modData[Child_ModData_Id] = newKidId;
         newKid.modData[Child_ModData_DisplayName] = kidName;
         newKid.modData[Child_ModData_NPCParent] = spouseName;
         if (newBorn)

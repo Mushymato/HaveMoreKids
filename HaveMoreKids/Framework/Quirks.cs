@@ -1,5 +1,4 @@
-using System.Reflection;
-using HarmonyLib;
+using System.Text.RegularExpressions;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -25,17 +24,13 @@ internal static class Quirks
         // events
         ModEntry.help.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         ModEntry.help.Events.GameLoop.DayStarted += OnDayStarted;
+        ModEntry.help.Events.GameLoop.Saving += OnSaving;
+        ModEntry.help.Events.GameLoop.Saved += OnSaved;
         // delegates
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
-        // console commands
-        ModEntry.help.ConsoleCommands.Add(
-            "hmk-unset_kids",
-            "Unset the internal names for unique kids, use this if you want to uninstall this mod completely.",
-            ConsoleUnsetKids
-        );
     }
 
     private static Child? FindChild(Farmer player, string kidId)
@@ -212,46 +207,54 @@ internal static class Quirks
         return true;
     }
 
-    /// <summary>Apply unique kids to any existing children</summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    ///
-    private static void ConsoleUnsetKids(string arg1, string[] arg2)
-    {
-        foreach (Child kid in Game1.player.getChildren())
-        {
-            if (kid.modData?.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName) ?? false)
-            {
-                ModEntry.Log($"Unset '{displayName}' ({kid.Name})", LogLevel.Info);
-                kid.modData.Remove(AssetManager.Child_ModData_DisplayName);
-                kid.Name = displayName;
-                kid.reloadSprite(onlyAppearance: true);
-            }
-        }
-    }
+    // $"{ModEntry.ModId}@{childName}@{uniqueMultiplayerId}"
+    private static readonly Regex childNPCPattern = new(@"^mushymato\.HaveMoreKids@([^\s]+)@\d+$");
 
-    /// <summary>Apply unique kids to any existing children</summary>
+    /// <summary>Check some one time kid stuff on save loaded</summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
     private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
+        // Remove any invalid kids
+        Utility.ForEachLocation(location =>
+        {
+            location.characters.RemoveWhere(
+                (npc) =>
+                {
+                    if (npc?.Name is not string npcId)
+                        return false;
+                    if (childNPCPattern.Match(npcId) is not Match match || !match.Success)
+                        return false;
+                    if (AssetManager.ChildToNPC.ContainsKey(npc.Name))
+                        return false;
+                    ModEntry.Log(
+                        $"Removed invalid kid NPC '{npc.Name}' from '{location.NameOrUniqueName}'",
+                        LogLevel.Warn
+                    );
+                    return true;
+                }
+            );
+            return true;
+        });
+        // Apply unique kids to any existing children
         foreach (Child kid in Game1.player.getChildren())
         {
             if (Game1.player.getSpouse() is NPC spouse)
             {
-                AssetManager.ChooseAndApplyKidId(spouse, kid, false);
+                AssetManager.ChooseAndApplyKidId(spouse, kid);
             }
         }
     }
 
-    /// <summary>Do reload sprite on day started, to properly deal with newborns (y r they like this)</summary>
+    /// <summary>Do some kid checks on day started</summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
     private static void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
+        // update all kids
         foreach (Child kid in Game1.player.getChildren())
         {
-            // check if Child should be invisible today
+            // check if today is a Child day or a NPC day
             if (
                 kid.GetData() is CharacterData childCharaData
                 && kid.modData.TryGetValue(AssetManager.Child_ModData_AsNPC, out string childAsNPCId)
@@ -306,5 +309,48 @@ internal static class Quirks
             }
         }
         Game1.player.stats.Decrement(Stats_daysUntilBirth);
+    }
+
+    /// <summary>Unset HMK related data on saving</summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private static void OnSaving(object? sender, SavingEventArgs e)
+    {
+        if (!Context.IsMainPlayer)
+            return;
+        foreach (Farmer farmer in Game1.getAllFarmers())
+        {
+            foreach (Child kid in farmer.getChildren())
+            {
+                if (kid.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName))
+                {
+                    ModEntry.Log($"Unset before saving: '{displayName}' ({kid.Name})");
+                    kid.modData.Remove(AssetManager.Child_ModData_DisplayName);
+                    kid.modData[AssetManager.Child_ModData_Id] = kid.Name;
+                    kid.Name = displayName;
+                }
+            }
+        }
+    }
+
+    /// <summary>Unset HMK related data on saving</summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private static void OnSaved(object? sender, SavedEventArgs e)
+    {
+        if (!Context.IsMainPlayer)
+            return;
+        foreach (Farmer farmer in Game1.getAllFarmers())
+        {
+            foreach (Child kid in farmer.getChildren())
+            {
+                if (kid.modData.TryGetValue(AssetManager.Child_ModData_Id, out string kidId))
+                {
+                    ModEntry.Log($"Restore after saving: '{kid.Name}' ({kidId})");
+                    kid.modData[AssetManager.Child_ModData_DisplayName] = kid.Name;
+                    kid.Name = kidId;
+                }
+            }
+        }
     }
 }
