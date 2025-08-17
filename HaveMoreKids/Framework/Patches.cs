@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using HaveMoreKids.Framework.BirthingEvents;
+using HaveMoreKids.Framework.NightEvents;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
@@ -66,15 +66,10 @@ internal static class Patches
             transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Transpiler)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Postfix))
         );
-        // Change pregnancy time needed
-        harmony.Patch(
-            original: AccessTools.DeclaredMethod(typeof(QuestionEvent), "answerPregnancyQuestion"),
-            transpiler: new HarmonyMethod(typeof(Patches), nameof(QuestionEvent_answerPregnancyQuestion_Transpiler))
-        );
         // Allow pregnancy past the second child
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.canGetPregnant)),
-            transpiler: new HarmonyMethod(typeof(Patches), nameof(NPC_canGetPregnant_Transpiler))
+            finalizer: new HarmonyMethod(typeof(Patches), nameof(NPC_canGetPregnant_Finalizer))
         );
         // Allow pregnancy past the second child for players
         harmony.Patch(
@@ -144,7 +139,7 @@ internal static class Patches
                         is MethodInfo portraitureGetPortrait
                 )
                 {
-                    ModEntry.Log($"Patching Portraiture: {portraitureGetPortrait}");
+                    ModEntry.Log($"Patching Portraiture: {portraitureTxLoaderType}::{portraitureGetPortrait}");
                     harmony.Patch(
                         portraitureGetPortrait,
                         prefix: new HarmonyMethod(typeof(Patches), nameof(PortraitureTextureLoader_getPortrait_Prefix)),
@@ -164,7 +159,7 @@ internal static class Patches
 
     private static void PortraitureTextureLoader_getPortrait_Prefix(NPC npc, ref string? __state)
     {
-        if (npc.Name != null && AssetManager.ChildToNPC.TryGetValue(npc.Name, out (string, string) kidIdName))
+        if (npc.Name != null && KidHandler.ChildToNPC.TryGetValue(npc.Name, out (string, string) kidIdName))
         {
             ModEntry.LogOnce($"PortraitureTextureLoader_getPortrait_Prefix: {npc.Name} -> {kidIdName.Item1}");
             __state = npc.Name;
@@ -182,7 +177,7 @@ internal static class Patches
 
     private static void Child_translateName_Postfix(Child __instance, ref string __result)
     {
-        if (__instance.modData.TryGetValue(AssetManager.Child_ModData_DisplayName, out string? displayName))
+        if (__instance.KidDisplayName() is string displayName)
         {
             __result = displayName;
         }
@@ -276,13 +271,11 @@ internal static class Patches
         }
     }
 
-    private static sbyte ModifyDaysBaby(sbyte days) => (sbyte)ModEntry.Config.DaysBaby;
+    private static sbyte ModifyDaysBaby(sbyte days) => ModEntry.Config.TotalDaysBaby;
 
-    private static sbyte ModifyDaysCrawler(sbyte days) =>
-        (sbyte)(ModEntry.Config.DaysBaby + ModEntry.Config.DaysCrawler);
+    private static sbyte ModifyDaysCrawler(sbyte days) => ModEntry.Config.TotalDaysCrawer;
 
-    private static sbyte ModifyDaysToddler(sbyte days) =>
-        (sbyte)(ModEntry.Config.DaysBaby + ModEntry.Config.DaysCrawler + ModEntry.Config.DaysToddler);
+    private static sbyte ModifyDaysToddler(sbyte days) => ModEntry.Config.TotalDaysToddler;
 
     private static IEnumerable<CodeInstruction> Child_dayUpdate_Transpiler(
         IEnumerable<CodeInstruction> instructions,
@@ -349,7 +342,7 @@ internal static class Patches
             if (__instance.Age < 3)
             {
                 tmpCADs.Add(new(data));
-                if (AssetManager.AppearanceIsBaby(data))
+                if (data.AppearanceIsBaby())
                 {
                     data.Precedence = Math.Min(data.Precedence, -100);
                     data.Condition =
@@ -363,7 +356,7 @@ internal static class Patches
             }
             else
             {
-                if (AssetManager.AppearanceIsBaby(data))
+                if (data.AppearanceIsBaby())
                 {
                     tmpCADs.Add(new(data));
                     data.Precedence = Math.Max(data.Precedence, 100);
@@ -432,92 +425,80 @@ internal static class Patches
         }
     }
 
-    /// <summary>
-    /// Check should have kids for NPC that have unique kids
-    /// If they don't have unique kids, fall down to the base kid count logic
-    /// </summary>
-    /// <param name="spouse"></param>
-    /// <param name="children"></param>
-    /// <returns></returns>
-    private static bool ShouldHaveKids(NPC spouse, List<Child> children)
-    {
-        string? kidId = AssetManager.PickKidId(spouse);
-        ModEntry.Log($"Checking ShouldHaveKids for '{spouse.Name}': {kidId}");
-        if (kidId != null)
-        {
-            return children.All(child => child.Age > 2);
-        }
-        return false;
-    }
-
     private static int ModifyBaseKidCount(int count) => ModEntry.Config.BaseMaxChildren;
 
     /// <summary>
-    /// Change can get pregnant count to check for number of kids available
+    /// Change can get pregnant checking
     /// </summary>
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
     /// <returns></returns>
-    private static IEnumerable<CodeInstruction> NPC_canGetPregnant_Transpiler(
-        IEnumerable<CodeInstruction> instructions,
-        ILGenerator generator
-    )
+    private static bool NPC_canGetPregnant_Finalizer(NPC __instance, ref bool __result)
     {
-        try
+        ModEntry.Log($"Checking NPC.canGetPregnant skip prefix for '{__instance.Name}'");
+        __result = false;
+        if (__instance is Horse || __instance.IsInvisible)
         {
-            // IL_00b0: ldloc.3
-            // IL_00b1: callvirt instance int32 class [System.Collections]System.Collections.Generic.List`1<class StardewValley.Characters.Child>::get_Count()
-            // IL_00b6: brfalse.s IL_00d3
-            CodeMatcher matcher = new(instructions, generator);
-            matcher
-                .MatchEndForward(
-                    [
-                        new(inst => inst.IsLdloc()),
-                        new(
-                            OpCodes.Callvirt,
-                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
-                        ),
-                        new(OpCodes.Brfalse_S),
-                        new(inst => inst.IsLdloc()),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find 'children.Count != 0'");
-            CodeInstruction ldlocChildren = matcher.InstructionAt(-3);
-            ldlocChildren = new(ldlocChildren.opcode, ldlocChildren.operand);
-            matcher
-                .CreateLabel(out Label lbl)
-                .Insert(
-                    [
-                        new(OpCodes.Ldarg_0),
-                        ldlocChildren,
-                        new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ShouldHaveKids))),
-                        new(OpCodes.Brfalse_S, lbl),
-                        new(OpCodes.Ldc_I4_1),
-                        new(OpCodes.Ret),
-                    ]
-                );
-            matcher
-                .MatchEndForward(
-                    [
-                        new(
-                            OpCodes.Callvirt,
-                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
-                        ),
-                        new(OpCodes.Ldc_I4_2),
-                        new(OpCodes.Bge_S),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find 'children.Count < 2'")
-                .InsertAndAdvance(
-                    [new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyBaseKidCount)))]
-                );
-            return matcher.Instructions();
+            ModEntry.Log("- is horse or invisible");
+            return false;
         }
-        catch (Exception err)
+        // roommate adoption
+        if (
+            __instance.isRoommate()
+            && __instance.GetData()?.SpouseAdopts is string spouseAdopts
+            && !GameStateQuery.CheckConditions(spouseAdopts)
+        )
         {
-            ModEntry.Log($"Error in NPC_canGetPregnant_Transpiler:\n{err}", LogLevel.Error);
-            return instructions;
+            ModEntry.Log("- is roommate and not adopt");
+            return false;
         }
+
+        // valid marriage
+        Farmer player = __instance.getSpouse();
+        if (player == null || player.divorceTonight.Value || player.GetDaysMarried() < ModEntry.Config.DaysMarried)
+        {
+            ModEntry.Log("- not married hard enough");
+            return false;
+        }
+
+        // valid home
+        FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(player);
+        if (homeOfFarmer.cribStyle.Value <= 0 || homeOfFarmer.upgradeLevel < 2)
+        {
+            ModEntry.Log("- housing market in shambles");
+            return false;
+        }
+
+        // friendly not pregnant spouse
+        Friendship spouseFriendship = player.GetSpouseFriendship();
+        if (spouseFriendship.DaysUntilBirthing > 0 || player.getFriendshipHeartLevelForNPC(__instance.Name) < 10)
+        {
+            ModEntry.Log("- pregnant or unfriendly");
+            return false;
+        }
+
+        __instance.DefaultMap = player.homeLocation.Value;
+        List<Child> children = player.getChildren();
+        if (!children.All(child => child.Age > 2))
+        {
+            ModEntry.Log("- kids not grown up");
+            return false;
+        }
+
+        if (KidHandler.TryGetSpouseOrSharedKidIds(__instance, out string? pickedKey, out List<string>? availableKidIds))
+        {
+            if (KidHandler.FilterAvailableKidIds(pickedKey, ref availableKidIds))
+            {
+                ModEntry.Log($"- success! (custom kids: {pickedKey})");
+                __result = true;
+            }
+        }
+        else
+        {
+            ModEntry.Log("- success! (generic kids)");
+            __result = children.Count < ModEntry.Config.BaseMaxChildren;
+        }
+        return false;
     }
 
     /// <summary>
@@ -614,7 +595,7 @@ internal static class Patches
         {
             return true;
         }
-        if (Game1.player.stats.Get(Quirks.Stats_daysUntilBirth) == 1)
+        if (Game1.player.stats.Get(GameDelegates.Stats_daysUntilBirth) == 1)
         {
             __result = new HMKBirthingEvent();
             return false;
@@ -662,11 +643,23 @@ internal static class Patches
         }
     }
 
+    private static readonly FieldInfo whichQuestionField = AccessTools.DeclaredField(
+        typeof(QuestionEvent),
+        "whichQuestion"
+    );
+
     private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
     {
         ModEntry.Log($"Utility_pickPersonalFarmEvent_Postfix {__result}");
-        if (__result is QuestionEvent) { }
-        if (__result is BirthingEvent)
+        if (
+            __result is QuestionEvent
+            && whichQuestionField.GetValue(__result) is int whichQ
+            && (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)
+        )
+        {
+            __result = new HMKPregnancyQuestionEvent(whichQ);
+        }
+        else if (__result is BirthingEvent)
         {
             __result = new HMKBirthingEvent();
         }

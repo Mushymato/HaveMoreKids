@@ -17,12 +17,16 @@ internal static class MultiplayerSync
 
     internal static void SendChildToNPC(long[]? playerIDs)
     {
+        if (!Context.IsMultiplayer)
+            return;
         ModEntry.Log("Send ChildToNPC");
-        ModEntry.help.Multiplayer.SendMessage(AssetManager.ChildToNPC, ChildToNPCMsg, [ModEntry.ModId], playerIDs);
+        ModEntry.help.Multiplayer.SendMessage(KidHandler.ChildToNPC, ChildToNPCMsg, [ModEntry.ModId], playerIDs);
     }
 
     internal static void SendModConfig(long[]? playerIDs)
     {
+        if (!Context.IsMultiplayer)
+            return;
         ModEntry.Log("Send ModConfig");
         ModEntry.help.Multiplayer.SendMessage(
             ModEntry.Config as ModConfigValues,
@@ -41,8 +45,7 @@ internal static class MultiplayerSync
             switch (e.Type)
             {
                 case ChildToNPCMsg:
-                    AssetManager.ChildToNPC = e.ReadAs<Dictionary<string, (string, string)>>();
-                    AssetManager.ChildNPCSetup();
+                    KidHandler.ChildToNPC_FromHost(e.ReadAs<Dictionary<string, (string, string)>>());
                     break;
                 case ModConfigMsg:
                     ModEntry.Config.SyncAndUnregister(e.ReadAs<ModConfigValues>());

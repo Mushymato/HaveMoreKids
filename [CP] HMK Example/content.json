@@ -11,11 +11,6 @@
     "NPCParent": {
       "Default": "Abigail"
     },
-    // when GrowupMode=none, do not load either kid-npc.json or kid-talk.json
-    "GrowupMode": {
-      "AllowValues": "talk,npc",
-      "Default": "talk"
-    }
   },
   "Changes": [
     {
@@ -23,7 +18,9 @@
       "FromFile": "data/kid.json",
       "LocalTokens": {
         "L@Kid": "boy1",
-        "L@Gender": "Male"
+        "L@Gender": "Male",
+        // Stop growing as a toddler with dialogue and gift tastes
+        "L@Growup": "talk"
       }
     },
     {
@@ -31,7 +28,9 @@
       "FromFile": "data/kid.json",
       "LocalTokens": {
         "L@Kid": "girl1",
-        "L@Gender": "Female"
+        "L@Gender": "Female",
+        // Growup into a full NPC with dialogue, gift tastes, and schedule
+        "L@Growup": "npc"
       }
     },
   ]

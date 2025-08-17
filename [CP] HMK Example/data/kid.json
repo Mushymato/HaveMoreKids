@@ -49,49 +49,45 @@
       }
     },
     // At this point, the kid is defined, but you need to add them to an NPC or the shared kids pool
-    // Case NPC Parent
+    // These examples are specific parent OR shared, but kid can be assigned to many parents and be shared at the same time.
+    // Case NPC Parent (kid is only available for a particular NPC parent)
     {
       "Action": "EditData",
-      "Target": "Data/Characters",
-      "TargetField": [
-        "{{NPCParent}}",
-        "CustomFields"
-      ],
+      "Target": "mushymato.HaveMoreKids/WhoseKids",
       "Entries": {
-        "mushymato.HaveMoreKids/Kid.{{ModId}}_{{L@Kid}}": true
+        "{{ModId}}_{{L@Kid}}": {
+          "NPCParents": [
+            "{{NPCParent}}"
+          ]
+        }
       },
       "When": {
         "SharedKids": false
       }
     },
-    // Case Shared Kids
+    // Case Shared Kids (kid is available for everyone)
     {
       "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/SharedKids",
+      "Target": "mushymato.HaveMoreKids/WhoseKids",
       "Entries": {
-        "{{ModId}}_{{L@Kid}}": true
+        "{{ModId}}_{{L@Kid}}": {
+          "Shared": true
+        }
       },
       "When": {
         "SharedKids": true
       }
     },
     // Finally, you can add various NPC style features to your kids
+    // L@Growup=talk -> Include data/kid-talk.json
+    //    This allows your child to talk to you, without becoming a full fledged NPC
+    //    It is active while the child is in the toddler phase
+    // L@Growup=npc  -> Include data/kid-npc.json
+    //    This turns your child into a full NPC with schedules
+    //    Both the "Child" verison and the "NPC" version coexist
     {
-      // This allows your child to talk to you, without becoming a full fledged NPC
-      // It is active while the child is in the toddler phase
       "Action": "Include",
-      "FromFile": "data/kid-talk.json",
-      "When": {
-        "GrowupMode": "talk"
-      }
-    },
-    {
-      // This turns your child into a full NPC
-      "Action": "Include",
-      "FromFile": "data/kid-npc.json",
-      "When": {
-        "GrowupMode": "npc"
-      }
+      "FromFile": "data/kid-{{L@Growup}}.json"
     }
   ]
 }

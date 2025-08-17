@@ -7,7 +7,7 @@ using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.Menus;
 
-namespace HaveMoreKids.Framework.BirthingEvents;
+namespace HaveMoreKids.Framework.NightEvents;
 
 public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
 {
@@ -94,12 +94,12 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
             bool isDarkSkinned = random.NextDouble() < num;
 
             if (
-                AssetManager.TryGetAvailableSharedKidIds(out string[]? sharedKids)
-                && AssetManager.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null) is string newKidId
+                KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids)
+                && KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null) is string newKidId
                 && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData)
             )
             {
-                child = AssetManager.ApplyKidId(
+                child = KidHandler.ApplyKidId(
                     "PLAYER_COUPLE",
                     new("Baby", childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
                     true,
@@ -121,6 +121,8 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
                 child = new Child("Baby", isMale, isDarkSkinned, Game1.player);
             }
             farmHouse.characters.Add(child);
+            KidHandler.ChildToNPC_Check();
+
             child.Age = 0;
             child.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);
 
@@ -171,10 +173,9 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
             {
                 string text = babyName;
                 List<NPC> allCharacters = Utility.getAllCharacters();
-                if (child.modData.ContainsKey(AssetManager.Child_ModData_DisplayName))
+                if (child.KidDisplayName() is not null)
                 {
                     child.displayName = text;
-                    child.modData[AssetManager.Child_ModData_DisplayName] = text;
                 }
                 else
                 {

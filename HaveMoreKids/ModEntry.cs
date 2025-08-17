@@ -1,7 +1,6 @@
 using HaveMoreKids.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewValley;
 
 namespace HaveMoreKids;
 
@@ -24,28 +23,25 @@ public class ModEntry : Mod
         mon = Monitor;
         help = helper;
         help.Events.GameLoop.GameLaunched += OnGameLaunched;
+        help.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
         Config = helper.ReadConfig<ModConfig>();
-        MultiplayerSync.Register();
+        KidHandler.Register();
         AssetManager.Register();
-        Quirks.Register();
+        MultiplayerSync.Register();
         Patches.Apply();
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
         Config.Register(ModManifest);
-        // Register a content patcher token for getting the display names of kids
-        if (
-            Helper.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")
-            is Integration.IContentPatcherAPI CP
-        )
-        {
-            CP.RegisterToken(ModManifest, "ChildDisplayName", CPTokenChildDisplayNames);
-        }
+        GameDelegates.Register(ModManifest);
     }
 
-    private static IEnumerable<string>? CPTokenChildDisplayNames() =>
-        Context.IsWorldReady ? Game1.player.getChildren().Select(child => child.displayName) : null;
+    private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+    {
+        Config.UnregistedOnNonHost = false;
+        Config.ResetMenu();
+    }
 
     /// <summary>SMAPI static monitor Log wrapper</summary>
     /// <param name="msg"></param>

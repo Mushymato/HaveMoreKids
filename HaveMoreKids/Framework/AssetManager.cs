@@ -3,60 +3,34 @@ using Force.DeepCloner;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
-using StardewValley.Characters;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
-using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
 
+public sealed class WhoseKidData
+{
+    public List<string>? NPCParents { get; set; } = null;
+    public bool Shared { get; set; } = false;
+    public bool DefaultEnabled { get; set; } = true;
+}
+
 internal static class AssetManager
 {
-    private const string Appearances_Prefix_Baby = "HMK_BABY";
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
-    private const string Asset_WhoseKids = $"{ModEntry.ModId}/WhoseKid";
-    internal const string Asset_Kids_Shared = $"{ModEntry.ModId}#SHARED";
+    private const string Asset_WhoseKids = $"{ModEntry.ModId}/WhoseKids";
     private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
     private const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
     private const string Asset_PortraitPrefix = $"Portraits/{ModEntry.ModId}@";
     private const string Asset_SpritePrefix = $"Characters/{ModEntry.ModId}@";
-    internal const string Asset_StringsUI = "Strings/UI";
+    private const string Asset_StringsUI = "Strings/UI";
     internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
-    internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
-    internal const string Asset_CharactersSchedule = "Characters/schedules/";
-    internal static string[] ChildForwardedAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
-    internal const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
-    internal const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
-    internal const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
-    internal const string Child_ModData_Birthday = $"{ModEntry.ModId}/Birthday";
-    internal const string Child_ModData_AsNPC = $"{ModEntry.ModId}/AsNPC";
-    internal const string ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
-
-    internal static bool AppearanceIsValid(CharacterAppearanceData appearance)
-    {
-        return Game1.content.DoesAssetExist<Texture2D>(appearance.Sprite);
-    }
-
-    internal static bool AppearanceIsUnconditional(CharacterAppearanceData appearance)
-    {
-        ModEntry.LogOnce(
-            $"{appearance.Id}: {appearance.Condition} {appearance.Indoors} {appearance.Outdoors} {appearance.IsIslandAttire}",
-            LogLevel.Debug
-        );
-        return (string.IsNullOrEmpty(appearance.Condition) || GameStateQuery.IsImmutablyTrue(appearance.Condition))
-            && appearance.Indoors
-            && appearance.Outdoors
-            && !appearance.IsIslandAttire;
-    }
-
-    internal static bool AppearanceIsBaby(CharacterAppearanceData appearance)
-    {
-        return appearance.Id?.StartsWith(Appearances_Prefix_Baby) ?? false;
-    }
+    private const string Asset_CharactersDialogue = "Characters/Dialogue/";
+    private const string Asset_CharactersSchedule = "Characters/schedules/";
+    private static readonly string[] ChildForwardedAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
 
     private static Dictionary<string, CharacterData>? childData = null;
 
@@ -82,7 +56,7 @@ internal static class AssetManager
                     byte isValidKidEntry = 0b00;
                     foreach (CharacterAppearanceData appearance in value.Appearance)
                     {
-                        if (!AppearanceIsValid(appearance))
+                        if (!appearance.AppearanceIsValid())
                         {
                             invalidAppearances.Add(appearance);
                             continue;
@@ -92,9 +66,9 @@ internal static class AssetManager
                             appearance.Portrait = Asset_NoPortrait;
                         }
                         // check for an unconditional appearance entry
-                        if (isValidKidEntry != 0b11 && AppearanceIsUnconditional(appearance))
+                        if (isValidKidEntry != 0b11 && appearance.AppearanceIsUnconditional())
                         {
-                            if (AppearanceIsBaby(appearance))
+                            if (appearance.AppearanceIsBaby())
                             {
                                 isValidKidEntry |= 0b01;
                             }
@@ -128,15 +102,49 @@ internal static class AssetManager
         }
     }
 
-    private static Dictionary<string, Dictionary<string, bool>>? whoseKids = null;
+    private static Dictionary<string, Dictionary<string, WhoseKidData>>? whoseKids = null;
 
-    internal static Dictionary<string, Dictionary<string, bool>> WhoseKids =>
-        whoseKids ??= Game1.content.Load<Dictionary<string, Dictionary<string, bool>>>(Asset_WhoseKids);
+    internal static Dictionary<string, Dictionary<string, WhoseKidData>> WhoseKids
+    {
+        get
+        {
+            if (whoseKids != null)
+                return whoseKids;
+            Dictionary<string, WhoseKidData> rawWhoseKids = Game1.content.Load<Dictionary<string, WhoseKidData>>(
+                Asset_WhoseKids
+            );
+            whoseKids = [];
+            whoseKids[KidHandler.WhoseKids_Shared] = [];
+            foreach ((string kidId, WhoseKidData whose) in rawWhoseKids)
+            {
+                if (!ChildData.ContainsKey(kidId))
+                    continue;
+                if (whose.Shared)
+                    whoseKids[KidHandler.WhoseKids_Shared][kidId] = whose;
+                if (whose.NPCParents?.Any() ?? false)
+                {
+                    foreach (string parentId in whose.NPCParents)
+                    {
+                        if (!whoseKids.TryGetValue(parentId, out Dictionary<string, WhoseKidData>? npcWhosekids))
+                        {
+                            npcWhosekids = [];
+                            whoseKids[parentId] = npcWhosekids;
+                        }
+                        npcWhosekids[kidId] = whose;
+                    }
+                }
+            }
+            return whoseKids;
+        }
+    }
 
     internal static string LoadString(string key) => Game1.content.LoadString($"{Asset_Strings}:{key}");
 
     internal static string LoadString(string key, params object[] substitutions) =>
         Game1.content.LoadString($"{Asset_Strings}:{key}", substitutions);
+
+    internal static string LoadStringReturnNullIfNotFound(string key, params object[] substitutions) =>
+        Game1.content.LoadStringReturnNullIfNotFound($"{Asset_Strings}:{key}", substitutions);
 
     internal static bool TryLoadString(
         string key,
@@ -157,76 +165,7 @@ internal static class AssetManager
     {
         ModEntry.help.Events.Content.AssetRequested += OnAssetRequested;
         ModEntry.help.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
-        ModEntry.help.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
-    }
-
-    internal static Dictionary<string, (string, string)> ChildToNPC = [];
-
-    private static string FormChildNPCId(string childName, long uniqueMultiplayerId)
-    {
-        return $"{ModEntry.ModId}@{childName}@{uniqueMultiplayerId}";
-    }
-
-    private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
-    {
-        if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
-        {
-            ChildToNPC.Clear();
-            foreach (Farmer farmer in Game1.getAllFarmers())
-            {
-                foreach (Child kid in farmer.getChildren())
-                {
-                    if (kid.modData.TryGetValue(Child_ModData_Id, out string kidId))
-                    {
-                        kid.modData[Child_ModData_DisplayName] = kid.Name;
-                        kid.Name = kidId;
-                    }
-                    if (
-                        ChildData.TryGetValue(kidId, out CharacterData? childCharaData)
-                        && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                        && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
-                    )
-                    {
-                        string childNPCId = FormChildNPCId(kidId, farmer.UniqueMultiplayerID);
-                        ChildToNPC[childNPCId] = new(kidId, kid.displayName);
-                        kid.modData[Child_ModData_AsNPC] = childNPCId;
-                    }
-                }
-            }
-            ChildNPCSetup();
-            MultiplayerSync.SendChildToNPC(null);
-        }
-    }
-
-    internal static void ChildNPCSetup()
-    {
-        if (!ChildToNPC.Any())
-        {
-            return;
-        }
-        ModEntry.Log("Child to NPC setup");
-        foreach (var kv in ChildToNPC)
-        {
-            ModEntry.Log($"{kv.Key}: {kv.Value}");
-        }
-        ModEntry.help.GameContent.InvalidateCache(Asset_DataCharacters);
-        ModEntry.help.GameContent.InvalidateCache(Asset_DataNPCGiftTastes);
-        if (!Context.IsMainPlayer)
-        {
-            foreach (string childAsNPCId in ChildToNPC.Keys)
-            {
-                if (Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC)
-                {
-                    childAsNPC.reloadSprite(onlyAppearance: true);
-                    childAsNPC.Sprite.UpdateSourceRect();
-                }
-            }
-        }
-    }
-
-    private static void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
-    {
-        throw new NotImplementedException();
+        ModEntry.help.Events.Content.AssetReady += OnAssetReady;
     }
 
     private static void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -234,7 +173,7 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo(Asset_ChildData))
             e.LoadFrom(() => new Dictionary<string, CharacterData>(), AssetLoadPriority.Low);
         if (e.Name.IsEquivalentTo(Asset_WhoseKids))
-            e.LoadFrom(() => new Dictionary<string, Dictionary<string, bool>>(), AssetLoadPriority.Low);
+            e.LoadFrom(() => new Dictionary<string, WhoseKidData>(), AssetLoadPriority.Low);
         if (e.Name.IsEquivalentTo(Asset_Strings))
             e.LoadFromModFile<Dictionary<string, string>>("i18n/default/strings.json", AssetLoadPriority.Exclusive);
         if (e.Name.IsEquivalentTo(Asset_NoPortrait))
@@ -246,13 +185,13 @@ internal static class AssetManager
         if (e.Name.StartsWith(Asset_PortraitPrefix) || e.Name.StartsWith(Asset_SpritePrefix))
             e.LoadFrom(() => Game1.content.Load<Texture2D>(Asset_NoPortrait), AssetLoadPriority.Low);
 
-        if (ChildToNPC.Any())
+        if (KidHandler.ChildToNPC.Any())
         {
             if (e.Name.IsEquivalentTo(Asset_DataCharacters))
                 e.Edit(Edit_DataCharacters, AssetEditPriority.Early);
             if (e.NameWithoutLocale.IsEquivalentTo(Asset_DataNPCGiftTastes))
                 e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
-            foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
+            foreach ((string childNPCId, (string childId, _)) in KidHandler.ChildToNPC)
             {
                 foreach (string fwdAsset in ChildForwardedAssets)
                 {
@@ -286,7 +225,7 @@ internal static class AssetManager
     private static void Edit_DataCharacters(IAssetData asset)
     {
         IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
-        foreach ((string childNPCId, (string childId, string childName)) in ChildToNPC)
+        foreach ((string childNPCId, (string childId, string childName)) in KidHandler.ChildToNPC)
         {
             if (ChildData.TryGetValue(childId, out CharacterData? childCharaData))
             {
@@ -296,7 +235,7 @@ internal static class AssetManager
                 childCharaData.SpawnIfMissing = true;
                 foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))
                 {
-                    if (AppearanceIsBaby(appearanceData))
+                    if (KidHandler.AppearanceIsBaby(appearanceData))
                     {
                         childCharaData.Appearance.Remove(appearanceData);
                     }
@@ -309,7 +248,7 @@ internal static class AssetManager
     private static void Edit_DataNPCGiftTastes(IAssetData asset)
     {
         IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
-        foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
+        foreach ((string childNPCId, (string childId, _)) in KidHandler.ChildToNPC)
         {
             if (data.TryGetValue(childId, out string? giftTastes))
             {
@@ -340,191 +279,24 @@ internal static class AssetManager
             whoseKids = null;
             ModEntry.Config.ResetMenu();
         }
-        foreach ((string childNPCId, (string childId, _)) in ChildToNPC)
+        foreach ((string childNPCId, (string childId, _)) in KidHandler.ChildToNPC)
         {
             foreach (string fwdAsset in ChildForwardedAssets)
             {
                 if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, childId))))
                 {
-                    ModEntry.Log($"{fwdAsset}{childId} -> {fwdAsset}{childNPCId}");
+                    ModEntry.Log($"Propagate {fwdAsset}{childId} -> {fwdAsset}{childNPCId}");
                     ModEntry.help.GameContent.InvalidateCache(string.Concat(fwdAsset, childNPCId));
                 }
             }
         }
     }
 
-    /// <summary>Get and validate kid id</summary>
-    /// <param name="data"></param>
-    /// <returns></returns>
-    internal static bool TryGetKidIds(
-        string spouseId,
-        [NotNullWhen(true)] out List<string>? kidIds,
-        [NotNullWhen(true)] out Dictionary<string, bool>? enabledByDefault
-    )
+    private static void OnAssetReady(object? sender, AssetReadyEventArgs e)
     {
-        kidIds = null;
-        if (WhoseKids.TryGetValue(spouseId, out enabledByDefault))
+        if (e.NameWithoutLocale.IsEquivalentTo(Asset_ChildData))
         {
-            kidIds = enabledByDefault.Keys.ToList();
-            return enabledByDefault.Values.Where(value => value).Any();
+            DelayedAction.functionAfterDelay(KidHandler.ChildToNPC_Check, 0);
         }
-        return false;
-    }
-
-    /// <summary>Choose a new kid Id. If originalName is given, only choose new one if the existing pick is invalid for the specific spouse</summary>
-    /// <param name="spouse"></param>
-    /// <param name="originalName"></param>
-    /// <returns></returns>
-    internal static string? PickKidId(NPC spouse, Child? child = null, bool? darkSkinned = null)
-    {
-        if (
-            !TryGetAvailableSpouseKidIds(spouse, out string[]? availableKidIds)
-            && !TryGetAvailableSharedKidIds(out availableKidIds)
-        )
-        {
-            return null;
-        }
-
-        // already a HMK child, try to apply the changes
-        if (child != null && availableKidIds.Contains(child.Name))
-        {
-            return child.Name;
-        }
-
-        // Prioritize the kid id set by trigger action, if it is valid
-        if (spouse.modData.TryGetValue(ModData_NextKidId, out string? nextKidId) && availableKidIds.Contains(nextKidId))
-        {
-            return nextKidId;
-        }
-
-        string? name = null;
-        Gender? gender = null;
-        if (child != null)
-        {
-            name = child.Name;
-            darkSkinned = child.darkSkinned.Value;
-            gender = child.Gender;
-        }
-        return PickMostLikelyKidId(availableKidIds, darkSkinned, gender, name);
-    }
-
-    private static bool TryGetAvailableKidIds(string key, [NotNullWhen(true)] out string[]? availableKidIds)
-    {
-        availableKidIds = null;
-        if (!TryGetKidIds(key, out List<string>? kidIds, out _))
-            return false;
-
-        HashSet<string> children = Game1.player.getChildren().Select(child => child.Name).ToHashSet();
-        availableKidIds = kidIds
-            .Where(id =>
-                ChildData.ContainsKey(id)
-                && !children.Contains(id)
-                && ModEntry.Config.EnabledKids.GetValueOrDefault(new(key, id))
-            )
-            .ToArray();
-        return availableKidIds.Length > 0;
-    }
-
-    private static bool TryGetAvailableSpouseKidIds(NPC spouse, [NotNullWhen(true)] out string[]? availableKidIds)
-    {
-        availableKidIds = null;
-        if (spouse?.Name == null)
-            return false;
-        return TryGetAvailableKidIds(spouse.Name, out availableKidIds);
-    }
-
-    internal static bool TryGetAvailableSharedKidIds([NotNullWhen(true)] out string[]? availableKidIds)
-    {
-        return TryGetAvailableKidIds(Asset_Kids_Shared, out availableKidIds);
-    }
-
-    internal static string PickMostLikelyKidId(
-        string[] availableKidIds,
-        bool? darkSkinned,
-        Gender? gender,
-        string? name
-    )
-    {
-        // Prioritize "real name" if found
-        List<string> moreLikelyMatch = [];
-        foreach (var kidId in availableKidIds)
-        {
-            if (ChildData.TryGetValue(kidId, out CharacterData? data))
-            {
-                if (name != null && TokenParser.ParseText(data.DisplayName) == name)
-                    return kidId;
-                if (
-                    (gender == null || gender == data.Gender)
-                    && (darkSkinned == null || darkSkinned == data.IsDarkSkinned)
-                )
-                {
-                    moreLikelyMatch.Add(kidId);
-                }
-            }
-        }
-        Random daysPlayedRand = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
-        if (moreLikelyMatch.Count > 0)
-            return moreLikelyMatch[daysPlayedRand.Next(moreLikelyMatch.Count)];
-        return availableKidIds[daysPlayedRand.Next(availableKidIds.Length)];
-    }
-
-    internal static string? PickForSpecificKidId(NPC spouse, string name)
-    {
-        // Check for "real name" kid
-        if (!TryGetAvailableSpouseKidIds(spouse, out string[]? availableKidIds))
-        {
-            return null;
-        }
-        foreach (var kidId in availableKidIds)
-        {
-            if (ChildData.TryGetValue(kidId, out CharacterData? data))
-            {
-                if (name != null && TokenParser.ParseText(data.DisplayName) == name)
-                    return kidId;
-            }
-        }
-        return null;
-    }
-
-    internal static Child ChooseAndApplyKidId(NPC spouse, Child kid)
-    {
-        string kidName = kid.Name;
-        if (kidName == null || PickKidId(spouse, kid) is not string newKidId)
-            return kid;
-        return ApplyKidId(spouse.Name, kid, false, kidName, newKidId);
-    }
-
-    internal static Child ApplyKidId(string? spouseName, Child newKid, bool newBorn, string kidName, string newKidId)
-    {
-        newKid.modData[Child_ModData_Id] = newKidId;
-        newKid.modData[Child_ModData_DisplayName] = kidName;
-        newKid.modData[Child_ModData_NPCParent] = spouseName;
-        if (newBorn)
-        {
-            newKid.modData[Child_ModData_Birthday] = $"{Game1.season}|{Game1.dayOfMonth}";
-        }
-        else
-        {
-            SDate birthday = SDate.Now();
-            int daysOld = newKid.daysOld.Value;
-            while (daysOld > birthday.DaysSinceStart)
-            {
-                birthday.AddDays(28 * 40);
-            }
-            birthday = birthday.AddDays(-daysOld);
-            newKid.modData[Child_ModData_Birthday] = $"{birthday.Season}|{birthday.Day}";
-        }
-        newKid.Name = newKidId;
-        newKid.displayName = kidName;
-        if (newKid.GetData() is not CharacterData data)
-        {
-            ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);
-            return newKid;
-        }
-        newKid.Gender = data.Gender;
-        newKid.darkSkinned.Value = data.IsDarkSkinned;
-        newKid.reloadSprite(onlyAppearance: true);
-        ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.");
-        return newKid;
     }
 }

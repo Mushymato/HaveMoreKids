@@ -37,7 +37,7 @@
       "Target": "Characters/schedules/{{ModId}}_{{L@Kid}}",
       "Entries": {
         // give the child a schedule
-        "spring": "0700 Town 37 71 2/1200 Town 0 52 71/2400 13 21 BusStop"
+        "spring": "0610 Town 37 71 2/1200 Town 0 52 71/2400 13 21 BusStop"
       }
     },
     // You also need the dialogue and gift taste data
@@ -67,7 +67,7 @@
       "Target": "Data/NPCGiftTastes",
       "Entries": {
         // You can give the child some gift tastes, they also follow normal format
-        "{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.Toddler.Gift.Loved}}/221 398 612 721 903 FrogEgg/F{{i18n:{{L@Kid}}.Toddler.Gift.Liked}}/18 60 64 70 88 232 233 234 222 223 340 344 402 418 -6/{{i18n:{{L@Kid}}.Toddler.Gift.Dislike}}/-5 -75 -79 -81 80/{{i18n:{{L@Kid}}.Toddler.Gift.Hated}}/253 395 459 -26 16 330 873/{{i18n:{{L@Kid}}.Toddler.Gift.Neutral}}//",
+        "{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.Toddler.Gift.Loved}}/221 398 612 721 903 FrogEgg/{{i18n:{{L@Kid}}.Toddler.Gift.Liked}}/18 60 64 70 88 232 233 234 222 223 340 344 402 418 -6/{{i18n:{{L@Kid}}.Toddler.Gift.Dislike}}/-5 -75 -79 -81 80/{{i18n:{{L@Kid}}.Toddler.Gift.Hated}}/253 395 459 -26 16 330 873/{{i18n:{{L@Kid}}.Toddler.Gift.Neutral}}//",
       }
     }
   ]

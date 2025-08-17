@@ -28,6 +28,7 @@ internal sealed record KidIdent(string Spouse, string Kid)
 internal class ModConfigValues
 {
     public int PregnancyChance { get; set; } = 20;
+    public int DaysMarried { get; set; } = 7;
     public int DaysPregnant { get; set; } = 14;
     public int DaysBaby { get; set; } = 13;
     public int DaysCrawler { get; set; } = 27 - 13;
@@ -42,13 +43,19 @@ internal sealed class ModConfig : ModConfigValues
 {
     private Integration.IGenericModConfigMenuApi? GMCM;
     private IManifest Mod = null!;
-
     private Dictionary<string, IList<string>> EnabledKidsPages { get; set; } = [];
+    internal bool UnregistedOnNonHost = false;
+
+    internal sbyte TotalDaysBaby => (sbyte)DaysBaby;
+    internal sbyte TotalDaysCrawer => (sbyte)(DaysBaby + DaysCrawler);
+    internal sbyte TotalDaysToddler => (sbyte)(DaysBaby + DaysCrawler + DaysToddler);
+    internal sbyte TotalDaysChild => (sbyte)(DaysChild > -1 ? DaysBaby + DaysCrawler + DaysToddler + DaysChild : -1);
 
     /// <summary>Restore default config values</summary>
     private void Reset()
     {
         PregnancyChance = 20;
+        DaysMarried = 7;
         DaysPregnant = 14;
         DaysBaby = 13;
         DaysCrawler = 27 - 13;
@@ -57,13 +64,15 @@ internal sealed class ModConfig : ModConfigValues
         BaseMaxChildren = 4;
         UseSingleBedAsChildBed = false;
         EnabledKids.Clear();
-        CheckEnabledByDefault();
+        CheckDefaultEnabled();
     }
 
     public void SyncAndUnregister(ModConfigValues other)
     {
-        GMCM?.Unregister(Mod);
+        UnregistedOnNonHost = true;
+
         PregnancyChance = other.PregnancyChance;
+        DaysMarried = other.DaysMarried;
         DaysPregnant = other.DaysPregnant;
         DaysBaby = other.DaysBaby;
         DaysCrawler = other.DaysCrawler;
@@ -72,20 +81,39 @@ internal sealed class ModConfig : ModConfigValues
         BaseMaxChildren = other.BaseMaxChildren;
         UseSingleBedAsChildBed = other.UseSingleBedAsChildBed;
         EnabledKids = other.EnabledKids;
-        CheckEnabledByDefault();
+
+        if (GMCM == null)
+            return;
+        GMCM.Unregister(Mod);
+        GMCM.Register(
+            mod: Mod,
+            reset: () =>
+            {
+                Reset();
+                ModEntry.help.WriteConfig(this);
+                MultiplayerSync.SendModConfig(null);
+            },
+            save: () =>
+            {
+                ModEntry.help.WriteConfig(this);
+                MultiplayerSync.SendModConfig(null);
+            },
+            titleScreenOnly: false
+        );
+        GMCM.AddParagraph(Mod, I18n.Config_Page_Nonhost_Description);
     }
 
-    private void CheckEnabledByDefault()
+    private void CheckDefaultEnabled()
     {
         EnabledKidsPages.Clear();
-        string[] kidListKeys = [.. DataLoader.Characters(Game1.content).Keys, AssetManager.Asset_Kids_Shared];
+        string[] kidListKeys = [.. DataLoader.Characters(Game1.content).Keys, KidHandler.WhoseKids_Shared];
         foreach (string key in kidListKeys)
         {
             if (
-                !AssetManager.TryGetKidIds(
+                !KidHandler.TryGetKidIds(
                     key,
                     out List<string>? kidIds,
-                    out Dictionary<string, bool>? enabledByDefault
+                    out Dictionary<string, WhoseKidData>? whoseKidsInfo
                 )
             )
                 continue;
@@ -93,7 +121,7 @@ internal sealed class ModConfig : ModConfigValues
             {
                 KidIdent kidKey = new(key, kidId);
                 if (!EnabledKids.ContainsKey(kidKey))
-                    EnabledKids[kidKey] = enabledByDefault[kidId];
+                    EnabledKids[kidKey] = whoseKidsInfo[kidId].DefaultEnabled;
             }
             if (kidIds.Any())
                 EnabledKidsPages[key] = kidIds;
@@ -109,7 +137,7 @@ internal sealed class ModConfig : ModConfigValues
             "spacechase0.GenericModConfigMenu"
         );
         Mod = mod;
-        CheckEnabledByDefault();
+        CheckDefaultEnabled();
         if (GMCM == null)
         {
             ModEntry.help.WriteConfig(this);
@@ -148,6 +176,15 @@ internal sealed class ModConfig : ModConfigValues
             I18n.Config_PregnancyChance_Description,
             min: 0,
             max: 100
+        );
+        GMCM.AddNumberOption(
+            Mod,
+            () => DaysMarried,
+            (value) => DaysMarried = value,
+            I18n.Config_DaysMarried_Name,
+            I18n.Config_DaysMarried_Description,
+            min: 1,
+            max: 14
         );
         GMCM.AddNumberOption(
             Mod,
@@ -218,7 +255,7 @@ internal sealed class ModConfig : ModConfigValues
             var characterDatas = DataLoader.Characters(Game1.content);
             foreach ((string key, IList<string> kidIds) in EnabledKidsPages)
             {
-                if (key == AssetManager.Asset_Kids_Shared)
+                if (key == KidHandler.WhoseKids_Shared)
                 {
                     SetupSpouseKidsPage(key, I18n.Config_Page_SharedKids_Name, kidIds);
                 }
@@ -248,13 +285,11 @@ internal sealed class ModConfig : ModConfigValues
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
             {
                 if (
-                    data.Appearance?.FirstOrDefault(apr =>
-                        AssetManager.AppearanceIsUnconditional(apr) && !AssetManager.AppearanceIsBaby(apr)
-                    )
+                    data.Appearance?.FirstOrDefault(apr => apr.AppearanceIsUnconditional() && !apr.AppearanceIsBaby())
                     is CharacterAppearanceData toddlerApr
                 )
                 {
-                    CharacterAppearanceData? babyApr = data.Appearance?.FirstOrDefault(AssetManager.AppearanceIsBaby);
+                    CharacterAppearanceData? babyApr = data.Appearance?.FirstOrDefault(apr => apr.AppearanceIsBaby());
                     GMCM.AddComplexOption(
                         Mod,
                         name: () => "",
@@ -317,10 +352,12 @@ internal sealed class ModConfig : ModConfigValues
 
     public void ResetMenu()
     {
+        if (UnregistedOnNonHost)
+            return;
         if (GMCM == null)
             return;
         GMCM.Unregister(Mod);
-        CheckEnabledByDefault();
+        CheckDefaultEnabled();
         if (!Context.IsWorldReady || Context.IsMainPlayer)
         {
             SetupMenu();

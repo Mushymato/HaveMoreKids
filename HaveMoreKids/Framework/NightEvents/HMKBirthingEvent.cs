@@ -7,7 +7,7 @@ using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Menus;
 
-namespace HaveMoreKids.Framework.BirthingEvents;
+namespace HaveMoreKids.Framework.NightEvents;
 
 public class HMKBirthingEvent : BaseFarmEvent
 {
@@ -36,7 +36,7 @@ public class HMKBirthingEvent : BaseFarmEvent
             isDarkSkinned = random.NextBool(
                 (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
             );
-            newKidId = AssetManager.PickKidId(
+            newKidId = KidHandler.PickKidId(
                 spouse,
                 darkSkinned: random.NextBool(
                     (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
@@ -46,9 +46,9 @@ public class HMKBirthingEvent : BaseFarmEvent
         else
         {
             isDarkSkinned = random.NextBool(Game1.player.hasDarkSkin() ? 0.75 : 0.25);
-            if (AssetManager.TryGetAvailableSharedKidIds(out string[]? sharedKids))
+            if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids))
             {
-                newKidId = AssetManager.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
+                newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
             }
         }
 
@@ -131,18 +131,14 @@ public class HMKBirthingEvent : BaseFarmEvent
 
         // create and add kid
         Child newKid;
-        if (
-            newKidId != null
-            && !spouse.modData.Remove(AssetManager.ModData_NextKidId)
-            && AssetManager.PickForSpecificKidId(spouse, babyName) is string specificKidName
-        )
+        if (newKidId == null && KidHandler.PickForSpecificKidId(spouse, babyName) is string specificKidName)
         {
             newKidId = specificKidName;
         }
 
         if (newKidId != null && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData))
         {
-            newKid = AssetManager.ApplyKidId(
+            newKid = KidHandler.ApplyKidId(
                 spouse.Name,
                 new(babyName, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
                 true,
@@ -166,6 +162,7 @@ public class HMKBirthingEvent : BaseFarmEvent
         newKid.Age = 0;
         newKid.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);
         Utility.getHomeOfFarmer(Game1.player).characters.Add(newKid);
+        KidHandler.ChildToNPC_Check();
 
         // spouse stuff
         Game1.stats.checkForFullHouseAchievement(isDirectUnlock: true);

@@ -3,6 +3,8 @@
   "config.page.pregnancy.description": "Settings for pregnancy chances, length, base max number of children, and child stage lengths.",
   "config.PregnancyChance.name": "Pregnancy Chance",
   "config.PregnancyChance.description": "When all other conditions are filled, chance that your spouse will ask to have/adopt a child each night. Vanilla chance is 5%.",
+  "config.DaysMarried.name": "Married Days",
+  "config.DaysMarried.description": "Player must be married for this many days before pregnancy can happen. Vanilla days is 7.",
   "config.DaysPregnant.name": "Pregnancy Days",
   "config.DaysPregnant.description": "Time until the child arrives after answering the pregnancy question. Vanilla days is 14, must be changed prior to answering the pregnancy question. This feature does not work for player couples.",
   "config.BaseMaxChildren.name": "Base Max Children",
@@ -20,5 +22,6 @@
   "config.page.specificKids.description": "Enable/Disable Specific Kids Below:",
   "config.page.spousekids.name": "{{Name}}'s Kids",
   "config.page.sharedKids.name": "Shared Kids",
-  "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply."
+  "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply.",
+  "config.page.nonhost.description": "Because you are not the host player, you cannot change settings for this mod."
 }
