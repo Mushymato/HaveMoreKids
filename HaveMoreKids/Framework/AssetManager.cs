@@ -11,7 +11,7 @@ namespace HaveMoreKids.Framework;
 
 public sealed class WhoseKidData
 {
-    public List<string>? NPCParents { get; set; } = null;
+    public string? Parent { get; set; } = null;
     public bool Shared { get; set; } = false;
     public bool DefaultEnabled { get; set; } = true;
 }
@@ -119,19 +119,18 @@ internal static class AssetManager
             {
                 if (!ChildData.ContainsKey(kidId))
                     continue;
-                if (whose.Shared)
-                    whoseKids[KidHandler.WhoseKids_Shared][kidId] = whose;
-                if (whose.NPCParents?.Any() ?? false)
+                if (whose.Parent != null && Game1.characterData.ContainsKey(whose.Parent))
                 {
-                    foreach (string parentId in whose.NPCParents)
+                    if (!whoseKids.TryGetValue(whose.Parent, out Dictionary<string, WhoseKidData>? npcWhosekids))
                     {
-                        if (!whoseKids.TryGetValue(parentId, out Dictionary<string, WhoseKidData>? npcWhosekids))
-                        {
-                            npcWhosekids = [];
-                            whoseKids[parentId] = npcWhosekids;
-                        }
-                        npcWhosekids[kidId] = whose;
+                        npcWhosekids = [];
+                        whoseKids[whose.Parent] = npcWhosekids;
                     }
+                    npcWhosekids[kidId] = whose;
+                }
+                else if (whose.Shared)
+                {
+                    whoseKids[KidHandler.WhoseKids_Shared][kidId] = whose;
                 }
             }
             return whoseKids;

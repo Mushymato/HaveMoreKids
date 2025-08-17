@@ -106,7 +106,7 @@ internal sealed class ModConfig : ModConfigValues
     private void CheckDefaultEnabled()
     {
         EnabledKidsPages.Clear();
-        string[] kidListKeys = [.. DataLoader.Characters(Game1.content).Keys, KidHandler.WhoseKids_Shared];
+        string[] kidListKeys = [.. Game1.characterData.Keys, KidHandler.WhoseKids_Shared];
         foreach (string key in kidListKeys)
         {
             if (
@@ -197,15 +197,6 @@ internal sealed class ModConfig : ModConfigValues
         );
         GMCM.AddNumberOption(
             Mod,
-            () => BaseMaxChildren,
-            (value) => BaseMaxChildren = value,
-            I18n.Config_BaseMaxChildren_Name,
-            I18n.Config_BaseMaxChildren_Description,
-            min: 1,
-            max: 8
-        );
-        GMCM.AddNumberOption(
-            Mod,
             () => DaysBaby,
             (value) => DaysBaby = value,
             I18n.Config_DaysBaby_Name,
@@ -240,6 +231,20 @@ internal sealed class ModConfig : ModConfigValues
             min: -1,
             max: 56
         );
+
+        if (!EnabledKidsPages.ContainsKey(KidHandler.WhoseKids_Shared))
+        {
+            GMCM.AddNumberOption(
+                Mod,
+                () => BaseMaxChildren,
+                (value) => BaseMaxChildren = value,
+                I18n.Config_BaseMaxChildren_Name,
+                I18n.Config_BaseMaxChildren_Description,
+                min: 1,
+                max: 8
+            );
+        }
+
         GMCM.AddBoolOption(
             Mod,
             () => UseSingleBedAsChildBed,
@@ -252,14 +257,13 @@ internal sealed class ModConfig : ModConfigValues
         if (EnabledKidsPages.Any())
         {
             GMCM.AddParagraph(Mod, I18n.Config_Page_SpecificKids_Description);
-            var characterDatas = DataLoader.Characters(Game1.content);
             foreach ((string key, IList<string> kidIds) in EnabledKidsPages)
             {
                 if (key == KidHandler.WhoseKids_Shared)
                 {
                     SetupSpouseKidsPage(key, I18n.Config_Page_SharedKids_Name, kidIds);
                 }
-                else if (characterDatas.TryGetValue(key, out CharacterData? charaData))
+                else if (Game1.characterData.TryGetValue(key, out CharacterData? charaData))
                 {
                     SetupSpouseKidsPage(
                         key,

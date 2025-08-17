@@ -49,16 +49,14 @@
       }
     },
     // At this point, the kid is defined, but you need to add them to an NPC or the shared kids pool
-    // These examples are specific parent OR shared, but kid can be assigned to many parents and be shared at the same time.
+    // Parent and Shared are mutually exclusive and Parent takes precedence
     // Case NPC Parent (kid is only available for a particular NPC parent)
     {
       "Action": "EditData",
       "Target": "mushymato.HaveMoreKids/WhoseKids",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
-          "NPCParents": [
-            "{{NPCParent}}"
-          ]
+          "Parent": "{{NPCParent}}",
         }
       },
       "When": {

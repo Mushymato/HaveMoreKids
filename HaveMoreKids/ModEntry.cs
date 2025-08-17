@@ -1,6 +1,8 @@
+using System.Text;
 using HaveMoreKids.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
 
 namespace HaveMoreKids;
 
@@ -29,6 +31,20 @@ public class ModEntry : Mod
         AssetManager.Register();
         MultiplayerSync.Register();
         Patches.Apply();
+
+        help.ConsoleCommands.Add("hmk-list_npcs", "List all NPC in the world", ConsoleListNPCs);
+    }
+
+    internal static void ConsoleListNPCs(string arg1, string[] arg2)
+    {
+        if (!Context.IsWorldReady)
+            return;
+        StringBuilder sb = new();
+        Utility.ForEachCharacter(chara =>
+        {
+            Log($"{chara.Name} :: {chara.GetType()}");
+            return true;
+        });
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)

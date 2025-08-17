@@ -107,9 +107,7 @@
       "Target": "mushymato.HaveMoreKids/WhoseKids",
       "Entries": {
         "{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}": {
-          "NPCParents": [
-            "{{L@Spouse}}"
-          ]
+          "Parent": "{{L@Spouse}}"
         }
       },
     },

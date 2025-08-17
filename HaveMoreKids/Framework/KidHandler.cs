@@ -72,6 +72,22 @@ internal static class KidHandler
         return false;
     }
 
+    internal static IEnumerable<(Farmer, Child)> AllKids()
+    {
+        if (!Context.IsMainPlayer)
+        {
+            ModEntry.Log("WARNING: tried to iterate all kids on non-host", LogLevel.Warn);
+            yield break;
+        }
+        foreach (Farmer farmer in Game1.getAllFarmers())
+        {
+            foreach (Child kid in farmer.getChildren())
+            {
+                yield return new(farmer, kid);
+            }
+        }
+    }
+
     internal static void Register()
     {
         // events
@@ -93,23 +109,20 @@ internal static class KidHandler
     {
         if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
         {
-            foreach (Farmer farmer in Game1.getAllFarmers())
+            foreach ((_, Child kid) in AllKids())
             {
-                foreach (Child kid in farmer.getChildren())
+                if (kid.KidHMKId() is string kidId)
                 {
-                    if (kid.KidHMKId() is string kidId)
+                    if (AssetManager.ChildData.ContainsKey(kidId))
                     {
-                        if (AssetManager.ChildData.ContainsKey(kidId))
-                        {
-                            ModEntry.Log($"Restore on load: '{kid.Name}' ({kidId})");
-                            kid.modData[Child_ModData_DisplayName] = kid.Name;
-                            kid.Name = kidId;
-                        }
-                        else
-                        {
-                            ModEntry.Log($"Missing custom kid: '{kid.Name}' ({kidId})", LogLevel.Warn);
-                            kid.Name = kid.KidDisplayName(allowNull: false);
-                        }
+                        ModEntry.Log($"Restore on load: '{kid.Name}' ({kidId})");
+                        kid.modData[Child_ModData_DisplayName] = kid.Name;
+                        kid.Name = kidId;
+                    }
+                    else
+                    {
+                        ModEntry.Log($"Missing custom kid: '{kid.Name}' ({kidId})", LogLevel.Warn);
+                        kid.Name = kid.KidDisplayName(allowNull: false);
                     }
                 }
             }
@@ -124,20 +137,17 @@ internal static class KidHandler
 
         ModEntry.Log("Check if any child needs NPC version");
         ChildToNPC.Clear();
-        foreach (Farmer farmer in Game1.getAllFarmers())
+        foreach ((Farmer farmer, Child kid) in AllKids())
         {
-            foreach (Child kid in farmer.getChildren())
+            if (
+                AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                && !string.IsNullOrEmpty(childCharaData.CanSocialize)
+                && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
+            )
             {
-                if (
-                    AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
-                    && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                    && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
-                )
-                {
-                    string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
-                    ChildToNPC[childNPCId] = new(kid.Name, kid.displayName);
-                    kid.modData[Child_ModData_AsNPC] = childNPCId;
-                }
+                string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
+                ChildToNPC[childNPCId] = new(kid.Name, kid.displayName);
+                kid.modData[Child_ModData_AsNPC] = childNPCId;
             }
         }
         ChildToNPC_Setup();
@@ -240,8 +250,13 @@ internal static class KidHandler
                     kid.Age = 4;
                     if (GameStateQuery.CheckConditions(childCharaData.CanSocialize))
                     {
+                        kid.IsInvisible = true;
                         kid.daysUntilNotInvisible = 1;
                         stayHome = false;
+                    }
+                    else
+                    {
+                        kid.reloadSprite();
                     }
                 }
 
@@ -259,6 +274,7 @@ internal static class KidHandler
                         childFriendship = new Friendship(0);
                         Game1.player.friendshipData[kid.Name] = childFriendship;
                     }
+                    // might be haunted in multiplayer?
                     Game1.player.friendshipData[childAsNPCId] = childFriendship;
                     childAsNPC.reloadSprite(onlyAppearance: true);
                     childAsNPC.InvalidateMasterSchedule();
@@ -301,19 +317,16 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        foreach (Farmer farmer in Game1.getAllFarmers())
+        foreach ((_, Child kid) in AllKids())
         {
-            foreach (Child kid in farmer.getChildren())
+            if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
             {
-                if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
-                {
 #if DEBUG
-                    ModEntry.Log($"Unset before saving: '{displayName}' ({kid.Name})");
+                ModEntry.Log($"Unset before saving: '{displayName}' ({kid.Name})");
 #endif
-                    kid.modData.Remove(Child_ModData_DisplayName);
-                    kid.modData[Child_ModData_Id] = kid.Name;
-                    kid.Name = displayName;
-                }
+                kid.modData.Remove(Child_ModData_DisplayName);
+                kid.modData[Child_ModData_Id] = kid.Name;
+                kid.Name = displayName;
             }
         }
     }
@@ -325,19 +338,16 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        foreach (Farmer farmer in Game1.getAllFarmers())
+        foreach ((_, Child kid) in AllKids())
         {
-            foreach (Child kid in farmer.getChildren())
+            if (kid.modData.TryGetValue(Child_ModData_Id, out string kidId))
             {
-                if (kid.modData.TryGetValue(Child_ModData_Id, out string kidId))
-                {
 #if DEBUG
-                    ModEntry.Log($"Restore after saving: '{kid.Name}' ({kidId})");
+                ModEntry.Log($"Restore after saving: '{kid.Name}' ({kidId})");
 #endif
 
-                    kid.modData[Child_ModData_DisplayName] = kid.Name;
-                    kid.Name = kidId;
-                }
+                kid.modData[Child_ModData_DisplayName] = kid.Name;
+                kid.Name = kidId;
             }
         }
     }

@@ -41,7 +41,6 @@ internal static class MultiplayerSync
         if (!Context.IsMainPlayer && e.FromModID == ModEntry.ModId)
         {
             ModEntry.Log($"Recv {e.Type}");
-
             switch (e.Type)
             {
                 case ChildToNPCMsg:
