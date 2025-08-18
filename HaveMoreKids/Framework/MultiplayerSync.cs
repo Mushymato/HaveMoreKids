@@ -44,7 +44,7 @@ internal static class MultiplayerSync
             switch (e.Type)
             {
                 case ChildToNPCMsg:
-                    KidHandler.ChildToNPC_FromHost(e.ReadAs<Dictionary<string, (string, string)>>());
+                    KidHandler.ChildToNPC_FromHost(e.ReadAs<Dictionary<string, ChildToNPCEntry>>());
                     break;
                 case ModConfigMsg:
                     ModEntry.Config.SyncAndUnregister(e.ReadAs<ModConfigValues>());

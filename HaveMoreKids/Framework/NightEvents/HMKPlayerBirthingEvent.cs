@@ -171,7 +171,7 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
             }
             if (!string.IsNullOrEmpty(babyName) && babyName.Length > 0)
             {
-                string text = babyName;
+                string text = HMKBirthingEvent.AntiNameCollision(babyName);
                 List<NPC> allCharacters = Utility.getAllCharacters();
                 if (child.KidDisplayName() is not null)
                 {
@@ -179,7 +179,7 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
                 }
                 else
                 {
-                    child.Name = HMKBirthingEvent.AntiNameCollision(text);
+                    child.Name = text;
                 }
                 Game1.playSound("smallSelect");
                 if (Game1.keyboardDispatcher != null)

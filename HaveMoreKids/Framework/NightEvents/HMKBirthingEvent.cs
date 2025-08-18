@@ -136,6 +136,7 @@ public class HMKBirthingEvent : BaseFarmEvent
             newKidId = specificKidName;
         }
 
+        babyName = AntiNameCollision(babyName);
         if (newKidId != null && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData))
         {
             newKid = KidHandler.ApplyKidId(
@@ -157,7 +158,7 @@ public class HMKBirthingEvent : BaseFarmEvent
             {
                 isMale = Game1.player.getChildren().Last().Gender == Gender.Female;
             }
-            newKid = new(AntiNameCollision(babyName), isMale, isDarkSkinned, Game1.player);
+            newKid = new(babyName, isMale, isDarkSkinned, Game1.player);
         }
         newKid.Age = 0;
         newKid.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);

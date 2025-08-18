@@ -1,12 +1,12 @@
 # Have More Kids (HMK)
 
-Mod that let you have more kids, unique kids, talkable and giftable kids, roaming NPC kids, and so on.
+A mod that let you have more kids, unique kids, talkable and giftable kids, roaming NPC kids, and so on.
 
 This mod's has features related to pregnancy and childbirth that will apply even if you don't have any content packs. These can be changed in-game via GMCM.
 
 ## Configuration
 
-- `Days Married`: Minimum number of days the player must be married before pregnancy can occur. Vanilla days is 7.
+- `Days Married`: Minimum number of days the player must be married before pregnancy can occur. Vanilla days is 7, only applicable to NPC spouse.
 - `Pregnancy Chance`: Changes chance for pregnancy to happen each night, when all other conditions are fufilled.
 - `Pregnancy Days`: Time until the child arrives after answering the pregnancy question. Vanilla days is 14, must be changed prior to answering the pregnancy question.
 - `Days until Baby`: Number of days until the newborn becomes a baby. Vanilla days is 13.
@@ -19,13 +19,13 @@ When you have content packs installed, you can configure which custom kids are e
 
 ## Compatibility
 
-- Free Love: not compat rn (0.6.0), soon perhaps.
-- Unique Children Talk: HMK has similar feature (allow talking to children), but you should be able to use UCT on a HMK kid without dialogue.
-- LittleNPC: HMK has similar feature (children grow up to NPC), but you should be able to use LittleNPC with a HMK kid does NOT have HMK kid NPC data.
+- `Free Love`: not compat rn (0.6.0), soon perhaps.
+- `Unique Children Talk`: HMK has similar feature (allow talking to children), but you should be able to use UCT on a HMK kid without dialogue.
+- `LittleNPC`: HMK has similar feature (children grow up to NPC), but you should be able to use LittleNPC with a HMK kid that doesn't have NPC mode enabled.
 
 ## Multiplayer
 
-Custom kids are assigned unique id 
+In order to ensure proper function, all players must install this mod and the same list of content packs for this mod. Compared to content patcher child replacer mods, this mod manages appearances of other player's children in a way that is consistent for all players, and thus all players need to have matching data and textures even if it is not their baby. This is extra important if the feature of letting kid grow up to a child is enabled.
 
 ## Uninstall
 
@@ -34,4 +34,4 @@ Removing a content pack for this mod will make the affected kids retry choosing 
 
 ## For Modders
 
-See [author guide](author-guide.md) for how to make a content pack to have unique children for your spouse.
+See [author guide](docs/author-guide.md) for how to make a content pack to have unique children for your spouse.

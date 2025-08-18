@@ -1,4 +1,7 @@
+using System.Reflection;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Events;
 
@@ -72,13 +75,39 @@ public class HMKPregnancyQuestionEvent(int whichQuestion) : BaseFarmEvent
         }
     }
 
+    private static readonly FieldInfo nextBirthingDateField = AccessTools.DeclaredField(
+        typeof(Friendship),
+        "nextBirthingDate"
+    );
+    private static readonly PerScreen<Netcode.NetRef<WorldDate>> nextBirthingDatePS = new();
+
     private void AnswerPlayerPregnancyQuestion(Farmer who, string answer)
     {
         if (answer.Equals("Yes"))
         {
             long value = Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID)!.Value;
             Farmer receiver = Game1.otherFarmers[value];
+            Friendship friendship = Game1.player.team.GetFriendship(Game1.player.UniqueMultiplayerID, value);
+            if (nextBirthingDateField.GetValue(friendship) is Netcode.NetRef<WorldDate> nextBirthingDate)
+            {
+                nextBirthingDatePS.Value = nextBirthingDate;
+                if (ModEntry.Config.DaysPregnant != 14)
+                {
+                    nextBirthingDate.fieldChangeVisibleEvent += OnFieldChangeVisible;
+                }
+            }
             Game1.player.team.SendProposal(receiver, ProposalType.Baby);
+        }
+    }
+
+    private void OnFieldChangeVisible(Netcode.NetRef<WorldDate> field, WorldDate oldValue, WorldDate newValue)
+    {
+        if (field == nextBirthingDatePS.Value && newValue.TotalDays - oldValue.TotalDays == 14)
+        {
+            ModEntry.Log($"Modifying player pregnancy days");
+            nextBirthingDatePS.Value.fieldChangeVisibleEvent -= OnFieldChangeVisible;
+            nextBirthingDatePS.Value.Value.TotalDays -= 14;
+            nextBirthingDatePS.Value.Value.TotalDays += ModEntry.Config.DaysPregnant;
         }
     }
 

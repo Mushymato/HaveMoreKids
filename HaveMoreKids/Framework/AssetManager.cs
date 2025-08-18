@@ -190,11 +190,11 @@ internal static class AssetManager
                 e.Edit(Edit_DataCharacters, AssetEditPriority.Early);
             if (e.NameWithoutLocale.IsEquivalentTo(Asset_DataNPCGiftTastes))
                 e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
-            foreach ((string childNPCId, (string childId, _)) in KidHandler.ChildToNPC)
+            foreach ((string childNPCId, ChildToNPCEntry child2npc) in KidHandler.ChildToNPC)
             {
                 foreach (string fwdAsset in ChildForwardedAssets)
                 {
-                    string fwdSrcAsset = string.Concat(fwdAsset, childId);
+                    string fwdSrcAsset = string.Concat(fwdAsset, child2npc.KidId);
                     if (e.NameWithoutLocale.IsEquivalentTo(string.Concat(fwdAsset, childNPCId)))
                     {
                         e.LoadFrom(() => ForwardFrom_ChildIdAsset(fwdSrcAsset), AssetLoadPriority.Low);
@@ -224,14 +224,16 @@ internal static class AssetManager
     private static void Edit_DataCharacters(IAssetData asset)
     {
         IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
-        foreach ((string childNPCId, (string childId, string childName)) in KidHandler.ChildToNPC)
+        foreach ((string childNPCId, ChildToNPCEntry child2npc) in KidHandler.ChildToNPC)
         {
-            if (ChildData.TryGetValue(childId, out CharacterData? childCharaData))
+            if (ChildData.TryGetValue(child2npc.KidId, out CharacterData? childCharaData))
             {
                 childCharaData = childCharaData.ShallowClone();
-                childCharaData.DisplayName = childName;
+                childCharaData.DisplayName = child2npc.DisplayName;
                 childCharaData.TextureName ??= Asset_DefaultTextureName;
                 childCharaData.SpawnIfMissing = true;
+                childCharaData.BirthSeason = child2npc.BirthSeason;
+                childCharaData.BirthDay = child2npc.BirthDay;
                 foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))
                 {
                     if (KidHandler.AppearanceIsBaby(appearanceData))
@@ -247,9 +249,9 @@ internal static class AssetManager
     private static void Edit_DataNPCGiftTastes(IAssetData asset)
     {
         IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
-        foreach ((string childNPCId, (string childId, _)) in KidHandler.ChildToNPC)
+        foreach ((string childNPCId, ChildToNPCEntry child2npc) in KidHandler.ChildToNPC)
         {
-            if (data.TryGetValue(childId, out string? giftTastes))
+            if (data.TryGetValue(child2npc.KidId, out string? giftTastes))
             {
                 data[childNPCId] = giftTastes;
             }
@@ -278,13 +280,13 @@ internal static class AssetManager
             whoseKids = null;
             ModEntry.Config.ResetMenu();
         }
-        foreach ((string childNPCId, (string childId, _)) in KidHandler.ChildToNPC)
+        foreach ((string childNPCId, ChildToNPCEntry child2npc) in KidHandler.ChildToNPC)
         {
             foreach (string fwdAsset in ChildForwardedAssets)
             {
-                if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, childId))))
+                if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, child2npc.KidId))))
                 {
-                    ModEntry.Log($"Propagate {fwdAsset}{childId} -> {fwdAsset}{childNPCId}");
+                    ModEntry.Log($"Propagate {fwdAsset}{child2npc.KidId} -> {fwdAsset}{childNPCId}");
                     ModEntry.help.GameContent.InvalidateCache(string.Concat(fwdAsset, childNPCId));
                 }
             }

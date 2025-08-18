@@ -11,6 +11,7 @@
           // As long as it is not null/FALSE, the child will get a generated Data/Character entry
           // Afterwards, this condition controls whether they appear as a Child or a NPC
           "CanSocialize": "!DAY_OF_WEEK Sunday",
+          "Calendar": "AlwaysShown",
           // They need a Home entries (to not spawn in middle of Town), just like normal NPCs
           "Home": [
             {

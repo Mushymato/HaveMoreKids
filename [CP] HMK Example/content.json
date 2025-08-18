@@ -33,5 +33,14 @@
         "L@Growup": "npc"
       }
     },
+    {
+      "Action": "EditData",
+      "Target": "Data/Characters",
+      "Fields": {
+        "Vincent": {
+          "BirthDay": 12
+        }
+      }
+    },
   ]
 }

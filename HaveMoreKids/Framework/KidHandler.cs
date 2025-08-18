@@ -12,6 +12,8 @@ using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
 
+internal sealed record ChildToNPCEntry(string KidId, string DisplayName, Season BirthSeason, int BirthDay);
+
 internal static class KidHandler
 {
     private const string Appearances_Prefix_Baby = "HMK_BABY";
@@ -98,7 +100,7 @@ internal static class KidHandler
         ModEntry.help.Events.GameLoop.Saved += OnSaved;
     }
 
-    internal static Dictionary<string, (string, string)> ChildToNPC { get; private set; } = [];
+    internal static Dictionary<string, ChildToNPCEntry> ChildToNPC { get; private set; } = [];
 
     private static string FormChildNPCId(string childName, long uniqueMultiplayerId)
     {
@@ -146,7 +148,34 @@ internal static class KidHandler
             )
             {
                 string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
-                ChildToNPC[childNPCId] = new(kid.Name, kid.displayName);
+                SDate birthday = SDate.Now();
+                bool gotBirthday = false;
+                Season birthSeason = birthday.Season;
+                int birthDay = birthday.Day;
+                if (kid.modData.TryGetValue(Child_ModData_Birthday, out string bday))
+                {
+                    string[] parts = bday.Split("|");
+                    if (
+                        ArgUtility.TryGetEnum(parts, 0, out birthSeason, out string error, name: "season")
+                        && ArgUtility.TryGetInt(parts, 0, out birthDay, out error, name: "season")
+                    )
+                    {
+                        gotBirthday = true;
+                    }
+                }
+                if (!gotBirthday)
+                {
+                    int daysOld = kid.daysOld.Value;
+                    while (daysOld > birthday.DaysSinceStart)
+                    {
+                        birthday.AddDays(28 * 40);
+                    }
+                    birthday = birthday.AddDays(-daysOld);
+                    kid.modData[Child_ModData_Birthday] = $"{birthday.Season}|{birthday.Day}";
+                    birthSeason = birthday.Season;
+                    birthDay = birthday.Day;
+                }
+                ChildToNPC[childNPCId] = new(kid.Name, kid.displayName, birthSeason, birthDay);
                 kid.modData[Child_ModData_AsNPC] = childNPCId;
             }
         }
@@ -154,7 +183,7 @@ internal static class KidHandler
         MultiplayerSync.SendChildToNPC(null);
     }
 
-    internal static void ChildToNPC_FromHost(Dictionary<string, (string, string)> newChildToNPC)
+    internal static void ChildToNPC_FromHost(Dictionary<string, ChildToNPCEntry> newChildToNPC)
     {
         ChildToNPC = newChildToNPC;
         ChildToNPC_Setup();
