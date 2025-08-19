@@ -38,6 +38,16 @@ internal static partial class Patches
             prefix: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Prefix)),
             finalizer: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Finalizer))
         );
+        // special addActor logic for events
+        // harmony.Patch(
+        //     original: AccessTools.DeclaredMethod(typeof(Event), nameof(Event.getActorByName)),
+        //     postfix: new HarmonyMethod(typeof(Patches), nameof(Event_getActorByName_Postfix))
+        // );
+    }
+
+    private static void Event_getActorByName_Postfix()
+    {
+        throw new NotImplementedException();
     }
 
     private static bool In_Billboard_GetEventsForDay = true;
