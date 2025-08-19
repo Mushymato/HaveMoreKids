@@ -1,0 +1,326 @@
+using System.Reflection;
+using System.Reflection.Emit;
+using HarmonyLib;
+using HaveMoreKids.Framework.NightEvents;
+using Microsoft.Xna.Framework;
+using StardewModdingAPI;
+using StardewValley;
+using StardewValley.Characters;
+using StardewValley.Events;
+using StardewValley.GameData.Characters;
+using StardewValley.Locations;
+using StardewValley.Objects;
+
+namespace HaveMoreKids.Framework;
+
+internal record TempCAD(CharacterAppearanceData Data)
+{
+    readonly string? originalCondition = Data.Condition;
+    readonly int originalPrecedence = Data.Precedence;
+
+    public void Restore()
+    {
+        Data.Condition = originalCondition;
+        Data.Precedence = originalPrecedence;
+    }
+}
+
+internal static partial class Patches
+{
+    internal const string Condition_KidId = "KID_ID";
+    internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
+    internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
+
+    private static void MakeDynamicMethods()
+    {
+        DynamicMethod dm;
+        ILGenerator gen;
+
+        var NPC_ChooseAppearance = AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.ChooseAppearance));
+        dm = new DynamicMethod("NPC_ChooseAppearance_Call", typeof(void), [typeof(NPC)]);
+        gen = dm.GetILGenerator();
+        gen.Emit(OpCodes.Ldarg_0);
+        gen.Emit(OpCodes.Ldnull);
+        gen.Emit(OpCodes.Call, NPC_ChooseAppearance);
+        gen.Emit(OpCodes.Ret);
+        NPC_ChooseAppearance_Call = dm.CreateDelegate<Action<NPC>>();
+
+        var NPC_loadCurrentDialogue = AccessTools.DeclaredMethod(typeof(NPC), "loadCurrentDialogue");
+        dm = new DynamicMethod("NPC_loadCurrentDialogue_Call", typeof(Stack<Dialogue>), [typeof(NPC)]);
+        gen = dm.GetILGenerator();
+        gen.Emit(OpCodes.Ldarg_0);
+        gen.Emit(OpCodes.Call, NPC_loadCurrentDialogue);
+        gen.Emit(OpCodes.Ret);
+        NPC_loadCurrentDialogue_Call = dm.CreateDelegate<Func<NPC, Stack<Dialogue>>>();
+    }
+
+    internal static void Apply_Child(Harmony harmony)
+    {
+        MakeDynamicMethods();
+
+        // Make the child use appearance system
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.reloadSprite)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_reloadSprite_Postfix))
+        );
+        // Alter rate of child aging
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.dayUpdate)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler))
+        );
+        // Use special child data for the child form
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.GetData)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_GetData_Postfix))
+        );
+        // Talk to the child once every day
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.checkAction)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Child_checkAction_Prefix))
+        );
+        // Let child have regular npc dialogue
+        harmony.Patch(
+            original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.Dialogue)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_Dialogue_Transpiler))
+        );
+        harmony.Patch(
+            original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.CurrentDialogue)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CurrentDialogue_Postfix))
+        );
+        // Let child receive 1 gift a day
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.CanReceiveGifts)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CanReceiveGifts_Postfix))
+        );
+        // Fix display name
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), "translateName"),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_translateName_Postfix))
+        );
+        // Fix mugshot for Child Age>3
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.getMugShotSourceRect)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_getMugShotSourceRect_Postfix))
+        );
+    }
+
+    private static void Child_translateName_Postfix(Child __instance, ref string __result)
+    {
+        if (__instance.KidDisplayName() is string displayName)
+        {
+            __result = displayName;
+        }
+    }
+
+    private static void Child_getMugShotSourceRect_Postfix(Child __instance, ref Rectangle __result)
+    {
+        if (__instance.Age > 3)
+        {
+            __result = __instance.GetData()?.MugShotSourceRect ?? new Rectangle(0, 4, 16, 24);
+        }
+    }
+
+    private static void NPC_CanReceiveGifts_Postfix(NPC __instance, ref bool __result)
+    {
+        if (__instance is Child kid && kid.Age >= 3 && Game1.NPCGiftTastes.ContainsKey(kid.Name))
+        {
+            __result = kid.GetData().CanReceiveGifts;
+        }
+    }
+
+    private static void NPC_CurrentDialogue_Postfix(NPC __instance, ref Stack<Dialogue> __result)
+    {
+        if (__instance is Child kid && kid.Age >= 3)
+        {
+            Game1.npcDialogues.TryGetValue(__instance.Name, out var value);
+            value ??= Game1.npcDialogues[__instance.Name] = NPC_loadCurrentDialogue_Call(__instance);
+            __result = value;
+        }
+    }
+
+    private static IEnumerable<CodeInstruction> Child_Dialogue_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            // IL_0018: ldarg.0
+            // IL_0019: isinst StardewValley.Characters.Child
+            // IL_001e: brfalse.s IL_0029
+            matcher
+                .MatchEndForward([new(OpCodes.Ldarg_0), new(OpCodes.Isinst, typeof(Child)), new(OpCodes.Brfalse_S)])
+                .ThrowIfNotMatch("Did not find 'this is Child'");
+            matcher.Opcode = OpCodes.Brtrue_S;
+            matcher.Advance(-1).Operand = typeof(NPC);
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in Child_Dialogue_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
+    private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l, ref bool __result)
+    {
+        if (__instance.Age >= 3 && who.IsLocalPlayer)
+        {
+            if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
+            {
+                __result = __instance.tryToReceiveActiveObject(who);
+                return !__result;
+            }
+            if (__instance.CurrentDialogue.Count > 0)
+            {
+                Game1.drawDialogue(__instance);
+                who.talkToFriend(__instance); // blocks the vanilla interact
+                __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
+                __result = true;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void Child_GetData_Postfix(NPC __instance, ref CharacterData __result)
+    {
+        if (__result != null)
+            return;
+        if (__instance is Child && AssetManager.ChildData.TryGetValue(__instance.Name, out CharacterData? data))
+        {
+            __result = data;
+        }
+    }
+
+    private static sbyte ModifyDaysBaby(sbyte days) => ModEntry.Config.TotalDaysBaby;
+
+    private static sbyte ModifyDaysCrawler(sbyte days) => ModEntry.Config.TotalDaysCrawer;
+
+    private static sbyte ModifyDaysToddler(sbyte days) => ModEntry.Config.TotalDaysToddler;
+
+    private static IEnumerable<CodeInstruction> Child_dayUpdate_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+
+            // IL_0093: ldfld class Netcode.NetInt StardewValley.Characters.Child::daysOld
+            // IL_0098: callvirt instance !0 class Netcode.NetFieldBase`2<int32, class Netcode.NetInt>::get_Value()
+            // IL_009d: ldc.i4.s 55
+
+            List<ValueTuple<sbyte, MethodInfo>> patchDays =
+            [
+                new(55, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysToddler))),
+                new(27, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysCrawler))),
+                new(13, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyDaysBaby))),
+            ];
+            foreach ((sbyte days, MethodInfo callFunc) in patchDays)
+            {
+                matcher
+                    .MatchEndForward(
+                        [
+                            new(OpCodes.Ldfld, AccessTools.Field(typeof(Child), nameof(Child.daysOld))),
+                            new(
+                                OpCodes.Callvirt
+                            // AccessTools.PropertyGetter(typeof(Netcode.NetInt), nameof(Netcode.NetInt.Value))
+                            ),
+                            new(OpCodes.Ldc_I4_S, days),
+                        ]
+                    )
+                    .ThrowIfNotMatch($"Did not find 'daysOld.Value >= {days}'")
+                    .Advance(1)
+                    .InsertAndAdvance([new(OpCodes.Call, callFunc)]);
+            }
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in Child_dayUpdate_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
+    /// <summary>
+    /// Apply appearances on the kid
+    /// </summary>
+    /// <param name="__instance"></param>
+    private static void Child_reloadSprite_Postfix(Child __instance)
+    {
+        if (__instance.currentLocation == null)
+            return;
+        CharacterData? characterData = __instance.GetData();
+        if (characterData?.Appearance is not List<CharacterAppearanceData> appearances || appearances.Count == 0)
+        {
+            return;
+        }
+        List<TempCAD> tmpCADs = [];
+        foreach (var data in appearances)
+        {
+            if (__instance.Age < 3)
+            {
+                tmpCADs.Add(new(data));
+                if (data.AppearanceIsBaby())
+                {
+                    data.Precedence = Math.Min(data.Precedence, -100);
+                    data.Condition =
+                        data.Condition != null ? data.Condition.Replace(Condition_KidId, __instance.Name) : "TRUE";
+                }
+                else
+                {
+                    data.Precedence = Math.Max(data.Precedence, 100);
+                    data.Condition = "FALSE";
+                }
+            }
+            else
+            {
+                if (data.AppearanceIsBaby())
+                {
+                    tmpCADs.Add(new(data));
+                    data.Precedence = Math.Max(data.Precedence, 100);
+                    data.Condition = "FALSE";
+                }
+                else if (data.Condition != null)
+                {
+                    tmpCADs.Add(new(data));
+                    data.Condition = data.Condition.Replace(Condition_KidId, __instance.Name);
+                }
+            }
+        }
+        NPC_ChooseAppearance_Call(__instance);
+        if (__instance.Age < 3)
+        {
+            __instance.Sprite.SpriteWidth = 22;
+            __instance.Sprite.SpriteHeight = __instance.Age == 1 ? 32 : 16;
+            __instance.Sprite.currentFrame = 0;
+            switch (__instance.Age)
+            {
+                case 1:
+                    __instance.Sprite.currentFrame = 4;
+                    break;
+                case 2:
+                    __instance.Sprite.currentFrame = 32;
+                    break;
+            }
+            __instance.HideShadow = true;
+        }
+        else
+        {
+            __instance.Sprite.SpriteWidth = characterData.Size.X;
+            __instance.Sprite.SpriteHeight = characterData.Size.Y;
+            __instance.Sprite.currentFrame = 0;
+            __instance.HideShadow = false;
+        }
+        __instance.Sprite.UpdateSourceRect();
+
+        foreach (var tmp in tmpCADs)
+            tmp.Restore();
+
+        return;
+    }
+}

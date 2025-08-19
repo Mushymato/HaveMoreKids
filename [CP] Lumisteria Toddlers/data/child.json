@@ -28,24 +28,24 @@
     // toddlers
     {
       "Action": "Load",
-      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
+      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
       "FromFile": "Assets/body/{{L@Body}}.png",
     },
     {
       "Action": "EditImage",
-      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
+      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
       "FromFile": "Assets/eyes/{{EyeStyle}}{{L@Eyes}}/{{Lowercase:{{L@Spouse}}}}.png",
       "PatchMode": "Overlay"
     },
     {
       "Action": "EditImage",
-      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
+      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
       "FromFile": "Assets/hairs/{{Lowercase:{{L@Spouse}}}}/{{L@Hair}}.png",
       "PatchMode": "Overlay"
     },
     {
       "Action": "EditImage",
-      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
+      "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
       "FromFile": "Assets/clothes/{{Lowercase:{{L@Spouse}}}}/{{L@Seq}}{{Random:01,02,03,04,05,06,07,08,09,10,11,12}}.png",
       "PatchMode": "Overlay"
     },
@@ -84,7 +84,7 @@
           "Appearance": [
             {
               "Id": "mushymato.HaveMoreKids_Toddler",
-              "Sprite": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}",
+              "Sprite": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
             },
             {
               // a conditional outfit

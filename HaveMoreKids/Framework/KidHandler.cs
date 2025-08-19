@@ -6,6 +6,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Delegates;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
@@ -20,7 +21,6 @@ internal static class KidHandler
     private const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
-    private const string Child_ModData_Birthday = $"{ModEntry.ModId}/Birthday";
     private const string Child_ModData_AsNPC = $"{ModEntry.ModId}/AsNPC";
     private const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     private const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
@@ -111,24 +111,31 @@ internal static class KidHandler
     {
         if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveLoadedLocations && Context.IsMainPlayer)
         {
-            foreach ((_, Child kid) in AllKids())
+            try
             {
-                if (kid.KidHMKId() is string kidId)
+                foreach ((_, Child kid) in AllKids())
                 {
-                    if (AssetManager.ChildData.ContainsKey(kidId))
+                    if (kid.KidHMKId() is string kidId)
                     {
-                        ModEntry.Log($"Restore on load: '{kid.Name}' ({kidId})");
-                        kid.modData[Child_ModData_DisplayName] = kid.Name;
-                        kid.Name = kidId;
-                    }
-                    else
-                    {
-                        ModEntry.Log($"Missing custom kid: '{kid.Name}' ({kidId})", LogLevel.Warn);
-                        kid.Name = kid.KidDisplayName(allowNull: false);
+                        if (AssetManager.ChildData.ContainsKey(kidId))
+                        {
+                            ModEntry.Log($"Restore on load: '{kid.Name}' ({kidId})");
+                            kid.modData[Child_ModData_DisplayName] = kid.Name;
+                            kid.Name = kidId;
+                        }
+                        else
+                        {
+                            ModEntry.Log($"Missing custom kid: '{kid.Name}' ({kidId})", LogLevel.Warn);
+                            kid.Name = kid.KidDisplayName(allowNull: false);
+                        }
                     }
                 }
+                ChildToNPC_Check();
             }
-            ChildToNPC_Check();
+            catch (Exception err)
+            {
+                ModEntry.Log($"Error in LoadStageChanged:\n{err}", LogLevel.Error);
+            }
         }
     }
 
@@ -141,6 +148,20 @@ internal static class KidHandler
         ChildToNPC.Clear();
         foreach ((Farmer farmer, Child kid) in AllKids())
         {
+            if (!Utility.TryParseEnum(kid.Birthday_Season, out Season season))
+            {
+                SDate birthday = SDate.Now();
+                int daysOld = kid.daysOld.Value;
+                while (daysOld > birthday.DaysSinceStart)
+                {
+                    // 10 years
+                    birthday.AddDays(28 * 40);
+                }
+                birthday = birthday.AddDays(-daysOld);
+                season = birthday.Season;
+                kid.Birthday_Season = Utility.getSeasonKey(birthday.Season);
+                kid.Birthday_Day = birthday.Day;
+            }
             if (
                 AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
                 && !string.IsNullOrEmpty(childCharaData.CanSocialize)
@@ -148,34 +169,7 @@ internal static class KidHandler
             )
             {
                 string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
-                SDate birthday = SDate.Now();
-                bool gotBirthday = false;
-                Season birthSeason = birthday.Season;
-                int birthDay = birthday.Day;
-                if (kid.modData.TryGetValue(Child_ModData_Birthday, out string bday))
-                {
-                    string[] parts = bday.Split("|");
-                    if (
-                        ArgUtility.TryGetEnum(parts, 0, out birthSeason, out string error, name: "season")
-                        && ArgUtility.TryGetInt(parts, 0, out birthDay, out error, name: "season")
-                    )
-                    {
-                        gotBirthday = true;
-                    }
-                }
-                if (!gotBirthday)
-                {
-                    int daysOld = kid.daysOld.Value;
-                    while (daysOld > birthday.DaysSinceStart)
-                    {
-                        birthday.AddDays(28 * 40);
-                    }
-                    birthday = birthday.AddDays(-daysOld);
-                    kid.modData[Child_ModData_Birthday] = $"{birthday.Season}|{birthday.Day}";
-                    birthSeason = birthday.Season;
-                    birthDay = birthday.Day;
-                }
-                ChildToNPC[childNPCId] = new(kid.Name, kid.displayName, birthSeason, birthDay);
+                ChildToNPC[childNPCId] = new(kid.Name, kid.displayName, season, kid.Birthday_Day);
                 kid.modData[Child_ModData_AsNPC] = childNPCId;
             }
         }
@@ -258,10 +252,16 @@ internal static class KidHandler
     /// <param name="e"></param>
     private static void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
+        Game1.player.stats.Decrement(Stats_daysUntilBirth);
+        if (!Context.IsMainPlayer)
+        {
+            return;
+        }
         int totalDaysChild = ModEntry.Config.TotalDaysChild;
         // update all kids
-        foreach (Child kid in Game1.player.getChildren())
+        foreach ((Farmer farmer, Child kid) in AllKids())
         {
+            kid.reloadSprite();
             // check if today is a Child day or a NPC day
             if (
                 kid.GetData() is CharacterData childCharaData
@@ -277,15 +277,16 @@ internal static class KidHandler
                 )
                 {
                     kid.Age = 4;
-                    if (GameStateQuery.CheckConditions(childCharaData.CanSocialize))
+                    if (
+                        GameStateQuery.CheckConditions(
+                            childCharaData.CanSocialize,
+                            new GameStateQueryContext(null, farmer, null, null, Game1.random)
+                        )
+                    )
                     {
                         kid.IsInvisible = true;
                         kid.daysUntilNotInvisible = 1;
                         stayHome = false;
-                    }
-                    else
-                    {
-                        kid.reloadSprite();
                     }
                 }
 
@@ -316,12 +317,7 @@ internal static class KidHandler
                     ModEntry.help.Events.Player.Warped += OnWarped;
                 }
             }
-            else
-            {
-                kid.reloadSprite();
-            }
         }
-        Game1.player.stats.Decrement(Stats_daysUntilBirth);
     }
 
     private static void OnWarped(object? sender, WarpedEventArgs e)
@@ -587,18 +583,9 @@ internal static class KidHandler
         newKid.modData[Child_ModData_NPCParent] = spouseName;
         if (newBorn)
         {
-            newKid.modData[Child_ModData_Birthday] = $"{Game1.season}|{Game1.dayOfMonth}";
-        }
-        else
-        {
-            SDate birthday = SDate.Now();
-            int daysOld = newKid.daysOld.Value;
-            while (daysOld > birthday.DaysSinceStart)
-            {
-                birthday.AddDays(28 * 40);
-            }
-            birthday = birthday.AddDays(-daysOld);
-            newKid.modData[Child_ModData_Birthday] = $"{birthday.Season}|{birthday.Day}";
+            // newKid.modData[Child_ModData_Birthday] = $"{Game1.season}|{Game1.dayOfMonth}";
+            newKid.Birthday_Season = Utility.getSeasonKey(Game1.season);
+            newKid.Birthday_Day = Game1.dayOfMonth;
         }
         newKid.Name = newKidId;
         newKid.displayName = kidName;

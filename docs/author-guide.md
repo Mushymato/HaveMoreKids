@@ -37,7 +37,7 @@ Custom kids in HMK uses the same [appearance system](https://stardewvalleywiki.c
 - Baby sprites should have `Id` that begin with `HMK_BABY`. While a child is not yet a toddler, they will use these appearances.
 - Toddlers and child NPC uses the same set of appearances, but you can limit an appearance to toddler by using conditions. The special token `KID_ID` will be replaced with this kid's HMK id. Thus if the kid should look different as a child NPC, use `mushymato.HaveMoreKids_CHILD_AGE KID_ID 4` with a lower Precedence.
 - If the toddler has lines, they would need a `Portrait` as well.
-- A HMK kid must have a least one unconditional baby appearance and one unconditional toddler appearance, which is defined as an appearance with valid Sprite, applicable both indoor and outdoors, and nod an island outfit.
+- A HMK kid must have a least one unconditional baby appearance and one unconditional toddler appearance, which is defined as an appearance with valid Sprite, applicable both indoor and outdoors, and not an island outfit.
 
 ### Dialogue & Gift Tastes
 
