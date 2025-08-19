@@ -82,8 +82,7 @@
       "Target": "mushymato.HaveMoreKids/WhoseKids",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
-          "Parent": "SenS",
-          "Shared": true
+          "Parent": "SenS"
         }
       },
     },
