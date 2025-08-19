@@ -66,16 +66,26 @@
     },
     // Add this senlet to SenS
     // for dynamic token reasons, this will throw warning at title screen, it is safe to ignore
+    // {
+    //   "Action": "EditData",
+    //   "Target": "Data/Characters",
+    //   "TargetField": [
+    //     "SenS",
+    //     "CustomFields"
+    //   ],
+    //   "Entries": {
+    //     "mushymato.HaveMoreKids/Kid.{{ModId}}_{{L@Kid}}": true
+    //   }
+    // },
     {
       "Action": "EditData",
-      "Target": "Data/Characters",
-      "TargetField": [
-        "SenS",
-        "CustomFields"
-      ],
+      "Target": "mushymato.HaveMoreKids/WhoseKids",
       "Entries": {
-        "mushymato.HaveMoreKids/Kid.{{ModId}}_{{L@Kid}}": true
-      }
+        "{{ModId}}_{{L@Kid}}": {
+          "Parent": "SenS",
+          "Shared": true
+        }
+      },
     },
     // Include this senlet's dialogue, if any exists
     {

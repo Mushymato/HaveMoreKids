@@ -37,7 +37,7 @@
       "Action": "EditData",
       "Target": "Data/Characters",
       "Fields": {
-        "Vincent": {
+        "Emily": {
           "BirthDay": 12
         }
       }

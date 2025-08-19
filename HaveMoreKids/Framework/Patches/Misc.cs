@@ -22,12 +22,42 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(Billboard), nameof(Billboard.GetBirthdays)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetBirthdays_Postfix))
         );
+        // make calendar respect appearances >:(
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Billboard), nameof(Billboard.GetEventsForDay)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetEventsForDay_Prefix)),
+            finalizer: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetEventsForDay_Finalizer))
+        );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
+        );
         // show hearts and gifts this week for Age 3
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(SocialPage), nameof(SocialPage.drawNPCSlot)),
             prefix: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Prefix)),
             finalizer: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Finalizer))
         );
+    }
+
+    private static bool In_Billboard_GetEventsForDay = true;
+
+    private static void Billboard_GetEventsForDay_Prefix()
+    {
+        In_Billboard_GetEventsForDay = true;
+    }
+
+    private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
+    {
+        if (In_Billboard_GetEventsForDay && __instance is Child)
+        {
+            __result = null!;
+        }
+    }
+
+    private static void Billboard_GetEventsForDay_Finalizer()
+    {
+        In_Billboard_GetEventsForDay = false;
     }
 
     private static readonly FieldInfo IsChildField = AccessTools.DeclaredField(
