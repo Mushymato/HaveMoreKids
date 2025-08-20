@@ -28,26 +28,12 @@ internal static partial class Patches
             prefix: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetEventsForDay_Prefix)),
             finalizer: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetEventsForDay_Finalizer))
         );
-        harmony.Patch(
-            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
-            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
-        );
         // show hearts and gifts this week for Age 3
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(SocialPage), nameof(SocialPage.drawNPCSlot)),
             prefix: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Prefix)),
             finalizer: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Finalizer))
         );
-        // special addActor logic for events
-        // harmony.Patch(
-        //     original: AccessTools.DeclaredMethod(typeof(Event), nameof(Event.getActorByName)),
-        //     postfix: new HarmonyMethod(typeof(Patches), nameof(Event_getActorByName_Postfix))
-        // );
-    }
-
-    private static void Event_getActorByName_Postfix()
-    {
-        throw new NotImplementedException();
     }
 
     private static bool In_Billboard_GetEventsForDay = true;
@@ -55,14 +41,6 @@ internal static partial class Patches
     private static void Billboard_GetEventsForDay_Prefix()
     {
         In_Billboard_GetEventsForDay = true;
-    }
-
-    private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
-    {
-        if (In_Billboard_GetEventsForDay && __instance is Child)
-        {
-            __result = null!;
-        }
     }
 
     private static void Billboard_GetEventsForDay_Finalizer()
@@ -95,7 +73,7 @@ internal static partial class Patches
 
     private static void Billboard_GetBirthdays_Postfix(ref Dictionary<int, List<NPC>> __result)
     {
-        foreach ((_, Child kid) in KidHandler.AllKids())
+        foreach (Child kid in KidHandler.AllKids())
         {
             ModEntry.Log($"{Game1.currentSeason}: {kid.Birthday_Season}/{kid.Birthday_Day}");
             if (kid.Birthday_Season != Game1.currentSeason)

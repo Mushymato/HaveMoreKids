@@ -21,10 +21,11 @@ internal static class AssetManager
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
     private const string Asset_WhoseKids = $"{ModEntry.ModId}/WhoseKids";
     private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
-    private const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
+    internal const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
-    private const string Asset_PortraitPrefix = $"Portraits/{ModEntry.ModId}@";
-    private const string Asset_SpritePrefix = $"Characters/{ModEntry.ModId}@";
+
+    // private const string Asset_PortraitPrefix = $"Portraits/{ModEntry.ModId}@";
+    // private const string Asset_SpritePrefix = $"Characters/{ModEntry.ModId}@";
     private const string Asset_StringsUI = "Strings/UI";
     internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
@@ -40,10 +41,16 @@ internal static class AssetManager
         {
             if (childData == null)
             {
-                HashSet<string> invalidKidEntries = [];
+                List<(string, string)> invalidKidEntries = [];
                 childData = Game1.content.Load<Dictionary<string, CharacterData>>(Asset_ChildData);
                 foreach ((string key, CharacterData value) in childData)
                 {
+                    if (Game1.characterData.ContainsKey(key))
+                    {
+                        invalidKidEntries.Add(new(key, "ID collides with NPC"));
+                        continue;
+                    }
+
                     value.Age = NpcAge.Child;
                     value.CanBeRomanced = false;
                     value.Calendar = CalendarBehavior.HiddenAlways;
@@ -87,15 +94,19 @@ internal static class AssetManager
                         value.Appearance.RemoveAll(invalidAppearances.Contains);
                     }
                     if (isValidKidEntry != 0b11)
-                        invalidKidEntries.Add(key);
+                        invalidKidEntries.Add(new(key, "must have an unconditional Appearance"));
                 }
                 if (invalidKidEntries.Any())
                 {
                     ModEntry.Log(
-                        $"Removed {invalidKidEntries.Count} invalid entries that lack an unconditional Appearance in {Asset_ChildData}: {string.Join(", ", invalidKidEntries)}",
+                        $"Removed {invalidKidEntries.Count} invalid entries from {Asset_ChildData}:",
                         LogLevel.Warn
                     );
-                    childData.RemoveWhere(kv => invalidKidEntries.Contains(kv.Key));
+                    foreach ((string key, string reason) in invalidKidEntries)
+                    {
+                        ModEntry.Log($"- {key}: {reason}");
+                        childData.Remove(key);
+                    }
                 }
             }
             return childData;
@@ -181,8 +192,8 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == ModEntry.help.Translation.Locale)
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
 
-        if (e.Name.StartsWith(Asset_PortraitPrefix) || e.Name.StartsWith(Asset_SpritePrefix))
-            e.LoadFrom(() => Game1.content.Load<Texture2D>(Asset_NoPortrait), AssetLoadPriority.Low);
+        // if (e.Name.StartsWith(Asset_PortraitPrefix) || e.Name.StartsWith(Asset_SpritePrefix))
+        //     e.LoadFrom(() => Game1.content.Load<Texture2D>(Asset_NoPortrait), AssetLoadPriority.Low);
 
         if (KidHandler.ChildToNPC.Any())
         {

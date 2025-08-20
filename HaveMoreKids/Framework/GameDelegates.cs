@@ -1,5 +1,6 @@
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 using StardewValley.Characters;
 using StardewValley.Delegates;
 using StardewValley.Extensions;
@@ -8,6 +9,73 @@ using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework;
 
+// public sealed class CPTokenKidNPC
+// {
+//     private static FarmHouse? farmHouse;
+//     private static Dictionary<string, string>? KidIds = null;
+
+//     public bool IsMutable() => true;
+
+//     public bool IsDeterministicForInput() => true;
+
+//     public bool AllowsInput() => true;
+
+//     public bool RequiresInput() => false;
+
+//     public bool CanHaveMultipleValues(string input) => input == null;
+
+//     public bool TryValidateInput(string? input, [NotNullWhen(false)] out string? error)
+//     {
+//         error = null!;
+//         if (input != null && (KidIds == null || !KidIds.ContainsKey(input)))
+//         {
+//             error = $"Kid '{input}' not found";
+//             return false;
+//         }
+//         return true;
+//     }
+
+//     public bool UpdateContext()
+//     {
+//         if (Game1.getLocationFromName(Game1.player.homeLocation.Value) is not FarmHouse house)
+//             return false;
+//         farmHouse = house;
+//         bool changed = KidIds != null;
+//         Dictionary<string, string> newKidIds = [];
+//         foreach (Child kid in farmHouse.getChildren())
+//         {
+//             if (kid.KidAsNPCId() is not string child2npcA)
+//                 continue;
+//             changed |= !(KidIds?.TryGetValue(kid.Name, out string? child2npcB) ?? false) || child2npcA != child2npcB;
+//             newKidIds[kid.Name] = child2npcA;
+//             if (KidIds?.TryGetValue(kid.Name, out string? child2npcBb) ?? false)
+//             {
+//                 ModEntry.Log($"{kid.Name}: {child2npcBb} -> {child2npcA}");
+//             }
+//         }
+//         KidIds = newKidIds;
+//         return changed;
+//     }
+
+//     public bool IsReady() => farmHouse != null;
+
+//     public IEnumerable<string> GetValues(string? input)
+//     {
+//         if (input != null && KidIds!.TryGetValue(input, out string? kidNPCid))
+//         {
+//             yield return kidNPCid;
+//             yield break;
+//         }
+//         else
+//         {
+//             foreach (string kidId in KidIds!.Values)
+//             {
+//                 yield return kidId;
+//             }
+//         }
+//     }
+// }
+
 internal static class GameDelegates
 {
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
@@ -15,31 +83,75 @@ internal static class GameDelegates
     internal const string Action_SetChildBirth = $"{ModEntry.ModId}_SetChildBirth";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
     internal const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
+    internal const string EventCmd_AddChildActor = $"{ModEntry.ModId}_addChildActor";
+    internal const string EventCmd_AddChildActor_Alias = "HMK_addChildActor";
+    internal const string TS_Endearment = $"{ModEntry.ModId}_Endearment";
 
     internal static void Register(IManifest mod)
     {
-        // delegates
+        // GSQ
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
+        // TAction
         TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
-        // Register content patcher tokens for getting the display names of kids
+        // Event
+        // Event.RegisterCommand(EventCmd_AddChildActor, AddChildActor);
+        // Event.RegisterCommandAlias(EventCmd_AddChildActor_Alias, EventCmd_AddChildActor);
+        // Tokenizable String
+        TokenParser.RegisterParser(TS_Endearment, TSEndearment);
+        // CP Tokens
         if (
             ModEntry.help.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")
             is Integration.IContentPatcherAPI CP
         )
         {
-            CP.RegisterToken(mod, "ChildDisplayName", CPTokenChildDisplayNames);
+            CP.RegisterToken(mod, "KidDisplayName", CPTokenChildDisplayNames);
+            // CPTokenKidNPC kidNPCToken = new();
+            // CP.RegisterToken(mod, "KidNPC", kidNPCToken);
         }
     }
 
-    private static IEnumerable<string>? CPTokenChildDisplayNames() =>
-        Context.IsWorldReady ? Game1.player.getChildren().Select(child => child.displayName) : null;
+    private static bool TSEndearment(string[] query, out string replacement, Random random, Farmer player)
+    {
+        if (!ArgUtility.TryGetOptionalBool(query, 1, out bool capitalize, out string error, name: "bool capitalize"))
+        {
+            return TokenParser.LogTokenError(query, error, out replacement);
+        }
+        if (AssetManager.LoadStringReturnNullIfNotFound("Relative_Custom") is string endearment)
+        {
+            replacement = endearment;
 
-    private static Child? FindChild(Farmer player, string kidId)
+            return true;
+        }
+        else
+        {
+            replacement = player.Gender switch
+            {
+                Gender.Male => Game1.content.LoadString("Strings/Characters:Relative_Dad"),
+                Gender.Female => Game1.content.LoadString("Strings/Characters:Relative_Mom"),
+                Gender.Undefined => Game1.content.LoadString("Strings/Characters:Relative_GNT"),
+                _ => throw new NotImplementedException(),
+            };
+        }
+        if (capitalize)
+        {
+            replacement = Lexicon.capitalize(replacement);
+        }
+        return true;
+    }
+
+    private static IEnumerable<string>? CPTokenChildDisplayNames()
+    {
+        if (!Context.IsWorldReady)
+            return null;
+        return Game1.player.getChildren().Select(child => child.displayName);
+    }
+
+    private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true)
     {
         List<Child> children = player.getChildren();
-        if (kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
+        if (allowIdx && kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
             return children[index];
         return children.FirstOrDefault(child => child.Name == kidId);
     }

@@ -21,6 +21,7 @@
         "{{ModId}}_{{L@Kid}}": {
           "DisplayName": "{{i18n:{{L@Kid}}.DisplayName}}",
           "Gender": "{{L@Gender}}",
+          "IsDarkSkinned": "{{L@IsDarkSkinned}}",
           "Appearance": [
             // BABY APPEARANCE
             {

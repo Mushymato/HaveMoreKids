@@ -25,6 +25,7 @@ internal static class KidHandler
     private const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     private const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
+    internal const string ChildNPC_Suffix = $"@{ModEntry.ModId}";
 
     internal static bool AppearanceIsValid(this CharacterAppearanceData appearance)
     {
@@ -53,6 +54,13 @@ internal static class KidHandler
         return null;
     }
 
+    internal static string? KidAsNPCId(this Child kid)
+    {
+        if (kid.modData.TryGetValue(Child_ModData_AsNPC, out string asNPC))
+            return asNPC;
+        return null;
+    }
+
     internal static string? KidDisplayName(this Child kid, bool allowNull = true)
     {
         if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string kidDisplayName))
@@ -74,13 +82,19 @@ internal static class KidHandler
         return false;
     }
 
-    internal static IEnumerable<(Farmer, Child)> AllKids()
+    internal static IEnumerable<Child> AllKids()
     {
-        if (!Context.IsMainPlayer)
+        foreach (Farmer farmer in Game1.getAllFarmers())
         {
-            ModEntry.Log("WARNING: tried to iterate all kids on non-host", LogLevel.Warn);
-            yield break;
+            foreach (Child kid in farmer.getChildren())
+            {
+                yield return kid;
+            }
         }
+    }
+
+    internal static IEnumerable<(Farmer, Child)> AllFarmersAndKids()
+    {
         foreach (Farmer farmer in Game1.getAllFarmers())
         {
             foreach (Child kid in farmer.getChildren())
@@ -102,9 +116,14 @@ internal static class KidHandler
 
     internal static Dictionary<string, ChildToNPCEntry> ChildToNPC { get; private set; } = [];
 
-    private static string FormChildNPCId(string childName, long uniqueMultiplayerId)
+    internal static string FormChildNPCId(string childName)
     {
-        return $"{ModEntry.ModId}@{childName}@{uniqueMultiplayerId}";
+        return string.Concat(childName, ChildNPC_Suffix);
+    }
+
+    internal static bool IsHMKChildNPC(this NPC childNPC)
+    {
+        return childNPC.Name?.EndsWith(ChildNPC_Suffix) ?? false;
     }
 
     private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
@@ -113,7 +132,7 @@ internal static class KidHandler
         {
             try
             {
-                foreach ((_, Child kid) in AllKids())
+                foreach (Child kid in AllKids())
                 {
                     if (kid.KidHMKId() is string kidId)
                     {
@@ -146,7 +165,7 @@ internal static class KidHandler
 
         ModEntry.Log("Check if any child needs NPC version");
         ChildToNPC.Clear();
-        foreach ((Farmer farmer, Child kid) in AllKids())
+        foreach (Child kid in AllKids())
         {
             if (!Utility.TryParseEnum(kid.Birthday_Season, out Season season))
             {
@@ -168,7 +187,7 @@ internal static class KidHandler
                 && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
             )
             {
-                string childNPCId = FormChildNPCId(kid.Name, farmer.UniqueMultiplayerID);
+                string childNPCId = FormChildNPCId(kid.Name);
                 ChildToNPC[childNPCId] = new(kid.Name, kid.displayName, season, kid.Birthday_Day);
                 kid.modData[Child_ModData_AsNPC] = childNPCId;
             }
@@ -259,13 +278,13 @@ internal static class KidHandler
         }
         int totalDaysChild = ModEntry.Config.TotalDaysChild;
         // update all kids
-        foreach ((Farmer farmer, Child kid) in AllKids())
+        foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
             kid.reloadSprite();
             // check if today is a Child day or a NPC day
             if (
                 kid.GetData() is CharacterData childCharaData
-                && kid.modData.TryGetValue(Child_ModData_AsNPC, out string childAsNPCId)
+                && kid.KidAsNPCId() is string childAsNPCId
                 && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
             )
             {
@@ -342,7 +361,7 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        foreach ((_, Child kid) in AllKids())
+        foreach (Child kid in AllKids())
         {
             if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
             {
@@ -363,7 +382,7 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        foreach ((_, Child kid) in AllKids())
+        foreach (Child kid in AllKids())
         {
             if (kid.modData.TryGetValue(Child_ModData_Id, out string kidId))
             {

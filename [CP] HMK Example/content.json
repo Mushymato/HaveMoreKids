@@ -19,6 +19,7 @@
       "LocalTokens": {
         "L@Kid": "boy1",
         "L@Gender": "Male",
+        "L@IsDarkSkinned": "false",
         // Stop growing as a toddler with dialogue and gift tastes
         "L@Growup": "talk"
       }
@@ -29,6 +30,7 @@
       "LocalTokens": {
         "L@Kid": "girl1",
         "L@Gender": "Female",
+        "L@IsDarkSkinned": "false",
         // Growup into a full NPC with dialogue, gift tastes, and schedule
         "L@Growup": "npc"
       }

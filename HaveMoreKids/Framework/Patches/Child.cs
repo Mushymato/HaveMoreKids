@@ -102,6 +102,26 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.getMugShotSourceRect)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_getMugShotSourceRect_Postfix))
         );
+        // Fix default texture
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
+        );
+    }
+
+    private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
+    {
+        if (__instance is Child)
+        {
+            if (In_Billboard_GetEventsForDay)
+            {
+                __result = null!;
+            }
+        }
+        else if (__instance.IsHMKChildNPC())
+        {
+            __result = __instance.GetData()?.TextureName ?? AssetManager.Asset_DefaultTextureName;
+        }
     }
 
     private static void Child_translateName_Postfix(Child __instance, ref string __result)
@@ -188,7 +208,11 @@ internal static partial class Patches
     {
         if (__result != null)
             return;
-        if (__instance is Child && AssetManager.ChildData.TryGetValue(__instance.Name, out CharacterData? data))
+        if (
+            __instance is Child
+            && __instance.Name != null
+            && AssetManager.ChildData.TryGetValue(__instance.Name, out CharacterData? data)
+        )
         {
             __result = data;
         }
@@ -252,8 +276,6 @@ internal static partial class Patches
     /// <param name="__instance"></param>
     private static void Child_reloadSprite_Postfix(Child __instance)
     {
-        if (__instance.currentLocation == null)
-            return;
         CharacterData? characterData = __instance.GetData();
         if (characterData?.Appearance is not List<CharacterAppearanceData> appearances || appearances.Count == 0)
         {
@@ -315,6 +337,7 @@ internal static partial class Patches
             __instance.Sprite.SpriteHeight = characterData.Size.Y;
             __instance.Sprite.currentFrame = 0;
             __instance.HideShadow = false;
+            __instance.Breather = true;
         }
         __instance.Sprite.UpdateSourceRect();
 

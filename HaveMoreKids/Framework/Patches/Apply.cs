@@ -28,15 +28,23 @@ internal static partial class Patches
         }
         try
         {
-            Apply_Portraiture(harmony);
+            Apply_Narrative(harmony);
         }
         catch (Exception err)
         {
-            ModEntry.Log($"Failed to patch Portraiture:\n{err}", LogLevel.Warn);
+            ModEntry.Log($"Failed to patch Narrative:\n{err}", LogLevel.Error);
         }
         try
         {
             Apply_Misc(harmony);
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Failed to patch Misc:\n{err}", LogLevel.Warn);
+        }
+        try
+        {
+            Apply_Portraiture(harmony);
         }
         catch (Exception err)
         {
