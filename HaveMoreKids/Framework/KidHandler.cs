@@ -192,7 +192,8 @@ internal static class KidHandler
 
             string? kidNPCId = null;
             if (
-                AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                kid.Age > 2
+                && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
                 && !string.IsNullOrEmpty(childCharaData.CanSocialize)
                 && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
             )
@@ -254,9 +255,9 @@ internal static class KidHandler
     private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         HashSet<string> kidNPCs = KidEntries
-            .Where(kv => kv.Value.KidNPCId is not null)
-            .Select(kv => kv.Value.KidNPCId!)
-            .ToHashSet();
+            .Select(kv => kv.Value.KidNPCId)
+            .Where(kidNPCId => kidNPCId is not null)
+            .ToHashSet()!;
         // Remove any invalid kids
         Utility.ForEachLocation(location =>
         {
@@ -298,11 +299,14 @@ internal static class KidHandler
         {
             return;
         }
+        KidEntries_Populate();
+
         int totalDaysChild = ModEntry.Config.TotalDaysChild;
         // update all kids
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
             kid.reloadSprite();
+            CribManager.PutInACrib(kid);
             // check if today is a Child day or a NPC day
             if (
                 kid.GetData() is CharacterData childCharaData
@@ -620,6 +624,8 @@ internal static class KidHandler
 
     internal static Child ApplyKidId(string? spouseName, Child newKid, bool newBorn, string kidName, string newKidId)
     {
+        newKid.Name = newKidId;
+        newKid.displayName = kidName;
         newKid.modData[Child_ModData_Id] = newKidId;
         newKid.modData[Child_ModData_DisplayName] = kidName;
         newKid.modData[Child_ModData_NPCParent] = spouseName;
@@ -629,8 +635,6 @@ internal static class KidHandler
             newKid.Birthday_Season = Utility.getSeasonKey(Game1.season);
             newKid.Birthday_Day = Game1.dayOfMonth;
         }
-        newKid.Name = newKidId;
-        newKid.displayName = kidName;
         if (newKid.GetData() is not CharacterData data)
         {
             ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);

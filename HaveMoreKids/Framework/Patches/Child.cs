@@ -1,15 +1,11 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using HaveMoreKids.Framework.NightEvents;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
-using StardewValley.Events;
 using StardewValley.GameData.Characters;
-using StardewValley.Locations;
-using StardewValley.Objects;
 
 namespace HaveMoreKids.Framework;
 
@@ -73,6 +69,15 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.GetData)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_GetData_Postfix))
         );
+        // Put child in the right crib
+        harmony.Patch(
+            original: AccessTools.Method(typeof(Child), nameof(Child.resetForPlayerEntry)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_resetForPlayerEntry_Postfix))
+            {
+                // :u
+                after = ["mushymato.MMAP"],
+            }
+        );
         // Talk to the child once every day
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.checkAction)),
@@ -108,6 +113,8 @@ internal static partial class Patches
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
         );
     }
+
+    private static void Child_resetForPlayerEntry_Postfix(Child __instance) => CribManager.PutInACrib(__instance);
 
     private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
     {

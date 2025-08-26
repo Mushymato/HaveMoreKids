@@ -127,7 +127,6 @@ public class HMKBirthingEvent : BaseFarmEvent
     {
         babyName ??= Dialogue.randomName();
         NPC spouse = Game1.player.getSpouse();
-        List<NPC> allCharacters = Utility.getAllCharacters();
 
         // create and add kid
         Child newKid;
@@ -141,7 +140,7 @@ public class HMKBirthingEvent : BaseFarmEvent
         {
             newKid = KidHandler.ApplyKidId(
                 spouse.Name,
-                new(babyName, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
+                new(newKidId, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
                 true,
                 babyName,
                 newKidId
@@ -163,7 +162,6 @@ public class HMKBirthingEvent : BaseFarmEvent
         newKid.Age = 0;
         newKid.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);
         Utility.getHomeOfFarmer(Game1.player).characters.Add(newKid);
-        KidHandler.KidEntries_Populate();
 
         // spouse stuff
         Game1.stats.checkForFullHouseAchievement(isDirectUnlock: true);

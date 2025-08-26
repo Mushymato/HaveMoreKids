@@ -1,0 +1,12 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/Furniture",
+      "Entries": {
+        "{{ModId}}_CustomCrib": "{{ModId}}_CustomCrib/decor/3 4/3 2/1/5000/-1/Custom Crib/185/Maps\\farmhouse_tiles/false/hmk_crib"
+      }
+    }
+  ]
+}

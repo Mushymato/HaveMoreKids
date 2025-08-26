@@ -79,7 +79,7 @@ internal static partial class Patches
 
         // valid home
         FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(player);
-        if (homeOfFarmer.cribStyle.Value <= 0 || homeOfFarmer.upgradeLevel < 2)
+        if (homeOfFarmer.upgradeLevel < 2 && !CribManager.HasAvailableCribs(homeOfFarmer))
         {
             ModEntry.Log("- housing market in shambles");
             return false;
@@ -93,13 +93,14 @@ internal static partial class Patches
             return false;
         }
 
+        // if (!children.All(child => child.Age > 2))
+        // {
+        //     ModEntry.Log("- kids not grown up");
+        //     return false;
+        // }
+
         __instance.DefaultMap = player.homeLocation.Value;
         List<Child> children = player.getChildren();
-        if (!children.All(child => child.Age > 2))
-        {
-            ModEntry.Log("- kids not grown up");
-            return false;
-        }
 
         if (KidHandler.TryGetSpouseOrSharedKidIds(__instance, out string? pickedKey, out List<string>? availableKidIds))
         {
@@ -107,6 +108,10 @@ internal static partial class Patches
             {
                 ModEntry.Log($"- success! (custom kids: {pickedKey})");
                 __result = true;
+            }
+            else
+            {
+                ModEntry.Log($"- no custom kids left!");
             }
         }
         else
@@ -267,13 +272,13 @@ internal static partial class Patches
     private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
     {
         ModEntry.Log($"Utility_pickPersonalFarmEvent_Postfix {__result}");
-        if (
-            __result is QuestionEvent
-            && whichQuestionField.GetValue(__result) is int whichQ
-            && (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)
-        )
+        if (__result is QuestionEvent && whichQuestionField.GetValue(__result) is int whichQ)
         {
-            __result = new HMKPregnancyQuestionEvent(whichQ);
+            ModEntry.Log($"whichQ: {whichQ}");
+            if (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)
+            {
+                __result = new HMKPregnancyQuestionEvent(whichQ);
+            }
         }
         else if (__result is BirthingEvent)
         {

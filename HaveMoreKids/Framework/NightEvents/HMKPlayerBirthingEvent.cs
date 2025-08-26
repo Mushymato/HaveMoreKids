@@ -121,7 +121,6 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
                 child = new Child("Baby", isMale, isDarkSkinned, Game1.player);
             }
             farmHouse.characters.Add(child);
-            KidHandler.KidEntries_Populate();
 
             child.Age = 0;
             child.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);

@@ -193,11 +193,6 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == ModEntry.help.Translation.Locale)
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
 
-        // if (name.StartsWith(Asset_PortraitPrefix) || name.StartsWith(Asset_SpritePrefix))
-        // {
-        //     e.LoadFrom(() => Game1.content.Load<Texture2D>(Asset_NoPortrait), AssetLoadPriority.Low);
-        // }
-
         if (KidHandler.KidNPCToKid.Any())
         {
             if (name.IsEquivalentTo(Asset_DataCharacters))
