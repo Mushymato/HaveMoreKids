@@ -13,7 +13,14 @@ using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
 
-internal sealed record KidEntry(string? KidNPCId, string DisplayName, Season BirthSeason, int BirthDay);
+internal sealed record KidEntry(
+    string? KidNPCId,
+    string DisplayName,
+    long PlayerParent,
+    string? OtherParent,
+    Season BirthSeason,
+    int BirthDay
+);
 
 internal static class KidHandler
 {
@@ -21,7 +28,6 @@ internal static class KidHandler
     private const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
-    private const string Child_ModData_AsNPC = $"{ModEntry.ModId}/AsNPC";
     private const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     private const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
@@ -54,10 +60,10 @@ internal static class KidHandler
         return null;
     }
 
-    internal static string? KidAsNPCId(this Child kid)
+    internal static string? KidNPCParent(this Child kid)
     {
-        if (kid.modData.TryGetValue(Child_ModData_AsNPC, out string asNPC))
-            return asNPC;
+        if (kid.modData.TryGetValue(Child_ModData_NPCParent, out string npcParent))
+            return npcParent;
         return null;
     }
 
@@ -193,7 +199,14 @@ internal static class KidHandler
             {
                 kidNPCId = FormChildNPCId(kid.Name);
             }
-            KidEntries[kid.Name] = new(kidNPCId, kid.displayName, season, kid.Birthday_Day);
+            KidEntries[kid.Name] = new(
+                kidNPCId,
+                kid.displayName,
+                kid.idOfParent.Value,
+                kid.KidNPCParent(),
+                season,
+                kid.Birthday_Day
+            );
         }
         KidNPCSetup();
         MultiplayerSync.SendKidEntries(null);
@@ -293,8 +306,9 @@ internal static class KidHandler
             // check if today is a Child day or a NPC day
             if (
                 kid.GetData() is CharacterData childCharaData
-                && kid.KidAsNPCId() is string childAsNPCId
-                && Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC
+                && KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
+                && entry.KidNPCId != null
+                && Game1.getCharacterFromName(entry.KidNPCId) is NPC childAsNPC
             )
             {
                 bool stayHome = true;
@@ -333,7 +347,7 @@ internal static class KidHandler
                         Game1.player.friendshipData[kid.Name] = childFriendship;
                     }
                     // might be haunted in multiplayer?
-                    Game1.player.friendshipData[childAsNPCId] = childFriendship;
+                    Game1.player.friendshipData[entry.KidNPCId] = childFriendship;
                     childAsNPC.reloadSprite(onlyAppearance: true);
                     childAsNPC.InvalidateMasterSchedule();
                     childAsNPC.TryLoadSchedule();

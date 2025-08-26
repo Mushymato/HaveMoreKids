@@ -95,9 +95,6 @@ internal static class GameDelegates
         // TAction
         TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
-        // Event
-        // Event.RegisterCommand(EventCmd_AddChildActor, AddChildActor);
-        // Event.RegisterCommandAlias(EventCmd_AddChildActor_Alias, EventCmd_AddChildActor);
         // Tokenizable String
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
         // CP Tokens
@@ -107,8 +104,6 @@ internal static class GameDelegates
         )
         {
             CP.RegisterToken(mod, "KidDisplayName", CPTokenChildDisplayNames);
-            // CPTokenKidNPC kidNPCToken = new();
-            // CP.RegisterToken(mod, "KidNPC", kidNPCToken);
         }
     }
 
@@ -195,9 +190,11 @@ internal static class GameDelegates
 
     private static IEnumerable<string>? CPTokenChildDisplayNames()
     {
-        if (!Context.IsWorldReady)
+        if (!KidHandler.KidEntries.Any())
             return null;
-        return Game1.player.getChildren().Select(child => child.displayName);
+        return KidHandler
+            .KidEntries.Values.Where(value => value.PlayerParent == Game1.player.UniqueMultiplayerID)
+            .Select(value => value.DisplayName);
     }
 
     private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true)
