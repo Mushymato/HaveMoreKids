@@ -114,26 +114,78 @@ internal static class GameDelegates
 
     private static bool TSEndearment(string[] query, out string replacement, Random random, Farmer player)
     {
-        if (!ArgUtility.TryGetOptionalBool(query, 1, out bool capitalize, out string error, name: "bool capitalize"))
+        if (
+            !ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId")
+            || !ArgUtility.TryGetOptionalBool(query, 2, out bool capitalize, out error, name: "bool capitalize")
+        )
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
-        if (AssetManager.LoadStringReturnNullIfNotFound("Relative_Custom") is string endearment)
+        string? endearment;
+        if (
+            (
+                endearment = Game1.content.LoadStringReturnNullIfNotFound(
+                    string.Concat(
+                        AssetManager.Asset_CharactersDialogue,
+                        kidId,
+                        ":Endearment_",
+                        player.Gender.ToString()
+                    )
+                )
+            )
+            is not null
+        )
         {
             replacement = endearment;
-
-            return true;
         }
-        else
+        else if (
+            (
+                endearment = Game1.content.LoadStringReturnNullIfNotFound(
+                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, ":Endearment")
+                )
+            )
+            is not null
+        )
         {
-            replacement = player.Gender switch
+            replacement = endearment;
+        }
+        if (
+            (
+                endearment = Game1.content.LoadStringReturnNullIfNotFound(
+                    string.Concat(
+                        AssetManager.Asset_CharactersDialogue,
+                        kidId,
+                        ":Endearment_",
+                        player.Gender.ToString()
+                    )
+                )
+            )
+                is null
+            && (
+                endearment = Game1.content.LoadStringReturnNullIfNotFound(
+                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, ":Endearment")
+                )
+            )
+                is null
+        )
+        {
+            endearment = player.Gender switch
             {
-                Gender.Male => Game1.content.LoadString("Strings/Characters:Relative_Dad"),
-                Gender.Female => Game1.content.LoadString("Strings/Characters:Relative_Mom"),
-                Gender.Undefined => Game1.content.LoadString("Strings/Characters:Relative_GNT"),
-                _ => throw new NotImplementedException(),
+                Gender.Male => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Male")
+                    ?? Game1.content.LoadString("Strings/Characters:Relative_Dad"),
+                Gender.Female => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Female")
+                    ?? Game1.content.LoadString("Strings/Characters:Relative_Mom"),
+                Gender.Undefined => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Neutral")
+                    ?? player.displayName,
+                _ => null,
             };
         }
+        if (endearment is null)
+        {
+            replacement = null!;
+            return false;
+        }
+        replacement = endearment;
         if (capitalize)
         {
             replacement = Lexicon.capitalize(replacement);

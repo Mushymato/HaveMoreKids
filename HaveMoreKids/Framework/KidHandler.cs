@@ -13,7 +13,7 @@ using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
 
-internal sealed record ChildToNPCEntry(string KidId, string DisplayName, Season BirthSeason, int BirthDay);
+internal sealed record KidEntry(string? KidNPCId, string DisplayName, Season BirthSeason, int BirthDay);
 
 internal static class KidHandler
 {
@@ -114,7 +114,8 @@ internal static class KidHandler
         ModEntry.help.Events.GameLoop.Saved += OnSaved;
     }
 
-    internal static Dictionary<string, ChildToNPCEntry> ChildToNPC { get; private set; } = [];
+    internal static Dictionary<string, KidEntry> KidEntries { get; private set; } = [];
+    internal static Dictionary<string, string> KidNPCToKid { get; private set; } = [];
 
     internal static string FormChildNPCId(string childName)
     {
@@ -149,7 +150,7 @@ internal static class KidHandler
                         }
                     }
                 }
-                ChildToNPC_Check();
+                KidEntries_Populate();
             }
             catch (Exception err)
             {
@@ -158,13 +159,14 @@ internal static class KidHandler
         }
     }
 
-    internal static void ChildToNPC_Check()
+    internal static void KidEntries_Populate()
     {
         if (!Context.IsMainPlayer)
             return;
 
-        ModEntry.Log("Check if any child needs NPC version");
-        ChildToNPC.Clear();
+        ModEntry.Log("Populating kid entries...");
+        KidEntries.Clear();
+
         foreach (Child kid in AllKids())
         {
             if (!Utility.TryParseEnum(kid.Birthday_Season, out Season season))
@@ -181,47 +183,50 @@ internal static class KidHandler
                 kid.Birthday_Season = Utility.getSeasonKey(birthday.Season);
                 kid.Birthday_Day = birthday.Day;
             }
+
+            string? kidNPCId = null;
             if (
                 AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
                 && !string.IsNullOrEmpty(childCharaData.CanSocialize)
                 && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
             )
             {
-                string childNPCId = FormChildNPCId(kid.Name);
-                ChildToNPC[childNPCId] = new(kid.Name, kid.displayName, season, kid.Birthday_Day);
-                kid.modData[Child_ModData_AsNPC] = childNPCId;
+                kidNPCId = FormChildNPCId(kid.Name);
             }
+            KidEntries[kid.Name] = new(kidNPCId, kid.displayName, season, kid.Birthday_Day);
         }
-        ChildToNPC_Setup();
-        MultiplayerSync.SendChildToNPC(null);
+        KidNPCSetup();
+        MultiplayerSync.SendKidEntries(null);
     }
 
-    internal static void ChildToNPC_FromHost(Dictionary<string, ChildToNPCEntry> newChildToNPC)
+    internal static void KidEntries_FromHost(Dictionary<string, KidEntry> newChildToNPC)
     {
-        ChildToNPC = newChildToNPC;
-        ChildToNPC_Setup();
+        KidEntries = newChildToNPC;
+        KidNPCSetup();
     }
 
-    private static void ChildToNPC_Setup()
+    private static void KidNPCSetup()
     {
-        if (!ChildToNPC.Any())
+        KidNPCToKid.Clear();
+        ModEntry.Log($"Got {KidEntries.Count} kids.");
+        foreach ((string kidId, KidEntry entry) in KidEntries)
         {
+            ModEntry.Log($"- {kidId}: {entry}");
+            if (entry.KidNPCId != null)
+                KidNPCToKid[entry.KidNPCId] = kidId;
+        }
+        if (!KidNPCToKid.Any())
             return;
-        }
-        foreach (var kv in ChildToNPC)
-        {
-            ModEntry.Log($"- {kv.Key}: {kv.Value}");
-        }
         ModEntry.help.GameContent.InvalidateCache(AssetManager.Asset_DataCharacters);
         ModEntry.help.GameContent.InvalidateCache(AssetManager.Asset_DataNPCGiftTastes);
         if (!Context.IsMainPlayer)
         {
-            foreach (string childAsNPCId in ChildToNPC.Keys)
+            foreach (KidEntry entry in KidEntries.Values)
             {
-                if (Game1.getCharacterFromName(childAsNPCId) is NPC childAsNPC)
+                if (entry.KidNPCId != null && Game1.getCharacterFromName(entry.KidNPCId) is NPC kidNPC)
                 {
-                    childAsNPC.reloadSprite(onlyAppearance: true);
-                    childAsNPC.Sprite.UpdateSourceRect();
+                    kidNPC.reloadSprite(onlyAppearance: true);
+                    kidNPC.Sprite.UpdateSourceRect();
                 }
             }
         }
@@ -235,6 +240,10 @@ internal static class KidHandler
     /// <param name="e"></param>
     private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
+        HashSet<string> kidNPCs = KidEntries
+            .Where(kv => kv.Value.KidNPCId is not null)
+            .Select(kv => kv.Value.KidNPCId!)
+            .ToHashSet();
         // Remove any invalid kids
         Utility.ForEachLocation(location =>
         {
@@ -245,7 +254,7 @@ internal static class KidHandler
                         return false;
                     if (childNPCPattern.Match(npcId) is not Match match || !match.Success)
                         return false;
-                    if (ChildToNPC.ContainsKey(npc.Name))
+                    if (kidNPCs.Contains(npc.Name))
                         return false;
                     ModEntry.Log(
                         $"Removed invalid kid NPC '{npc.Name}' from '{location.NameOrUniqueName}'",

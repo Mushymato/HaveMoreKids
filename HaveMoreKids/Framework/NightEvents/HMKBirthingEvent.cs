@@ -163,7 +163,7 @@ public class HMKBirthingEvent : BaseFarmEvent
         newKid.Age = 0;
         newKid.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);
         Utility.getHomeOfFarmer(Game1.player).characters.Add(newKid);
-        KidHandler.ChildToNPC_Check();
+        KidHandler.KidEntries_Populate();
 
         // spouse stuff
         Game1.stats.checkForFullHouseAchievement(isDirectUnlock: true);

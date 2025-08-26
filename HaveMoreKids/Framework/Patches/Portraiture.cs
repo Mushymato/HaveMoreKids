@@ -35,11 +35,11 @@ internal static partial class Patches
 
     private static void PortraitureTextureLoader_getPortrait_Prefix(NPC npc, ref string? __state)
     {
-        if (npc.Name != null && KidHandler.ChildToNPC.TryGetValue(npc.Name, out ChildToNPCEntry? child2npc))
+        if (npc.Name != null && KidHandler.KidNPCToKid.TryGetValue(npc.Name, out string? kidId))
         {
-            ModEntry.LogOnce($"PortraitureTextureLoader_getPortrait_Prefix: {npc.Name} -> {child2npc.KidId}");
+            ModEntry.LogOnce($"PortraitureTextureLoader_getPortrait_Prefix: {npc.Name} -> {kidId}");
             __state = npc.Name;
-            npc.Name = child2npc.KidId;
+            npc.Name = kidId;
         }
     }
 
