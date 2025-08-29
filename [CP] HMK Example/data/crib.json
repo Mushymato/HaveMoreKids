@@ -2,11 +2,20 @@
   "$schema": "https://smapi.io/schemas/content-patcher.json",
   "Changes": [
     {
+      "Action": "Load",
+      "Target": "{{ModId}}_Crib",
+      "FromFile": "assets/crib.png",
+    },
+    {
       "Action": "EditData",
       "Target": "Data/Furniture",
       "Entries": {
-        // This is an example custom crib
-        "{{ModId}}_CustomCrib": "{{ModId}}_CustomCrib/decor/3 4/3 2/1/5000/-1/Custom Crib/185/Maps\\farmhouse_tiles/false/hmk_crib"
+        // This is an example custom crib.
+        // To be considered a valid hmk crib:
+        // - needs context tag: hmk_crib
+        // - must have a bounding box of '3 2'
+        // See assets/crib.png for example of the texture (it's a little odd)
+        "{{ModId}}_CustomCrib": "{{ModId}}_CustomCrib/decor/3 4/3 2/1/5000/-1/Custom Crib/0/{{ModId}}_Crib/true/hmk_crib"
       }
     }
   ]

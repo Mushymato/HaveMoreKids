@@ -12,6 +12,7 @@ using StardewValley.Delegates;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
+using StardewValley.Objects;
 using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
@@ -261,9 +262,10 @@ internal static class KidHandler
             .Select(kv => kv.Value.KidNPCId)
             .Where(kidNPCId => kidNPCId is not null)
             .ToHashSet()!;
-        // Remove any invalid kids
+
         Utility.ForEachLocation(location =>
         {
+            // Remove any invalid kids
             location.characters.RemoveWhere(
                 (npc) =>
                 {
@@ -280,6 +282,11 @@ internal static class KidHandler
                     return true;
                 }
             );
+            // Clear the mod data on cribs
+            foreach (Furniture furniture in location.furniture)
+            {
+                furniture?.modData.Remove(CribAssign.PlacedChild);
+            }
             return true;
         });
         // Apply unique kids to any existing children
@@ -496,7 +503,6 @@ internal static class KidHandler
 
         Game1.morningQueue.Enqueue(() =>
         {
-            KidEntries_Populate();
             string text2 =
                 Game1.getCharacterFromName(Game1.player.spouse)?.GetTokenizedDisplayName() ?? Game1.player.spouse;
             Game1.Multiplayer.globalChatInfoMessage(
@@ -568,6 +574,7 @@ internal static class KidHandler
                     kidIds.Add(key);
                 }
             }
+            return kidIds.Any();
         }
         return false;
     }
