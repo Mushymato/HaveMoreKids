@@ -1,11 +1,9 @@
 using Microsoft.Xna.Framework;
 using StardewValley;
-using StardewValley.BellsAndWhistles;
-using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
-using StardewValley.GameData.Characters;
 using StardewValley.Menus;
+using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
@@ -25,11 +23,15 @@ public class HMKBirthingEvent : BaseFarmEvent
 
     private bool isDarkSkinned;
 
+    private bool isTwin;
+    private NPC? spouse;
+
     /// <inheritdoc />
     public override bool setUp()
     {
+        timer = 1500;
         Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
-        NPC? spouse = Game1.player.getSpouse();
+        spouse = Game1.player.getSpouse();
         Game1.player.CanMove = false;
         if (spouse != null)
         {
@@ -64,13 +66,9 @@ public class HMKBirthingEvent : BaseFarmEvent
             !AssetManager.TryLoadString($"BirthMessage_NPC_{spouse.Name}", out message, childTerm, spouse.displayName)
         )
         {
-            if (spouse.isAdoptionSpouse())
-            {
-                message = Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm);
-            }
-            else
-            {
-                message = spouse.Gender switch
+            message = spouse.isAdoptionSpouse()
+                ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
+                : spouse.Gender switch
                 {
                     Gender.Male => Game1.content.LoadString("Strings\\Events:BirthMessage_PlayerMother", childTerm),
                     Gender.Female => Game1.content.LoadString(
@@ -81,20 +79,11 @@ public class HMKBirthingEvent : BaseFarmEvent
                     Gender.Undefined => Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm),
                     _ => throw new NotImplementedException(),
                 };
-            }
         }
+
+        isTwin = false;
 
         return false;
-    }
-
-    public static string AntiNameCollision(string name)
-    {
-        HashSet<string> npcIds = Utility.getAllCharacters().Select(npc => npc.Name).ToHashSet();
-        while (npcIds.Contains(name))
-        {
-            name += " ";
-        }
-        return name;
     }
 
     public void returnBabyName(string name)
@@ -125,115 +114,94 @@ public class HMKBirthingEvent : BaseFarmEvent
 
     private bool TickUpdate_FinishNaming()
     {
-        babyName ??= Dialogue.randomName();
-        NPC spouse = Game1.player.getSpouse();
+        KidHandler.HaveAKid(
+            spouse,
+            newKidId,
+            isDarkSkinned,
+            babyName ?? Dialogue.randomName(),
+            out WhoseKidData? whoseKidForTwin,
+            isTwin
+        );
 
-        // create and add kid
-        Child newKid;
-        if (newKidId == null && KidHandler.PickForSpecificKidId(spouse, babyName) is string specificKidName)
+        if (whoseKidForTwin != null)
         {
-            newKidId = specificKidName;
-        }
-
-        babyName = AntiNameCollision(babyName);
-        if (newKidId != null && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData))
-        {
-            newKid = KidHandler.ApplyKidId(
-                spouse.Name,
-                new(newKidId, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
-                true,
-                babyName,
-                newKidId
-            );
-        }
-        else
-        {
-            bool isMale;
-            if (Game1.player.getNumberOfChildren() == 0)
+            newKidId = whoseKidForTwin.Twin;
+            isTwin = true;
+            babyName = null;
+            naming = false;
+            getBabyName = false;
+            timer = 1000;
+            message = null;
+            if (whoseKidForTwin.TwinMessage != null)
             {
-                isMale = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed).NextBool();
+                message = TokenParser.ParseText(whoseKidForTwin.TwinMessage);
             }
-            else
-            {
-                isMale = Game1.player.getChildren().Last().Gender == Gender.Female;
-            }
-            newKid = new(babyName, isMale, isDarkSkinned, Game1.player);
+            message ??= AssetManager.LoadString("BirthMessage_Twin");
+            return false;
         }
-        newKid.Age = 0;
-        newKid.Position = new Vector2(16f, 4f) * 64f + new Vector2(0f, -24f);
-        Utility.getHomeOfFarmer(Game1.player).characters.Add(newKid);
 
-        // spouse stuff
         Game1.stats.checkForFullHouseAchievement(isDirectUnlock: true);
         Game1.playSound("smallSelect");
-        spouse.daysAfterLastBirth = 5;
-        Game1.player.GetSpouseFriendship().NextBirthingDate = null;
-        int childrenCount = Game1.player.getChildrenCount();
 
-        spouse.shouldSayMarriageDialogue.Value = true;
-        if (childrenCount == 1)
+        // spouse stuff
+        if (spouse != null)
         {
-            if (spouse.isAdoptionSpouse())
+            Game1.player.GetSpouseFriendship().NextBirthingDate = null;
+            spouse.daysAfterLastBirth = 5;
+            int childrenCount = Game1.player.getChildrenCount();
+
+            spouse.shouldSayMarriageDialogue.Value = true;
+            if (childrenCount == 1)
+            {
+                if (spouse.isAdoptionSpouse())
+                {
+                    spouse.currentMarriageDialogue.Insert(
+                        0,
+                        new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_Adoption", true, babyName)
+                    );
+                }
+                else
+                {
+                    spouse.currentMarriageDialogue.Insert(
+                        0,
+                        new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_FirstChild", true, babyName)
+                    );
+                }
+            }
+            else if (childrenCount == 2)
             {
                 spouse.currentMarriageDialogue.Insert(
                     0,
-                    new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_Adoption", true, babyName)
+                    new MarriageDialogueReference(
+                        "Data\\ExtraDialogue",
+                        "NewChild_SecondChild" + Game1.random.Next(1, 3),
+                        true
+                    )
                 );
+            }
+            else if (
+                AssetManager.LoadMarriageDialogueReference($"NewChild_{childrenCount}")
+                is MarriageDialogueReference marriageDialogueChildCount
+            )
+            {
+                spouse.currentMarriageDialogue.Insert(0, marriageDialogueChildCount);
+            }
+            else if (
+                AssetManager.LoadMarriageDialogueReference("NewChild_Generic")
+                is MarriageDialogueReference marriageDialogueGeneral
+            )
+            {
+                spouse.currentMarriageDialogue.Insert(0, marriageDialogueGeneral);
             }
             else
             {
-                spouse.currentMarriageDialogue.Insert(
-                    0,
-                    new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_FirstChild", true, babyName)
-                );
+                spouse.shouldSayMarriageDialogue.Value = false;
             }
-        }
-        else if (childrenCount == 2)
-        {
-            spouse.currentMarriageDialogue.Insert(
-                0,
-                new MarriageDialogueReference(
-                    "Data\\ExtraDialogue",
-                    "NewChild_SecondChild" + Game1.random.Next(1, 3),
-                    true
-                )
-            );
-        }
-        else if (
-            AssetManager.LoadMarriageDialogueReference($"NewChild_{childrenCount}")
-            is MarriageDialogueReference marriageDialogueChildCount
-        )
-        {
-            spouse.currentMarriageDialogue.Insert(0, marriageDialogueChildCount);
-        }
-        else if (
-            AssetManager.LoadMarriageDialogueReference("NewChild_Generic")
-            is MarriageDialogueReference marriageDialogueGeneral
-        )
-        {
-            spouse.currentMarriageDialogue.Insert(0, marriageDialogueGeneral);
-        }
-        else
-        {
-            spouse.shouldSayMarriageDialogue.Value = false;
         }
 
+        Game1.morningQueue.Enqueue(() => KidHandler.KidEntries_Populate());
+
         // remaining message and cleanup
-        Game1.morningQueue.Enqueue(
-            delegate
-            {
-                string text2 =
-                    Game1.getCharacterFromName(Game1.player.spouse)?.GetTokenizedDisplayName() ?? Game1.player.spouse;
-                Game1.Multiplayer.globalChatInfoMessage(
-                    "Baby",
-                    Lexicon.capitalize(Game1.player.Name),
-                    text2,
-                    Lexicon.getTokenizedGenderedChildTerm(newKid.Gender == Gender.Male),
-                    Lexicon.getTokenizedPronoun(newKid.Gender == Gender.Male),
-                    newKid.displayName
-                );
-            }
-        );
         if (Game1.keyboardDispatcher != null)
         {
             Game1.keyboardDispatcher.Subscriber = null;
@@ -248,9 +216,9 @@ public class HMKBirthingEvent : BaseFarmEvent
     public override bool tickUpdate(GameTime time)
     {
         Game1.player.CanMove = false;
-        timer += time.ElapsedGameTime.Milliseconds;
+        timer -= time.ElapsedGameTime.Milliseconds;
         Game1.fadeToBlackAlpha = 1f;
-        if (timer > 1500 && !getBabyName)
+        if (timer <= 0 && !getBabyName)
         {
             TickUpdate_CheckForName();
         }
@@ -262,7 +230,10 @@ public class HMKBirthingEvent : BaseFarmEvent
             }
             if (!string.IsNullOrEmpty(babyName) && babyName.Length > 0)
             {
-                return TickUpdate_FinishNaming();
+                if (TickUpdate_FinishNaming())
+                {
+                    return true;
+                }
             }
         }
         return false;

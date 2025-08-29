@@ -79,25 +79,29 @@ internal static partial class Patches
 
         // valid home
         FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(player);
-        if (homeOfFarmer.upgradeLevel < 2 && !CribManager.HasAvailableCribs(homeOfFarmer))
+        if (homeOfFarmer.upgradeLevel < 2)
         {
             ModEntry.Log("- housing market in shambles");
+            return false;
+        }
+        if (!CribManager.HasAvailableCribs(homeOfFarmer))
+        {
+            ModEntry.Log("- no crib no baby");
             return false;
         }
 
         // friendly not pregnant spouse
         Friendship spouseFriendship = player.GetSpouseFriendship();
-        if (spouseFriendship.DaysUntilBirthing > 0 || player.getFriendshipHeartLevelForNPC(__instance.Name) < 10)
+        if (spouseFriendship.DaysUntilBirthing > 0)
         {
-            ModEntry.Log("- pregnant or unfriendly");
+            ModEntry.Log("- already pregnant");
             return false;
         }
-
-        // if (!children.All(child => child.Age > 2))
-        // {
-        //     ModEntry.Log("- kids not grown up");
-        //     return false;
-        // }
+        if (player.getFriendshipHeartLevelForNPC(__instance.Name) < 10)
+        {
+            ModEntry.Log("- a loveless marriage");
+            return false;
+        }
 
         __instance.DefaultMap = player.homeLocation.Value;
         List<Child> children = player.getChildren();

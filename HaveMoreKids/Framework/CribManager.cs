@@ -1,34 +1,68 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Locations;
+using StardewValley.Network;
 using StardewValley.Objects;
 
 namespace HaveMoreKids.Framework;
 
-internal record CribAssign(Furniture? Furniture)
+internal record CribAssign(Child Baby, Furniture? Furni)
 {
-    internal static readonly Vector2 ChildOffset = new Vector2(1f, 1f) * Game1.tileSize;
+    internal const string PlacedChild = $"{ModEntry.ModId}/CribPlacedChild";
+    internal static Vector2 CribChildOffset = new(1f, 0f);
 
-    internal void RepositionChild(Child child)
+    internal bool IsInFurnitureCrib(Vector2? pos = null)
     {
-        if (Furniture == null)
+        return Furni?.GetBoundingBox().Contains(pos ?? Baby.Position) ?? false;
+    }
+
+    internal void PlaceChild()
+    {
+        Baby.position.fieldChangeEvent -= OnPositionChange;
+
+        if (Furni == null)
             return;
-        switch (child.Age)
+
+        switch (Baby.Age)
         {
             case 0:
-                child.Position = Furniture.TileLocation * Game1.tileSize + ChildOffset + new Vector2(0, -24f);
+                Baby.Position = (Furni.TileLocation + CribChildOffset) * Game1.tileSize + new Vector2(0, -24f);
                 break;
             case 1:
-                child.Position = Furniture.TileLocation * Game1.tileSize + ChildOffset + new Vector2(0, -12f);
+                Baby.Position = (Furni.TileLocation + CribChildOffset) * Game1.tileSize + new Vector2(0, -12f);
                 break;
             case 2:
-                if (Game1.timeOfDay >= 1800)
+                if (Game1.timeOfDay < 1800)
                 {
-                    child.Position = Furniture.TileLocation * Game1.tileSize + ChildOffset + new Vector2(0, -24f);
+                    return;
                 }
+                Baby.Position = (Furni.TileLocation + CribChildOffset) * Game1.tileSize + new Vector2(0, -24f);
                 break;
+            default:
+                return;
+        }
+
+        Baby.position.fieldChangeEvent += OnPositionChange;
+        Furni.modData[PlacedChild] = Baby.Name;
+
+        return;
+    }
+
+    internal void UnplaceChild()
+    {
+        ModEntry.Log($"UnplaceChild '{Baby.Name}'");
+        Furni?.modData.Remove(PlacedChild);
+        Baby.position.fieldChangeEvent -= OnPositionChange;
+    }
+
+    private void OnPositionChange(NetPosition field, Vector2 oldValue, Vector2 newValue)
+    {
+        if (!IsInFurnitureCrib(newValue) && !Baby.mutex.IsLocked())
+        {
+            DelayedAction.functionAfterDelay(UnplaceChild, 0);
         }
     }
 }
@@ -36,10 +70,18 @@ internal record CribAssign(Furniture? Furniture)
 internal static class CribManager
 {
     internal const string CribTag = "hmk_crib";
-    internal static ConditionalWeakTable<Child, CribAssign?> CribAssignment = [];
+    internal static ConditionalWeakTable<Child, CribAssign?> CribAssignments = [];
+
+    internal static bool IsCrib(Furniture furni)
+    {
+        if (!furni.HasContextTag(CribTag))
+            return false;
+        Rectangle bounds = furni.defaultBoundingBox.Value;
+        return bounds.Width == 3 * Game1.tileSize && bounds.Height == 2 * Game1.tileSize;
+    }
 
     private static List<Furniture> GetAvailableCribs(FarmHouse farmHouse, HashSet<Furniture> assignedCribs) =>
-        farmHouse.furniture.Where(furni => furni.HasContextTag(CribTag) && !assignedCribs.Contains(furni)).ToList();
+        farmHouse.furniture.Where(furni => IsCrib(furni) && !assignedCribs.Contains(furni)).ToList();
 
     private static void GetAssignedCribs(
         FarmHouse farmHouse,
@@ -49,22 +91,22 @@ internal static class CribManager
     {
         mapCribAvailable = farmHouse.cribStyle.Value > 0;
         assignedCribs = [];
-        foreach ((Child bby, CribAssign? assign) in CribAssignment.Where(kv => kv.Key.currentLocation == farmHouse))
+        foreach ((Child bby, CribAssign? assign) in CribAssignments.Where(kv => kv.Key.currentLocation == farmHouse))
         {
             if (assign == null)
                 continue;
-            if (assign.Furniture == null)
+            if (assign.Furni == null)
             {
                 mapCribAvailable = false;
             }
             else
             {
-                assignedCribs.Add(assign.Furniture);
+                assignedCribs.Add(assign.Furni);
             }
         }
     }
 
-    private static CribAssign? GetCribForChild(Child child)
+    private static CribAssign? AssignNewCribToChild(Child child)
     {
         if ((child.currentLocation ?? Utility.getHomeOfFarmer(Game1.player)) is not FarmHouse farmHouse)
             return null;
@@ -72,7 +114,7 @@ internal static class CribManager
 
         if (mapCribAvailable)
         {
-            return new CribAssign(null);
+            return new CribAssign(child, null);
         }
 
         List<Furniture> cribs = GetAvailableCribs(farmHouse, assignedCribs);
@@ -80,42 +122,119 @@ internal static class CribManager
         {
             return null;
         }
-        return new CribAssign(cribs.First());
+        return new CribAssign(child, cribs.First());
     }
 
     internal static bool HasAvailableCribs(FarmHouse farmHouse)
     {
         GetAssignedCribs(farmHouse, out bool mapCribAvailable, out HashSet<Furniture> assignedCribs);
         return mapCribAvailable
-            || farmHouse.furniture.Where(furni => furni.HasContextTag(CribTag) && !assignedCribs.Contains(furni)).Any();
+            || farmHouse.furniture.Where(furni => IsCrib(furni) && !assignedCribs.Contains(furni)).Any();
     }
 
-    internal static CribAssign? GetCribAssignment(this Child child) => CribAssignment.GetValue(child, GetCribForChild);
+    internal static bool IsAssignedCrib(Furniture furni)
+    {
+        if (furni.Location is not FarmHouse farmHouse)
+            return false;
+        GetAssignedCribs(farmHouse, out _, out HashSet<Furniture> assignedCribs);
+        return assignedCribs.Contains(furni);
+    }
+
+    internal static CribAssign? GetCribAssignment(this Child child) =>
+        CribAssignments.GetValue(child, AssignNewCribToChild);
 
     internal static bool PutInACrib(Child bby)
     {
         if (bby.Age > 2)
             return false;
-        CribAssign? cribAssign = CribManager.GetCribAssignment(bby);
+        CribAssign? cribAssign = GetCribAssignment(bby);
         if (cribAssign == null)
         {
             if (bby.currentLocation is not FarmHouse farmHouse)
                 return false;
             // put child at random open tile
-            Vector2 randomTile = farmHouse.getRandomTile(Random.Shared);
-            for (int i = 0; i < 32; i++)
-            {
-                if (farmHouse.isTileLocationOpen(randomTile))
-                {
-                    break;
-                }
-                randomTile = farmHouse.getRandomTile(Random.Shared);
-            }
-            bby.Position = randomTile * Game1.tileSize;
+            // todo: this will sometimes be out of bounds, need fixing
+            Point randomTile = farmHouse.getRandomOpenPointInHouse(Random.Shared, 1);
+            bby.Position = randomTile.ToVector2() * Game1.tileSize;
             return false;
         }
         // position the child
-        cribAssign.RepositionChild(bby);
+
+        DelayedAction.functionAfterDelay(cribAssign.PlaceChild, 0);
+        return true;
+    }
+
+    internal static void RecheckCribAssignments()
+    {
+        HashSet<Child> shouldHaveCrib = [];
+        foreach (Child child in KidHandler.AllKids())
+        {
+            if (child.Age < 2)
+            {
+                shouldHaveCrib.Add(child);
+            }
+        }
+        foreach ((Child child, CribAssign? assign) in CribAssignments)
+        {
+            if (assign == null)
+            {
+                continue;
+            }
+            if (shouldHaveCrib.Contains(child))
+            {
+                assign.PlaceChild();
+                shouldHaveCrib.Remove(child);
+            }
+            else
+            {
+                assign.UnplaceChild();
+                CribAssignments.Remove(child);
+            }
+        }
+        foreach (Child child in shouldHaveCrib)
+        {
+            PutInACrib(child);
+        }
+    }
+
+    internal static bool DoCribAction(Furniture furni, Farmer who)
+    {
+        if (furni.Location is not GameLocation location || !IsCrib(furni))
+            return false;
+        foreach ((Child child, CribAssign? cribAssign) in CribAssignments)
+        {
+            if (child.currentLocation != location)
+            {
+                continue;
+            }
+            if (cribAssign?.Furni != furni)
+            {
+                continue;
+            }
+            switch (child.Age)
+            {
+                case 0:
+                    Game1.drawObjectDialogue(
+                        Game1.parseText(
+                            Game1.content.LoadString(
+                                "Strings\\Locations:FarmHouse_Crib_NewbornSleeping",
+                                child.displayName
+                            )
+                        )
+                    );
+                    return true;
+                case 1:
+                    child.toss(who);
+                    return true;
+                case 2:
+                    if (child.isInCrib())
+                    {
+                        return child.checkAction(who, furni.Location);
+                    }
+                    return true;
+            }
+        }
+        Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty")));
         return true;
     }
 }

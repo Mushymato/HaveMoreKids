@@ -170,7 +170,7 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
             }
             if (!string.IsNullOrEmpty(babyName) && babyName.Length > 0)
             {
-                string text = HMKBirthingEvent.AntiNameCollision(babyName);
+                string text = KidHandler.AntiNameCollision(babyName);
                 List<NPC> allCharacters = Utility.getAllCharacters();
                 if (child.KidDisplayName() is not null)
                 {

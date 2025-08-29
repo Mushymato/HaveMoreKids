@@ -71,8 +71,17 @@ internal static partial class Patches
         );
         // Put child in the right crib
         harmony.Patch(
-            original: AccessTools.Method(typeof(Child), nameof(Child.resetForPlayerEntry)),
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.resetForPlayerEntry)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_resetForPlayerEntry_Postfix))
+            {
+                // :u
+                after = ["mushymato.MMAP"],
+            }
+        );
+        // Child is in a crib
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.isInCrib)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_isInCrib_Postfix))
             {
                 // :u
                 after = ["mushymato.MMAP"],
@@ -112,6 +121,43 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
         );
+    }
+
+    private static IEnumerable<CodeInstruction> Child_draw_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            LocalBuilder locLayerDepth = generator.DeclareLocal(typeof(float));
+
+            // check for the correct new layer depth
+            matcher.MatchEndForward(
+                [
+                    new(OpCodes.Ldarg_0),
+                    new(OpCodes.Call, AccessTools.DeclaredProperty(typeof(NPC), nameof(NPC.IsInvisible))),
+                    new(OpCodes.Brtrue),
+                ]
+            );
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in Child_Dialogue_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
+    }
+
+    private static void Child_isInCrib_Postfix(Child __instance, ref bool __result)
+    {
+        if (!__result)
+        {
+            CribAssign? cribAssign = CribManager.GetCribAssignment(__instance);
+            __result = cribAssign?.IsInFurnitureCrib() ?? false;
+        }
     }
 
     private static void Child_resetForPlayerEntry_Postfix(Child __instance) => CribManager.PutInACrib(__instance);
@@ -283,8 +329,8 @@ internal static partial class Patches
     /// <param name="__instance"></param>
     private static void Child_reloadSprite_Postfix(Child __instance)
     {
-        CharacterData? characterData = __instance.GetData();
-        if (characterData?.Appearance is not List<CharacterAppearanceData> appearances || appearances.Count == 0)
+        CharacterData? childData = __instance.GetData();
+        if (childData?.Appearance is not List<CharacterAppearanceData> appearances || appearances.Count == 0)
         {
             return;
         }
@@ -340,11 +386,11 @@ internal static partial class Patches
         }
         else
         {
-            __instance.Sprite.SpriteWidth = characterData.Size.X;
-            __instance.Sprite.SpriteHeight = characterData.Size.Y;
+            __instance.Sprite.SpriteWidth = childData.Size.X;
+            __instance.Sprite.SpriteHeight = childData.Size.Y;
             __instance.Sprite.currentFrame = 0;
             __instance.HideShadow = false;
-            __instance.Breather = true;
+            __instance.Breather = childData.BreathChestRect.HasValue;
         }
         __instance.Sprite.UpdateSourceRect();
 

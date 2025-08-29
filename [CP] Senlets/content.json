@@ -160,5 +160,19 @@
         "L@Rock": ""
       }
     },
+    // specials
+    {
+      // Laurel and Yvette are twins
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/WhoseKids",
+      "Fields": {
+        "{{ModId}}_Laurel": {
+          "Twin": "{{ModId}}_Yvette"
+        },
+        "{{ModId}}_Yvette": {
+          "Twin": "{{ModId}}_Laurel"
+        }
+      }
+    }
   ]
 }

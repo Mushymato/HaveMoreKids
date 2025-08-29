@@ -4,8 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
+using StardewValley.GameData.Shops;
 
 namespace HaveMoreKids.Framework;
 
@@ -14,21 +14,25 @@ public sealed class WhoseKidData
     public string? Parent { get; set; } = null;
     public bool Shared { get; set; } = false;
     public bool DefaultEnabled { get; set; } = true;
+    public string? Condition { get; set; } = null;
+    public string? Twin { get; set; } = null;
+    public string? TwinCondition { get; set; } = null;
+    public string? TwinMessage { get; set; } = null;
 }
 
 internal static class AssetManager
 {
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
     private const string Asset_WhoseKids = $"{ModEntry.ModId}/WhoseKids";
-    private const string Asset_Strings = $"{ModEntry.ModId}/Strings";
+    private const string Asset_Strings = $"{ModEntry.ModId}\\Strings";
     internal const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
 
     // private const string Asset_PortraitPrefix = "Portraits/";
     // private const string Asset_SpritePrefix = "Characters/";
-    private const string Asset_StringsUI = "Strings/UI";
     internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
+    private const string Furniture_DefaultCrib = $"{ModEntry.ModId}_Crib";
     internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
     private const string Asset_CharactersSchedule = "Characters/schedules/";
     private static readonly string[] KidNPCForwardAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
@@ -113,20 +117,19 @@ internal static class AssetManager
         }
     }
 
+    private static Dictionary<string, WhoseKidData>? whoseKidsRaw = null;
+    internal static Dictionary<string, WhoseKidData> WhoseKidsRaw =>
+        whoseKidsRaw ??= Game1.content.Load<Dictionary<string, WhoseKidData>>(Asset_WhoseKids);
     private static Dictionary<string, Dictionary<string, WhoseKidData>>? whoseKids = null;
-
     internal static Dictionary<string, Dictionary<string, WhoseKidData>> WhoseKids
     {
         get
         {
             if (whoseKids != null)
                 return whoseKids;
-            Dictionary<string, WhoseKidData> rawWhoseKids = Game1.content.Load<Dictionary<string, WhoseKidData>>(
-                Asset_WhoseKids
-            );
             whoseKids = [];
             whoseKids[KidHandler.WhoseKids_Shared] = [];
-            foreach ((string kidId, WhoseKidData whose) in rawWhoseKids)
+            foreach ((string kidId, WhoseKidData whose) in WhoseKidsRaw)
             {
                 if (!ChildData.ContainsKey(kidId))
                     continue;
@@ -185,12 +188,26 @@ internal static class AssetManager
             e.LoadFrom(() => new Dictionary<string, CharacterData>(), AssetLoadPriority.Low);
         if (name.IsEquivalentTo(Asset_WhoseKids))
             e.LoadFrom(() => new Dictionary<string, WhoseKidData>(), AssetLoadPriority.Low);
-        if (name.IsEquivalentTo(Asset_Strings))
-            e.LoadFromModFile<Dictionary<string, string>>("i18n/default/strings.json", AssetLoadPriority.Exclusive);
         if (name.IsEquivalentTo(Asset_NoPortrait))
             e.LoadFromModFile<Texture2D>("assets/no_portrait.png", AssetLoadPriority.Exclusive);
+        if (e.Name.IsEquivalentTo("Data/Furniture"))
+            e.Edit(Edit_DataFurniture, AssetEditPriority.Default);
+        if (e.Name.IsEquivalentTo("Data/Shops"))
+            e.Edit(Edit_DataShops, AssetEditPriority.Default);
+        if (name.IsEquivalentTo(Asset_Strings))
+        {
+            string stringsAsset = Path.Combine("i18n", e.Name.LanguageCode.ToString() ?? "default", "strings.json");
+            if (File.Exists(stringsAsset))
+            {
+                e.LoadFromModFile<Dictionary<string, string>>(stringsAsset, AssetLoadPriority.Exclusive);
+            }
+            else
+            {
+                e.LoadFromModFile<Dictionary<string, string>>("i18n/default/strings.json", AssetLoadPriority.Exclusive);
+            }
+        }
 
-        if (e.Name.IsEquivalentTo(Asset_StringsUI) && e.Name.LocaleCode == ModEntry.help.Translation.Locale)
+        if (e.Name.IsEquivalentTo("Strings/UI") && e.Name.LocaleCode == ModEntry.help.Translation.Locale)
             e.Edit(Edit_StringsUI, AssetEditPriority.Late);
 
         if (KidHandler.KidNPCToKid.Any())
@@ -214,6 +231,24 @@ internal static class AssetManager
                     }
                 }
             }
+        }
+    }
+
+    private static void Edit_DataFurniture(IAssetData asset)
+    {
+        IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
+        data[Furniture_DefaultCrib] =
+            $"{Furniture_DefaultCrib}/decor/3 4/3 2/1/5000/-1/[LocalizedText {Asset_Strings}:Crib_Name]/185/Maps\\farmhouse_tiles/true/hmk_crib";
+    }
+
+    private static void Edit_DataShops(IAssetData asset)
+    {
+        IDictionary<string, ShopData> data = asset.AsDictionary<string, ShopData>().Data;
+        if (data.TryGetValue("Carpenter", out ShopData? carpenterShop))
+        {
+            carpenterShop.Items.Add(
+                new() { Id = $"{Furniture_DefaultCrib}_Default", ItemId = $"(F){Furniture_DefaultCrib}" }
+            );
         }
     }
 
@@ -290,6 +325,7 @@ internal static class AssetManager
         }
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_WhoseKids)))
         {
+            whoseKidsRaw = null;
             whoseKids = null;
             ModEntry.Config.ResetMenu();
         }
@@ -310,7 +346,7 @@ internal static class AssetManager
     {
         if (e.NameWithoutLocale.IsEquivalentTo(Asset_ChildData))
         {
-            DelayedAction.functionAfterDelay(KidHandler.KidEntries_Populate, 0);
+            DelayedAction.functionAfterDelay(() => KidHandler.KidEntries_Populate(), 0);
         }
     }
 }

@@ -1,12 +1,15 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 using StardewValley.Characters;
 using StardewValley.Delegates;
+using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
@@ -165,12 +168,12 @@ internal static class KidHandler
         }
     }
 
-    internal static void KidEntries_Populate()
+    internal static void KidEntries_Populate([CallerMemberName] string? caller = null)
     {
         if (!Context.IsMainPlayer)
             return;
 
-        ModEntry.Log("Populating kid entries...");
+        ModEntry.Log($"Populating kid entries for '{caller}'...");
         KidEntries.Clear();
 
         foreach (Child kid in AllKids())
@@ -299,14 +302,12 @@ internal static class KidHandler
         {
             return;
         }
-        KidEntries_Populate();
-
+        CribManager.RecheckCribAssignments();
         int totalDaysChild = ModEntry.Config.TotalDaysChild;
         // update all kids
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
             kid.reloadSprite();
-            CribManager.PutInACrib(kid);
             // check if today is a Child day or a NPC day
             if (
                 kid.GetData() is CharacterData childCharaData
@@ -423,6 +424,92 @@ internal static class KidHandler
         }
     }
 
+    public static string AntiNameCollision(string name)
+    {
+        HashSet<string> npcIds = Utility.getAllCharacters().Select(npc => npc.Name).ToHashSet();
+        while (npcIds.Contains(name))
+        {
+            name += " ";
+        }
+        return name;
+    }
+
+    internal static void HaveAKid(
+        NPC? spouse,
+        string? newKidId,
+        bool isDarkSkinned,
+        string babyName,
+        out WhoseKidData? whoseKidForTwin,
+        bool isTwin
+    )
+    {
+        // create and add kid
+        Child newKid;
+        if (spouse != null)
+        {
+            if (PickForSpecificKidId(spouse, babyName) is string specificKidName)
+            {
+                newKidId = specificKidName;
+            }
+            spouse.modData.Remove(Character_ModData_NextKidId);
+        }
+
+        FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.player);
+        babyName = AntiNameCollision(babyName);
+        whoseKidForTwin = null;
+        if (newKidId != null && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData))
+        {
+            newKid = ApplyKidId(
+                spouse?.Name ?? "SOLO_BIRTH",
+                new(newKidId, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
+                true,
+                babyName,
+                newKidId
+            );
+            if (
+                !isTwin
+                && AssetManager.WhoseKidsRaw.TryGetValue(newKidId, out WhoseKidData? whoseKid)
+                && whoseKid.Twin != null
+                && GameStateQuery.CheckConditions(whoseKid.TwinCondition, farmHouse, Game1.player)
+            )
+            {
+                whoseKidForTwin = whoseKid;
+            }
+        }
+        else
+        {
+            bool isMale;
+            if (Game1.player.getNumberOfChildren() == 0)
+            {
+                isMale = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed).NextBool();
+            }
+            else
+            {
+                isMale = Game1.player.getChildren().Last().Gender == Gender.Female;
+            }
+            newKid = new(babyName, isMale, isDarkSkinned, Game1.player);
+        }
+
+        newKid.Age = 0;
+        farmHouse.characters.Add(newKid);
+        newKid.currentLocation = farmHouse;
+
+        Game1.morningQueue.Enqueue(() =>
+        {
+            KidEntries_Populate();
+            string text2 =
+                Game1.getCharacterFromName(Game1.player.spouse)?.GetTokenizedDisplayName() ?? Game1.player.spouse;
+            Game1.Multiplayer.globalChatInfoMessage(
+                "Baby",
+                Lexicon.capitalize(Game1.player.Name),
+                text2,
+                Lexicon.getTokenizedGenderedChildTerm(newKid.Gender == Gender.Male),
+                Lexicon.getTokenizedPronoun(newKid.Gender == Gender.Male),
+                newKid.displayName
+            );
+        });
+    }
+
     /// <summary>Choose a new kid Id. If originalName is given, only choose new one if the existing pick is invalid for the specific spouse</summary>
     /// <param name="spouse"></param>
     /// <param name="originalName"></param>
@@ -451,7 +538,6 @@ internal static class KidHandler
             && availableKidIds.Contains(nextKidId)
         )
         {
-            spouse.modData.Remove(Character_ModData_NextKidId);
             return nextKidId;
         }
 
@@ -474,8 +560,14 @@ internal static class KidHandler
         kidIds = null;
         if (AssetManager.WhoseKids.TryGetValue(spouseId, out Dictionary<string, WhoseKidData>? whoseKidsInfo))
         {
-            kidIds = whoseKidsInfo.Keys.ToList();
-            return true;
+            kidIds = [];
+            foreach ((string key, WhoseKidData data) in whoseKidsInfo)
+            {
+                if (GameStateQuery.CheckConditions(data.Condition))
+                {
+                    kidIds.Add(key);
+                }
+            }
         }
         return false;
     }
@@ -573,7 +665,7 @@ internal static class KidHandler
         string? name
     )
     {
-        // Prioritize "real name" if found
+        // Prioritize matching gender/darkskinned
         List<string> moreLikelyMatch = [];
         foreach (var kidId in availableKidIds)
         {
@@ -603,6 +695,15 @@ internal static class KidHandler
         {
             return null;
         }
+        // Prioritize the kid id set by trigger action, if it is valid
+        if (
+            spouse.modData.TryGetValue(Character_ModData_NextKidId, out string? nextKidId)
+            && availableKidIds.Contains(nextKidId)
+        )
+        {
+            return nextKidId;
+        }
+        // Check display names
         foreach (var kidId in availableKidIds)
         {
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
