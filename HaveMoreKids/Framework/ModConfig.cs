@@ -35,6 +35,7 @@ internal class ModConfigValues
     public int DaysToddler { get; set; } = 55 - 27;
     public int DaysChild { get; set; } = 84 - 55;
     public int BaseMaxChildren { get; set; } = 4;
+    public bool ToddlerRoamOnFarm { get; set; } = false;
     public bool UseSingleBedAsChildBed { get; set; } = false;
     public Dictionary<KidIdent, bool> EnabledKids { get; set; } = [];
 }
@@ -62,6 +63,7 @@ internal sealed class ModConfig : ModConfigValues
         DaysToddler = 55 - 27;
         DaysChild = 84 - 55;
         BaseMaxChildren = 4;
+        ToddlerRoamOnFarm = false;
         UseSingleBedAsChildBed = false;
         EnabledKids.Clear();
         CheckDefaultEnabled();
@@ -79,6 +81,7 @@ internal sealed class ModConfig : ModConfigValues
         DaysToddler = other.DaysToddler;
         DaysChild = other.DaysChild;
         BaseMaxChildren = other.BaseMaxChildren;
+        ToddlerRoamOnFarm = other.ToddlerRoamOnFarm;
         UseSingleBedAsChildBed = other.UseSingleBedAsChildBed;
         EnabledKids = other.EnabledKids;
 
@@ -245,6 +248,13 @@ internal sealed class ModConfig : ModConfigValues
             );
         }
 
+        GMCM.AddBoolOption(
+            Mod,
+            () => ToddlerRoamOnFarm,
+            (value) => ToddlerRoamOnFarm = value,
+            I18n.Config_ToddlerRoamOnFarm_Name,
+            I18n.Config_ToddlerRoamOnFarm_Description
+        );
         GMCM.AddBoolOption(
             Mod,
             () => UseSingleBedAsChildBed,

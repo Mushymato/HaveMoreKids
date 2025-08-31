@@ -33,7 +33,6 @@ public class ModEntry : Mod
         Patches.Apply();
 
         help.ConsoleCommands.Add("hmk-list_npcs", "List all NPC in the world", ConsoleListNPCs);
-        // help.ConsoleCommands.Add("hmk-pregnancy_days", "List day of next birth event", ConsoleListPregnancy);
     }
 
     internal static void ConsoleListNPCs(string arg1, string[] arg2)
@@ -47,14 +46,6 @@ public class ModEntry : Mod
             return true;
         });
     }
-
-    // private void ConsoleListPregnancy(string arg1, string[] arg2)
-    // {
-    //     if (Game1.player.GetSpouseFriendship() is Friendship friendship)
-    //     {
-    //         if (Game1.getAllFarmers)
-    //     }
-    // }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {

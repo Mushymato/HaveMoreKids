@@ -6,6 +6,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.GameData.Characters;
+using StardewValley.Locations;
 
 namespace HaveMoreKids.Framework;
 
@@ -64,6 +65,23 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.dayUpdate)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler))
         );
+        // Take over child behavior
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.tenMinuteUpdate)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Child_tenMinuteUpdate_Prefix))
+            {
+                priority = Priority.VeryHigh,
+            }
+        );
+        // Adjust FarmHouse getChildren/getChildrenCount so that it also looks at Farm
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.getChildren)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(FarmHouse_getChildren_Postfix))
+        );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.getChildrenCount)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(FarmHouse_getChildrenCount_Postfix))
+        );
         // Use special child data for the child form
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.GetData)),
@@ -121,6 +139,34 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
         );
+    }
+
+    private static IEnumerable<Child> GetChildrenOnFarm(FarmHouse __instance)
+    {
+        if (__instance.OwnerId == 0)
+        {
+            yield break;
+        }
+        if (__instance.GetParentLocation() is Farm farm)
+        {
+            foreach (Character chara in farm.characters)
+            {
+                if (chara is Child kid && kid.idOfParent.Value == __instance.OwnerId)
+                {
+                    yield return kid;
+                }
+            }
+        }
+    }
+
+    private static void FarmHouse_getChildren_Postfix(FarmHouse __instance, ref List<Child> __result)
+    {
+        __result.AddRange(GetChildrenOnFarm(__instance));
+    }
+
+    private static void FarmHouse_getChildrenCount_Postfix(FarmHouse __instance, ref int __result)
+    {
+        __result += GetChildrenOnFarm(__instance).Count();
     }
 
     private static IEnumerable<CodeInstruction> Child_draw_Transpiler(
@@ -238,21 +284,28 @@ internal static partial class Patches
 
     private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l, ref bool __result)
     {
-        if (__instance.Age >= 3 && who.IsLocalPlayer)
+        if (__instance.Age < 3)
         {
-            if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
-            {
-                __result = __instance.tryToReceiveActiveObject(who);
-                return !__result;
-            }
-            if (__instance.CurrentDialogue.Count > 0)
-            {
-                Game1.drawDialogue(__instance);
-                who.talkToFriend(__instance); // blocks the vanilla interact
-                __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
-                __result = true;
-                return false;
-            }
+            return true;
+        }
+        if (l is Farm)
+            __instance.controller = null;
+        if (!who.IsLocalPlayer)
+        {
+            return true;
+        }
+        if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
+        {
+            __result = __instance.tryToReceiveActiveObject(who);
+            return !__result;
+        }
+        if (__instance.CurrentDialogue.Count > 0)
+        {
+            Game1.drawDialogue(__instance);
+            who.talkToFriend(__instance); // blocks the vanilla interact
+            __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
+            __result = true;
+            return false;
         }
         return true;
     }
@@ -321,6 +374,18 @@ internal static partial class Patches
             ModEntry.Log($"Error in Child_dayUpdate_Transpiler:\n{err}", LogLevel.Error);
             return instructions;
         }
+    }
+
+    /// <summary>Alter child behavior so they can go outside to the Farm</summary>
+    /// <param name="__instance"></param>
+    /// <returns></returns>
+    private static bool Child_tenMinuteUpdate_Prefix(Child __instance)
+    {
+        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3 || !ModEntry.Config.ToddlerRoamOnFarm)
+        {
+            return false;
+        }
+        return KidHandler.TenMinuteUpdate(__instance);
     }
 
     /// <summary>
