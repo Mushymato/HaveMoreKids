@@ -394,35 +394,45 @@ internal static class KidHandler
     /// <returns></returns>
     internal static bool TenMinuteUpdate(Child kid)
     {
-        ModEntry.Log($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name}");
         // at 1900, banish them back to the house, and then allow vanilla logic to run
-        if (Game1.timeOfDay >= 1900 && kid.currentLocation is not FarmHouse)
+        if (Game1.timeOfDay >= 1850 && kid.currentLocation is not FarmHouse)
         {
             goingToTheFarm.Clear();
             ModEntry.Log($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to farmhouse");
             FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
-            int childIndex = kid.GetChildIndex();
-            Point childBedSpot = farmHouse.GetChildBedSpot(childIndex);
             DelayedAction.functionAfterDelay(
                 () =>
                 {
-                    Game1.warpCharacter(kid, farmHouse, childBedSpot.ToVector2());
+                    Game1.warpCharacter(
+                        kid,
+                        farmHouse,
+                        farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2()
+                    );
                     kid.controller = null;
                 },
                 0
             );
-            return true;
+            return false;
         }
 
-        // before 1100, roll and see if the child could go outside
+        // before 1000, roll and see if the child could go outside
         if (
-            Game1.timeOfDay < 1100
+            Game1.timeOfDay < 1000
             && kid.currentLocation is FarmHouse farmhouse
             && farmhouse.GetParentLocation() is Farm farm
         )
         {
-            // only 1 kid allowed to path to farm, they can't already be pathing to somewhere, and there's some rng
-            if (goingToTheFarm.ContainsKey(kid.idOfParent.Value) || kid.controller != null || Random.Shared.NextBool())
+            // if kid ought to be outside already, skip directly to warp
+            if (
+                goingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo)
+                && goingInfo.Item1 == kid
+            )
+            {
+                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
+                return false;
+            }
+            // only 1 kid allowed to path to farm, they aren't currently, they aren't being tossed, and there's some rng
+            if (kid.isMoving() || kid.mutex.IsLocked() || Random.Shared.NextBool())
             {
                 return false;
             }
@@ -441,6 +451,7 @@ internal static class KidHandler
                 houseEntry = new(warp.TargetX, warp.TargetY);
                 foundWarp = true;
             }
+
             if (!foundWarp)
             {
                 return true;
@@ -489,16 +500,15 @@ internal static class KidHandler
 
         kid.Halt();
         kid.controller = null;
-        Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
-        kid.toddlerReachedDestination(kid, l);
         goingToTheFarm.Remove(kid.idOfParent.Value);
-        ModEntry.Log($"WarpKidToFarm({Game1.timeOfDay}): {kid.Name}");
+        Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
+        kid.toddlerReachedDestination(kid, farm);
     }
 
     private static void FarmPathFinding(Child kid)
     {
         // already in a path find
-        if (kid.controller != null || kid.currentLocation is not Farm farm)
+        if (kid.controller != null || kid.mutex.IsLocked() || kid.currentLocation is not Farm farm)
         {
             return;
         }
