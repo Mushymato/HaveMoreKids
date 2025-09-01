@@ -57,6 +57,7 @@ public class ModEntry : Mod
     {
         Config.UnregistedOnNonHost = false;
         Config.ResetMenu();
+        KidHandler.GoingToTheFarm.Clear();
     }
 
     /// <summary>SMAPI static monitor Log wrapper</summary>

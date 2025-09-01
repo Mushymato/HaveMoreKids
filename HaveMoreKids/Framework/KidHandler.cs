@@ -123,6 +123,7 @@ internal static class KidHandler
         ModEntry.help.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
         ModEntry.help.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         ModEntry.help.Events.GameLoop.DayStarted += OnDayStarted;
+        ModEntry.help.Events.GameLoop.DayEnding += OnDayEnding;
         ModEntry.help.Events.GameLoop.Saving += OnSaving;
         ModEntry.help.Events.GameLoop.Saved += OnSaved;
     }
@@ -385,7 +386,7 @@ internal static class KidHandler
             && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
     }
 
-    private static readonly Dictionary<long, (Child, Point)> goingToTheFarm = [];
+    internal static readonly Dictionary<long, (Child, Point)> GoingToTheFarm = [];
 
     /// <summary>
     /// Possibly skipping prefix for Child.tenMinuteUpdate
@@ -397,21 +398,9 @@ internal static class KidHandler
         // at 1900, banish them back to the house, and then allow vanilla logic to run
         if (Game1.timeOfDay >= 1850 && kid.currentLocation is not FarmHouse)
         {
-            goingToTheFarm.Clear();
+            GoingToTheFarm.Clear();
             ModEntry.Log($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to farmhouse");
-            FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
-            DelayedAction.functionAfterDelay(
-                () =>
-                {
-                    Game1.warpCharacter(
-                        kid,
-                        farmHouse,
-                        farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2()
-                    );
-                    kid.controller = null;
-                },
-                0
-            );
+            WarpKidToHouse(kid);
             return false;
         }
 
@@ -424,7 +413,7 @@ internal static class KidHandler
         {
             // if kid ought to be outside already, skip directly to warp
             if (
-                goingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo)
+                GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo)
                 && goingInfo.Item1 == kid
             )
             {
@@ -475,7 +464,7 @@ internal static class KidHandler
                     }
                     else
                     {
-                        goingToTheFarm[kid.idOfParent.Value] = new(kid, trial);
+                        GoingToTheFarm[kid.idOfParent.Value] = new(kid, trial);
                         return false;
                     }
                 }
@@ -487,12 +476,37 @@ internal static class KidHandler
         return false;
     }
 
+    private static void WarpKidToHouse(Child kid, bool delay = true)
+    {
+        FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
+        if (delay)
+        {
+            DelayedAction.functionAfterDelay(
+                () =>
+                {
+                    Game1.warpCharacter(
+                        kid,
+                        farmHouse,
+                        farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2()
+                    );
+                    kid.controller = null;
+                },
+                0
+            );
+        }
+        else
+        {
+            Game1.warpCharacter(kid, farmHouse, farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2());
+            kid.controller = null;
+        }
+    }
+
     private static void WarpKidToFarm(Character c, GameLocation l)
     {
         if (
             c is not Child kid
             || l.GetParentLocation() is not Farm farm
-            || !goingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info)
+            || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info)
         )
             return;
         if (kid != info.Item1)
@@ -500,7 +514,7 @@ internal static class KidHandler
 
         kid.Halt();
         kid.controller = null;
-        goingToTheFarm.Remove(kid.idOfParent.Value);
+        GoingToTheFarm.Remove(kid.idOfParent.Value);
         Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
         kid.toddlerReachedDestination(kid, farm);
     }
@@ -553,6 +567,26 @@ internal static class KidHandler
         }
     }
 
+    private static void OnDayEnding(object? sender, DayEndingEventArgs e)
+    {
+        if (!Context.IsMainPlayer)
+            return;
+        ModEntry.Log("OnDayEnding");
+        GoingToTheFarm.Clear();
+        List<Child> needWarp = [];
+        foreach (Child kid in AllKids())
+        {
+            if (kid.currentLocation is not FarmHouse)
+            {
+                needWarp.Add(kid);
+            }
+        }
+        foreach (Child kid in needWarp)
+        {
+            WarpKidToHouse(kid, false);
+        }
+    }
+
     /// <summary>Unset HMK related data on saving</summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
@@ -560,6 +594,7 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
+        ModEntry.Log("OnSaving");
         foreach (Child kid in AllKids())
         {
             if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
