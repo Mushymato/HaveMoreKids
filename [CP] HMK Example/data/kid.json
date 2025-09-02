@@ -42,7 +42,7 @@
               "Id": "Toddler_Costume",
               "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/costume",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}/costume",
-              "Condition": "DAY_OF_WEEK Friday",
+              "Condition": "IS_EVENT festival_fall27",
               "Precedence": -1000,
             },
           ]

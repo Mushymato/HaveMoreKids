@@ -35,6 +35,7 @@ internal static class KidHandler
     private const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
+    private const string Child_CustomField_GoOutsideCondition = $"{ModEntry.ModId}/GoOutsideCondition";
     private const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     private const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
@@ -371,219 +372,10 @@ internal static class KidHandler
                     childAsNPC.resetSeasonalDialogue();
                     childAsNPC.resetCurrentDialogue();
                     childAsNPC.Sprite.UpdateSourceRect();
-                    ModEntry.Log($"Child '{kid.displayName}' ({kid.Name}) will go outside today", LogLevel.Info);
+                    ModEntry.Log($"Child '{kid.displayName}' ({kid.Name}) will go to town today", LogLevel.Info);
                     // ModEntry.help.Events.Player.Warped += OnWarped;
                 }
             }
-        }
-    }
-
-    internal static bool IsTileStandable(GameLocation location, Point tile)
-    {
-        return location.hasTileAt(tile.X, tile.Y, "Back")
-            && location.CanItemBePlacedHere(tile.ToVector2())
-            && !location.isWaterTile(tile.X, tile.Y)
-            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
-    }
-
-    internal static readonly Dictionary<long, (Child, Point)> GoingToTheFarm = [];
-
-    /// <summary>
-    /// Possibly skipping prefix for Child.tenMinuteUpdate
-    /// </summary>
-    /// <param name="kid"></param>
-    /// <returns></returns>
-    internal static bool TenMinuteUpdate(Child kid)
-    {
-        // at 1900, banish them back to the house, and then allow vanilla logic to run
-        if (Game1.timeOfDay >= 1850 && kid.currentLocation is not FarmHouse)
-        {
-            GoingToTheFarm.Clear();
-            ModEntry.Log($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to farmhouse");
-            WarpKidToHouse(kid);
-            return false;
-        }
-
-        // before 1000, roll and see if the child could go outside
-        if (
-            Game1.timeOfDay < 1000
-            && kid.currentLocation is FarmHouse farmhouse
-            && farmhouse.GetParentLocation() is Farm farm
-        )
-        {
-            // if kid ought to be outside already, skip directly to warp
-            if (
-                GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo)
-                && goingInfo.Item1 == kid
-            )
-            {
-                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
-                return false;
-            }
-            // only 1 kid allowed to path to farm, they aren't currently, they aren't being tossed, and there's some rng
-            if (kid.isMoving() || kid.mutex.IsLocked() || Random.Shared.NextBool())
-            {
-                return false;
-            }
-
-            ModEntry.Log($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> go outside");
-            bool foundWarp = false;
-            Point doorExit = new(-1, -1);
-            Point houseEntry = new(-1, -1);
-            foreach (Warp warp in farmhouse.warps)
-            {
-                if (warp.TargetName != farm.NameOrUniqueName)
-                {
-                    continue;
-                }
-                doorExit = new(warp.X, warp.Y - 2);
-                houseEntry = new(warp.TargetX, warp.TargetY);
-                foundWarp = true;
-            }
-
-            if (!foundWarp)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < 30; i++)
-            {
-                Point trial =
-                    new(houseEntry.X + Random.Shared.Next(-4, 4), houseEntry.Y + 2 + Random.Shared.Next(0, 8));
-                if (IsTileStandable(farm, trial))
-                {
-                    kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, WarpKidToFarm);
-                    if (
-                        kid.controller.pathToEndPoint == null
-                        || !kid.controller.pathToEndPoint.Any()
-                        || !kid.currentLocation.isTileOnMap(kid.controller.pathToEndPoint.Last())
-                    )
-                    {
-                        kid.controller = null;
-                        return true;
-                    }
-                    else
-                    {
-                        GoingToTheFarm[kid.idOfParent.Value] = new(kid, trial);
-                        return false;
-                    }
-                }
-            }
-        }
-
-        // while the kid is on the farm, do some path find controller things
-        FarmPathFinding(kid);
-        return false;
-    }
-
-    private static void WarpKidToHouse(Child kid, bool delay = true)
-    {
-        FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
-        if (delay)
-        {
-            DelayedAction.functionAfterDelay(
-                () =>
-                {
-                    Game1.warpCharacter(
-                        kid,
-                        farmHouse,
-                        farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2()
-                    );
-                    kid.controller = null;
-                },
-                0
-            );
-        }
-        else
-        {
-            Game1.warpCharacter(kid, farmHouse, farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2());
-            kid.controller = null;
-        }
-    }
-
-    private static void WarpKidToFarm(Character c, GameLocation l)
-    {
-        if (
-            c is not Child kid
-            || l.GetParentLocation() is not Farm farm
-            || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info)
-        )
-            return;
-        if (kid != info.Item1)
-            return;
-
-        kid.Halt();
-        kid.controller = null;
-        GoingToTheFarm.Remove(kid.idOfParent.Value);
-        Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
-        kid.toddlerReachedDestination(kid, farm);
-    }
-
-    private static void FarmPathFinding(Child kid)
-    {
-        // already in a path find
-        if (kid.controller != null || kid.mutex.IsLocked() || kid.currentLocation is not Farm farm)
-        {
-            return;
-        }
-
-        // 50% chance
-        if (Random.Shared.NextBool())
-        {
-            return;
-        }
-
-        kid.IsWalkingInSquare = false;
-        kid.Halt();
-
-        Point? targetTile = null;
-
-        if (!targetTile.HasValue || !IsTileStandable(farm, targetTile.Value))
-        {
-            for (int i = 0; i < 30; i++)
-            {
-                Point trial = kid.TilePoint + new Point(Random.Shared.Next(-10, 10), Random.Shared.Next(-10, 10));
-                if (IsTileStandable(farm, trial))
-                {
-                    targetTile = trial;
-                    break;
-                }
-            }
-            if (!targetTile.HasValue)
-            {
-                return;
-            }
-        }
-
-        ModEntry.Log($"FarmPathFinding({kid.Name}): {kid.TilePoint} -> {targetTile.Value}");
-        kid.controller = new PathFindController(kid, farm, targetTile.Value, -1, kid.toddlerReachedDestination);
-        if (
-            kid.controller.pathToEndPoint == null
-            || !kid.controller.pathToEndPoint.Any()
-            || !farm.isTileOnMap(kid.controller.pathToEndPoint.Last())
-        )
-        {
-            kid.controller = null;
-        }
-    }
-
-    private static void OnDayEnding(object? sender, DayEndingEventArgs e)
-    {
-        if (!Context.IsMainPlayer)
-            return;
-        ModEntry.Log("OnDayEnding");
-        GoingToTheFarm.Clear();
-        List<Child> needWarp = [];
-        foreach (Child kid in AllKids())
-        {
-            if (kid.currentLocation is not FarmHouse)
-            {
-                needWarp.Add(kid);
-            }
-        }
-        foreach (Child kid in needWarp)
-        {
-            WarpKidToHouse(kid, false);
         }
     }
 
@@ -597,11 +389,10 @@ internal static class KidHandler
         ModEntry.Log("OnSaving");
         foreach (Child kid in AllKids())
         {
+            kid.modData.Remove(Child_CustomField_GoOutsideCondition);
             if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string? displayName))
             {
-#if DEBUG
-                ModEntry.Log($"Unset before saving: '{displayName}' ({kid.Name})");
-#endif
+                ModEntry.LogDebug($"Unset before saving: '{displayName}' ({kid.Name})");
                 kid.modData.Remove(Child_ModData_DisplayName);
                 kid.modData[Child_ModData_Id] = kid.Name;
                 kid.Name = displayName;
@@ -620,10 +411,7 @@ internal static class KidHandler
         {
             if (kid.modData.TryGetValue(Child_ModData_Id, out string kidId))
             {
-#if DEBUG
-                ModEntry.Log($"Restore after saving: '{kid.Name}' ({kidId})");
-#endif
-
+                ModEntry.LogDebug($"Restore after saving: '{kid.Name}' ({kidId})");
                 kid.modData[Child_ModData_DisplayName] = kid.Name;
                 kid.Name = kidId;
             }
@@ -953,4 +741,257 @@ internal static class KidHandler
         ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.", LogLevel.Info);
         return newKid;
     }
+
+    #region kid pathing
+    internal static bool IsTileStandable(GameLocation location, Point tile)
+    {
+        return location.hasTileAt(tile.X, tile.Y, "Back")
+            && location.CanItemBePlacedHere(tile.ToVector2())
+            && !location.isWaterTile(tile.X, tile.Y)
+            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
+    }
+
+    internal static readonly Dictionary<long, (Child, Point)> GoingToTheFarm = [];
+
+    internal static bool KidShouldGoOutside(this Child kid)
+    {
+        if (kid.modData.TryGetValue(Child_CustomField_GoOutsideCondition, out string value))
+        {
+            return value == "T";
+        }
+
+        bool result;
+        if (
+            kid.GetData()?.CustomFields?.TryGetValue(Child_CustomField_GoOutsideCondition, out string? condition)
+            ?? false
+        )
+        {
+            result = GameStateQuery.CheckConditions(condition, new());
+            ModEntry.LogDebug($"{condition}={result}");
+        }
+        else
+        {
+            result = Random.Shared.NextBool();
+        }
+
+        kid.modData[Child_CustomField_GoOutsideCondition] = result ? "T" : "F";
+        return result;
+    }
+
+    /// <summary>
+    /// Possibly skipping prefix for Child.tenMinuteUpdate
+    /// </summary>
+    /// <param name="kid"></param>
+    /// <returns></returns>
+    internal static bool TenMinuteUpdate(Child kid)
+    {
+        // at 1900, banish them back to the house, and then allow vanilla logic to run
+        if (Game1.timeOfDay >= 1850 && kid.currentLocation is not FarmHouse)
+        {
+            GoingToTheFarm.Clear();
+            ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to farmhouse");
+            WarpKidToHouse(kid);
+            return false;
+        }
+
+        // before 1000, roll and see if the child could go outside
+        if (
+            ModEntry.Config.ToddlerRoamOnFarm
+            && Game1.timeOfDay <= 1000
+            && kid.currentLocation is FarmHouse farmhouse
+            && farmhouse.GetParentLocation() is Farm farm
+        )
+        {
+            return SendKidToOutside(kid, farmhouse, farm);
+        }
+
+        // while the kid is on the farm, do some path find controller things
+        FarmPathFinding(kid);
+        return false;
+    }
+
+    private static bool SendKidToOutside(Child kid, FarmHouse farmhouse, Farm farm)
+    {
+        // check if kid should go out
+        if (!kid.KidShouldGoOutside())
+        {
+            return false;
+        }
+
+        // if kid ought to be outside already, skip directly to warp
+        if (GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo))
+        {
+            if (goingInfo.Item1 == kid)
+            {
+                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        // only 1 kid allowed to path to farm at once and they should not be moving
+        if (kid.isMoving() || kid.mutex.IsLocked())
+        {
+            return false;
+        }
+
+        ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> go outside");
+        bool foundWarp = false;
+        Point doorExit = new(-1, -1);
+        Point houseEntry = new(-1, -1);
+        foreach (Warp warp in farmhouse.warps)
+        {
+            if (warp.TargetName != farm.NameOrUniqueName)
+            {
+                continue;
+            }
+            doorExit = new(warp.X, warp.Y - 2);
+            houseEntry = new(warp.TargetX, warp.TargetY);
+            foundWarp = true;
+        }
+
+        if (!foundWarp)
+        {
+            return true;
+        }
+
+        for (int i = 0; i < 30; i++)
+        {
+            Point trial = new(houseEntry.X + Random.Shared.Next(-4, 4), houseEntry.Y + 2 + Random.Shared.Next(0, 8));
+            if (IsTileStandable(farm, trial))
+            {
+                kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, WarpKidToFarm);
+                if (
+                    kid.controller.pathToEndPoint == null
+                    || !kid.controller.pathToEndPoint.Any()
+                    || !kid.currentLocation.isTileOnMap(kid.controller.pathToEndPoint.Last())
+                )
+                {
+                    kid.controller = null;
+                    return true;
+                }
+                else
+                {
+                    GoingToTheFarm[kid.idOfParent.Value] = new(kid, trial);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static void WarpKidToHouse(Child kid, bool delay = true)
+    {
+        FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
+        if (delay)
+        {
+            DelayedAction.functionAfterDelay(
+                () =>
+                {
+                    Game1.warpCharacter(
+                        kid,
+                        farmHouse,
+                        farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2()
+                    );
+                    kid.controller = null;
+                },
+                0
+            );
+        }
+        else
+        {
+            Game1.warpCharacter(kid, farmHouse, farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2());
+            kid.controller = null;
+        }
+    }
+
+    private static void WarpKidToFarm(Character c, GameLocation l)
+    {
+        if (
+            c is not Child kid
+            || l.GetParentLocation() is not Farm farm
+            || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info)
+        )
+            return;
+        if (kid != info.Item1)
+            return;
+
+        kid.Halt();
+        kid.controller = null;
+        GoingToTheFarm.Remove(kid.idOfParent.Value);
+        Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
+        kid.toddlerReachedDestination(kid, farm);
+    }
+
+    private static void FarmPathFinding(Child kid)
+    {
+        // already in a path find
+        if (kid.controller != null || kid.mutex.IsLocked() || kid.currentLocation is not Farm farm)
+        {
+            return;
+        }
+
+        // 50% chance
+        if (Random.Shared.NextBool())
+        {
+            return;
+        }
+
+        kid.IsWalkingInSquare = false;
+        kid.Halt();
+
+        Point? targetTile = null;
+
+        if (!targetTile.HasValue || !IsTileStandable(farm, targetTile.Value))
+        {
+            for (int i = 0; i < 30; i++)
+            {
+                Point trial = kid.TilePoint + new Point(Random.Shared.Next(-10, 10), Random.Shared.Next(-10, 10));
+                if (IsTileStandable(farm, trial))
+                {
+                    targetTile = trial;
+                    break;
+                }
+            }
+            if (!targetTile.HasValue)
+            {
+                return;
+            }
+        }
+
+        ModEntry.Log($"FarmPathFinding({kid.Name}): {kid.TilePoint} -> {targetTile.Value}");
+        kid.controller = new PathFindController(kid, farm, targetTile.Value, -1, kid.toddlerReachedDestination);
+        if (
+            kid.controller.pathToEndPoint == null
+            || !kid.controller.pathToEndPoint.Any()
+            || !farm.isTileOnMap(kid.controller.pathToEndPoint.Last())
+        )
+        {
+            kid.controller = null;
+        }
+    }
+
+    private static void OnDayEnding(object? sender, DayEndingEventArgs e)
+    {
+        if (!Context.IsMainPlayer)
+            return;
+        ModEntry.Log("OnDayEnding");
+        GoingToTheFarm.Clear();
+        List<Child> needWarp = [];
+        foreach (Child kid in AllKids())
+        {
+            if (kid.currentLocation is not FarmHouse)
+            {
+                needWarp.Add(kid);
+            }
+        }
+        foreach (Child kid in needWarp)
+        {
+            WarpKidToHouse(kid, false);
+        }
+    }
+    #endregion
 }

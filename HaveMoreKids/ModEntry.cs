@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using HaveMoreKids.Framework;
 using StardewModdingAPI;
@@ -74,5 +75,14 @@ public class ModEntry : Mod
     internal static void LogOnce(string msg, LogLevel level = DEFAULT_LOG_LEVEL)
     {
         mon!.LogOnce(msg, level);
+    }
+
+    /// <summary>SMAPI static monitor LogOnce wrapper</summary>
+    /// <param name="msg"></param>
+    /// <param name="level"></param>
+    [Conditional("DEBUG")]
+    internal static void LogDebug(string msg, LogLevel level = DEFAULT_LOG_LEVEL)
+    {
+        mon!.Log(msg, level);
     }
 }

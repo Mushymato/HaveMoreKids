@@ -60,7 +60,10 @@
               "Id": "HMK_BABY",
               "Sprite": "Characters/{{ModId}}_The_Baby"
             }
-          ]
+          ],
+          "CustomFields": {
+            "mushymato.HaveMoreKids/GoOutsideCondition": "WEATHER Here Rain Storm GreenRain"
+          }
         }
       }
     },

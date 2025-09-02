@@ -162,6 +162,7 @@ internal static partial class Patches
     private static void FarmHouse_getChildren_Postfix(FarmHouse __instance, ref List<Child> __result)
     {
         __result.AddRange(GetChildrenOnFarm(__instance));
+        __result.Sort((kidA, kidB) => kidA.daysOld.Value.CompareTo(kidB.daysOld.Value));
     }
 
     private static void FarmHouse_getChildrenCount_Postfix(FarmHouse __instance, ref int __result)
@@ -381,7 +382,7 @@ internal static partial class Patches
     /// <returns></returns>
     private static bool Child_tenMinuteUpdate_Prefix(Child __instance)
     {
-        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3 || !ModEntry.Config.ToddlerRoamOnFarm)
+        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3)
         {
             return false;
         }
@@ -455,7 +456,7 @@ internal static partial class Patches
             __instance.Sprite.SpriteHeight = childData.Size.Y;
             __instance.Sprite.currentFrame = 0;
             __instance.HideShadow = false;
-            __instance.Breather = childData.BreathChestRect.HasValue;
+            __instance.Breather = childData.Breather && childData.BreathChestRect.HasValue;
         }
         __instance.Sprite.UpdateSourceRect();
 
