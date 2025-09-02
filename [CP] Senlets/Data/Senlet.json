@@ -70,10 +70,10 @@
     // Add this senlet to SenS
     {
       "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/WhoseKids",
+      "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
-          "Parent": "Abigail"
+          "Parent": "SenS"
         }
       },
     },

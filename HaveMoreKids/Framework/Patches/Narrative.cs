@@ -1,10 +1,6 @@
-using System.Reflection;
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Characters;
-using StardewValley.Locations;
-using StardewValley.Menus;
-using StardewValley.Objects;
 
 namespace HaveMoreKids.Framework;
 
@@ -14,9 +10,6 @@ internal static partial class Patches
     {
         // Allow easier time of using kid actors in events
         harmony.Patch(
-            // original: AccessTools
-            //     .GetDeclaredMethods(typeof(Event))
-            //     .FirstOrDefault(mthd => mthd.Name == "getActorByName" && mthd.GetParameters().Length == 3),
             original: AccessTools.DeclaredMethod(
                 typeof(Event),
                 nameof(Event.getActorByName),
@@ -24,6 +17,24 @@ internal static partial class Patches
             ),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Event_getActorByName_Postfix))
         );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(
+                typeof(Event.DefaultCommands),
+                nameof(Event.DefaultCommands.LoadActors)
+            ),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(EventDefaultCommands_LoadActors_Postfix))
+        );
+    }
+
+    private static void EventDefaultCommands_LoadActors_Postfix(Event @event, string[] args, EventContext context)
+    {
+        foreach (NPC actor in @event.actors)
+        {
+            if (actor is Child kid)
+            {
+                ModEntry.Log($"{kid.Name}: {kid.TilePoint}");
+            }
+        }
     }
 
     private static void Event_getActorByName_Postfix(Event __instance, ref string name, ref NPC __result)

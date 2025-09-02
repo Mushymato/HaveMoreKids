@@ -119,7 +119,7 @@ public class HMKBirthingEvent : BaseFarmEvent
             newKidId,
             isDarkSkinned,
             babyName ?? Dialogue.randomName(),
-            out WhoseKidData? whoseKidForTwin,
+            out KidDefinitionData? whoseKidForTwin,
             isTwin
         );
 

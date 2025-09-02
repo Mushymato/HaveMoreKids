@@ -26,5 +26,12 @@
         "L@Spouse": "Alex"
       }
     },
+    {
+      "Action": "Include",
+      "FromFile": "data/spouse.json",
+      "LocalTokens": {
+        "L@Spouse": "Shane"
+      }
+    },
   ]
 }

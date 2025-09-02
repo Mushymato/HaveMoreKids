@@ -104,7 +104,7 @@
     // Add this Child to spouse
     {
       "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/WhoseKids",
+      "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}": {
           "Parent": "{{L@Spouse}}"

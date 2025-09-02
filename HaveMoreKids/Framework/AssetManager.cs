@@ -9,7 +9,7 @@ using StardewValley.GameData.Shops;
 
 namespace HaveMoreKids.Framework;
 
-public sealed class WhoseKidData
+public sealed class KidDefinitionData
 {
     public string? Parent { get; set; } = null;
     public bool Shared { get; set; } = false;
@@ -23,13 +23,10 @@ public sealed class WhoseKidData
 internal static class AssetManager
 {
     private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
-    private const string Asset_WhoseKids = $"{ModEntry.ModId}/WhoseKids";
+    private const string Asset_KidDefinitions = $"{ModEntry.ModId}/Kids";
     private const string Asset_Strings = $"{ModEntry.ModId}\\Strings";
     internal const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";
     private const string Asset_NoPortrait = $"Portraits/{Asset_DefaultTextureName}";
-
-    // private const string Asset_PortraitPrefix = "Portraits/";
-    // private const string Asset_SpritePrefix = "Characters/";
     internal const string Asset_DataCharacters = "Data/Characters";
     internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
     private const string Furniture_DefaultCrib = $"{ModEntry.ModId}_Crib";
@@ -117,11 +114,11 @@ internal static class AssetManager
         }
     }
 
-    private static Dictionary<string, WhoseKidData>? whoseKidsRaw = null;
-    internal static Dictionary<string, WhoseKidData> WhoseKidsRaw =>
-        whoseKidsRaw ??= Game1.content.Load<Dictionary<string, WhoseKidData>>(Asset_WhoseKids);
-    private static Dictionary<string, Dictionary<string, WhoseKidData>>? whoseKids = null;
-    internal static Dictionary<string, Dictionary<string, WhoseKidData>> WhoseKids
+    private static Dictionary<string, KidDefinitionData>? whoseKidsRaw = null;
+    internal static Dictionary<string, KidDefinitionData> WhoseKidsRaw =>
+        whoseKidsRaw ??= Game1.content.Load<Dictionary<string, KidDefinitionData>>(Asset_KidDefinitions);
+    private static Dictionary<string, Dictionary<string, KidDefinitionData>>? whoseKids = null;
+    internal static Dictionary<string, Dictionary<string, KidDefinitionData>> WhoseKids
     {
         get
         {
@@ -129,13 +126,13 @@ internal static class AssetManager
                 return whoseKids;
             whoseKids = [];
             whoseKids[KidHandler.WhoseKids_Shared] = [];
-            foreach ((string kidId, WhoseKidData whose) in WhoseKidsRaw)
+            foreach ((string kidId, KidDefinitionData whose) in WhoseKidsRaw)
             {
                 if (!ChildData.ContainsKey(kidId))
                     continue;
                 if (whose.Parent != null && Game1.characterData.ContainsKey(whose.Parent))
                 {
-                    if (!whoseKids.TryGetValue(whose.Parent, out Dictionary<string, WhoseKidData>? npcWhosekids))
+                    if (!whoseKids.TryGetValue(whose.Parent, out Dictionary<string, KidDefinitionData>? npcWhosekids))
                     {
                         npcWhosekids = [];
                         whoseKids[whose.Parent] = npcWhosekids;
@@ -186,8 +183,8 @@ internal static class AssetManager
         IAssetName name = e.NameWithoutLocale;
         if (name.IsEquivalentTo(Asset_ChildData))
             e.LoadFrom(() => new Dictionary<string, CharacterData>(), AssetLoadPriority.Low);
-        if (name.IsEquivalentTo(Asset_WhoseKids))
-            e.LoadFrom(() => new Dictionary<string, WhoseKidData>(), AssetLoadPriority.Low);
+        if (name.IsEquivalentTo(Asset_KidDefinitions))
+            e.LoadFrom(() => new Dictionary<string, KidDefinitionData>(), AssetLoadPriority.Low);
         if (name.IsEquivalentTo(Asset_NoPortrait))
             e.LoadFromModFile<Texture2D>("assets/no_portrait.png", AssetLoadPriority.Exclusive);
         if (e.Name.IsEquivalentTo("Data/Furniture"))
@@ -213,7 +210,7 @@ internal static class AssetManager
         if (KidHandler.KidNPCToKid.Any())
         {
             if (name.IsEquivalentTo(Asset_DataCharacters))
-                e.Edit(Edit_DataCharacters, AssetEditPriority.Early);
+                e.Edit(Edit_DataCharacters, AssetEditPriority.Late);
             if (name.IsEquivalentTo(Asset_DataNPCGiftTastes))
                 e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
             foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
@@ -320,10 +317,10 @@ internal static class AssetManager
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
         {
             childData = null;
-            ModEntry.help.GameContent.InvalidateCache(Asset_WhoseKids);
+            ModEntry.help.GameContent.InvalidateCache(Asset_KidDefinitions);
             ModEntry.Config.ResetMenu();
         }
-        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_WhoseKids)))
+        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_KidDefinitions)))
         {
             whoseKidsRaw = null;
             whoseKids = null;

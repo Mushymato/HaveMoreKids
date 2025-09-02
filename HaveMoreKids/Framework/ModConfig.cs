@@ -116,7 +116,7 @@ internal sealed class ModConfig : ModConfigValues
                 !KidHandler.TryGetKidIds(
                     key,
                     out List<string>? kidIds,
-                    out Dictionary<string, WhoseKidData>? whoseKidsInfo
+                    out Dictionary<string, KidDefinitionData>? whoseKidsInfo
                 )
             )
                 continue;

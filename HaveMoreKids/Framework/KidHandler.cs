@@ -363,6 +363,12 @@ internal static class KidHandler
                         childFriendship = new Friendship(0);
                         Game1.player.friendshipData[kid.Name] = childFriendship;
                     }
+                    childFriendship.ProposalRejected = false;
+                    childFriendship.RoommateMarriage = false;
+                    childFriendship.WeddingDate = null;
+                    childFriendship.NextBirthingDate = null;
+                    childFriendship.Status = FriendshipStatus.Friendly;
+                    childFriendship.Proposer = 0L;
                     // might be haunted in multiplayer?
                     Game1.player.friendshipData[entry.KidNPCId] = childFriendship;
                     childAsNPC.reloadSprite(onlyAppearance: true);
@@ -433,7 +439,7 @@ internal static class KidHandler
         string? newKidId,
         bool isDarkSkinned,
         string babyName,
-        out WhoseKidData? whoseKidForTwin,
+        out KidDefinitionData? whoseKidForTwin,
         bool isTwin
     )
     {
@@ -462,7 +468,7 @@ internal static class KidHandler
             );
             if (
                 !isTwin
-                && AssetManager.WhoseKidsRaw.TryGetValue(newKidId, out WhoseKidData? whoseKid)
+                && AssetManager.WhoseKidsRaw.TryGetValue(newKidId, out KidDefinitionData? whoseKid)
                 && whoseKid.Twin != null
                 && GameStateQuery.CheckConditions(whoseKid.TwinCondition, farmHouse, Game1.player)
             )
@@ -551,10 +557,10 @@ internal static class KidHandler
     internal static bool TryGetKidIds(string spouseId, [NotNullWhen(true)] out List<string>? kidIds)
     {
         kidIds = null;
-        if (AssetManager.WhoseKids.TryGetValue(spouseId, out Dictionary<string, WhoseKidData>? whoseKidsInfo))
+        if (AssetManager.WhoseKids.TryGetValue(spouseId, out Dictionary<string, KidDefinitionData>? whoseKidsInfo))
         {
             kidIds = [];
-            foreach ((string key, WhoseKidData data) in whoseKidsInfo)
+            foreach ((string key, KidDefinitionData data) in whoseKidsInfo)
             {
                 if (GameStateQuery.CheckConditions(data.Condition))
                 {
@@ -572,7 +578,7 @@ internal static class KidHandler
     internal static bool TryGetKidIds(
         string spouseId,
         [NotNullWhen(true)] out List<string>? kidIds,
-        [NotNullWhen(true)] out Dictionary<string, WhoseKidData>? whoseKidsInfo
+        [NotNullWhen(true)] out Dictionary<string, KidDefinitionData>? whoseKidsInfo
     )
     {
         kidIds = null;

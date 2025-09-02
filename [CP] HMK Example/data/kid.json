@@ -54,7 +54,7 @@
     // Case NPC Parent (kid is only available for a particular NPC parent)
     {
       "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/WhoseKids",
+      "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
           "Parent": "{{NPCParent}}",
@@ -67,7 +67,7 @@
     // Case Shared Kids (kid is available for everyone)
     {
       "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/WhoseKids",
+      "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
           "Shared": true

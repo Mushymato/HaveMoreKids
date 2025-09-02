@@ -35,9 +35,9 @@
         "L@Growup": "npc"
       }
     },
-    {
-      "Action": "Include",
-      "FromFile": "data/crib.json"
-    }
+    // {
+    //   "Action": "Include",
+    //   "FromFile": "data/crib.json"
+    // }
   ]
 }

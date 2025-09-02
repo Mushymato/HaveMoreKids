@@ -164,7 +164,7 @@
     {
       // Laurel and Yvette are twins
       "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/WhoseKids",
+      "Target": "mushymato.HaveMoreKids/Kids",
       "Fields": {
         "{{ModId}}_Laurel": {
           "Twin": "{{ModId}}_Yvette"
