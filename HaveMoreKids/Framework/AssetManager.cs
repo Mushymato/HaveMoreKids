@@ -48,7 +48,7 @@ internal static class AssetManager
                 {
                     if (Game1.characterData.ContainsKey(key))
                     {
-                        invalidKidData.Add(new(key, "ID collides with NPC"));
+                        invalidKidData.Add(new(key, "ID collides with NPC (Data/Characters)"));
                         continue;
                     }
 

@@ -8,7 +8,6 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
-using StardewValley.Buildings;
 using StardewValley.Characters;
 using StardewValley.Delegates;
 using StardewValley.Extensions;
@@ -749,10 +748,31 @@ internal static class KidHandler
     }
 
     #region kid pathing
+
+    /// <summary>Get whether players can walk on a map tile.</summary>
+    /// <param name="location">The location to check.</param>
+    /// <param name="tile">The tile position.</param>
+    /// <remarks>This is derived from <see cref="GameLocation.isTilePassable(Vector2)" />, but also checks tile properties in addition to tile index properties to match the actual game behavior.</remarks>
+    private static bool IsTilePassable(GameLocation location, Point tile)
+    {
+        // passable if Buildings layer has 'Passable' property
+        xTile.Tiles.Tile? buildingTile = location.map.RequireLayer("Buildings").Tiles[(int)tile.X, (int)tile.Y];
+        if (buildingTile?.Properties.ContainsKey("Passable") is true)
+            return true;
+
+        // non-passable if Back layer has 'Passable' property
+        xTile.Tiles.Tile? backTile = location.map.RequireLayer("Back").Tiles[(int)tile.X, (int)tile.Y];
+        if (backTile?.Properties.ContainsKey("Passable") is true)
+            return false;
+
+        // else check tile indexes
+        return location.isTilePassable(tile.ToVector2());
+    }
+
     internal static bool IsTileStandable(GameLocation location, Point tile)
     {
-        return location.hasTileAt(tile.X, tile.Y, "Back")
-            && location.CanItemBePlacedHere(tile.ToVector2())
+        return !IsTilePassable(location, tile)
+            && !location.IsTileBlockedBy(tile.ToVector2(), ignorePassables: CollisionMask.All)
             && !location.isWaterTile(tile.X, tile.Y)
             && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
     }
