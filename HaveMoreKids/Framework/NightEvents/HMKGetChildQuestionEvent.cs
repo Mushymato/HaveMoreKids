@@ -7,7 +7,7 @@ using StardewValley.Events;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
-public class HMKPregnancyQuestionEvent(int whichQuestion) : BaseFarmEvent
+public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
 {
     public bool forceProceed;
     private static Response[] YesNot =>

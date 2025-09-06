@@ -7,7 +7,7 @@ using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
-public class HMKBirthingEvent : BaseFarmEvent
+public class HMKNewChildEvent : BaseFarmEvent
 {
     private int timer;
 
@@ -24,6 +24,7 @@ public class HMKBirthingEvent : BaseFarmEvent
     private bool isDarkSkinned;
 
     private bool isTwin;
+
     private NPC? spouse;
 
     /// <inheritdoc />

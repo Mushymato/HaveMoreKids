@@ -1,0 +1,21 @@
+{
+  "Name": "Have More Kids Example Pack",
+  "Author": "mushymato",
+  "Version": "0.1.0",
+  "Description": "Example pack for mushymato.HaveMoreKids, ",
+  "UniqueID": "mushymato.HMK.Example",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [
+    "Nexus:???"
+  ],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher",
+    "MinimumVersion": "2.7.0"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "mushymato.HaveMoreKids",
+      "IsRequired": true
+    }
+  ]
+}

@@ -21,6 +21,7 @@ namespace HaveMoreKids.Framework;
 
 internal sealed record KidEntry(
     string? KidNPCId,
+    bool NeedAssetEdits,
     string DisplayName,
     long PlayerParent,
     string? OtherParent,
@@ -199,17 +200,27 @@ internal static class KidHandler
             }
 
             string? kidNPCId = null;
-            if (
-                kid.Age > 2
-                && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
-                && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
-            )
+            bool needAssetEdits = false;
+            if (kid.Age > 2 && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData))
             {
-                kidNPCId = FormChildNPCId(kid.Name);
+                if (
+                    AssetManager.KidDefsByKidId.TryGetValue(kid.Name, out KidDefinitionData? kidDef)
+                    && kidDef.AdoptedFromNPC is not null
+                )
+                {
+                    kidNPCId = kidDef.AdoptedFromNPC;
+                    needAssetEdits = false;
+                }
+                else if (!GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize))
+                {
+                    kidNPCId = FormChildNPCId(kid.Name);
+                    needAssetEdits = true;
+                }
             }
+
             KidEntries[kid.Name] = new(
                 kidNPCId,
+                needAssetEdits,
                 kid.displayName,
                 kid.idOfParent.Value,
                 kid.KidNPCParent(),
@@ -467,12 +478,12 @@ internal static class KidHandler
             );
             if (
                 !isTwin
-                && AssetManager.WhoseKidsRaw.TryGetValue(newKidId, out KidDefinitionData? whoseKid)
-                && whoseKid.Twin != null
-                && GameStateQuery.CheckConditions(whoseKid.TwinCondition, farmHouse, Game1.player)
+                && AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef)
+                && kidDef.Twin != null
+                && GameStateQuery.CheckConditions(kidDef.TwinCondition, farmHouse, Game1.player)
             )
             {
-                whoseKidForTwin = whoseKid;
+                whoseKidForTwin = kidDef;
             }
         }
         else
@@ -556,7 +567,12 @@ internal static class KidHandler
     internal static bool TryGetKidIds(string spouseId, [NotNullWhen(true)] out List<string>? kidIds)
     {
         kidIds = null;
-        if (AssetManager.WhoseKids.TryGetValue(spouseId, out Dictionary<string, KidDefinitionData>? whoseKidsInfo))
+        if (
+            AssetManager.KidDefsByParentId.TryGetValue(
+                spouseId,
+                out Dictionary<string, KidDefinitionData>? whoseKidsInfo
+            )
+        )
         {
             kidIds = [];
             foreach ((string key, KidDefinitionData data) in whoseKidsInfo)
@@ -581,7 +597,7 @@ internal static class KidHandler
     )
     {
         kidIds = null;
-        if (AssetManager.WhoseKids.TryGetValue(spouseId, out whoseKidsInfo))
+        if (AssetManager.KidDefsByParentId.TryGetValue(spouseId, out whoseKidsInfo))
         {
             kidIds = whoseKidsInfo.Keys.ToList();
             return whoseKidsInfo.Values.Where(value => value.DefaultEnabled).Any();

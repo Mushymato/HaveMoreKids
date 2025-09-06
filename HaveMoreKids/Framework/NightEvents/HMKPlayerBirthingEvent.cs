@@ -9,7 +9,7 @@ using StardewValley.Menus;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
-public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
+public class HMKPlayerCoupleNewChildEvent : BaseFarmEvent
 {
     private int timer;
 
@@ -31,7 +31,7 @@ public class HMKPlayerCoupleBirthingEvent : BaseFarmEvent
 
     private Child? child;
 
-    public HMKPlayerCoupleBirthingEvent()
+    public HMKPlayerCoupleNewChildEvent()
     {
         spouseID = Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID)!.Value;
         Game1.otherFarmers.TryGetValue(spouseID, out spouse);

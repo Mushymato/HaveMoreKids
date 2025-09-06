@@ -1,0 +1,14 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Format": "2.7.0",
+  "Changes": [
+    // Hospital Adoption event
+    {
+      "Action": "EditData",
+      "Target": "Data/Events/Hospital",
+      "Entries": {
+        "{{ModId}}_Intro/GameStateQuery TRUE": "Hospital_Ambient/-100 -100/farmer 10 19 0 {{ChildNames|valueAt=0}} 9 14 2/skippable/viewport 10 14/pause 1000/move {{ChildNames|valueAt=0}} 0 4 down true/speak {{ChildNames|valueAt=0}} \"I AM {{ChildNames|valueAt=0}}\"/end"
+      }
+    }
+  ]
+}

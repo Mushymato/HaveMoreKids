@@ -5,7 +5,7 @@ namespace HaveMoreKids.Framework;
 
 internal static class MultiplayerSync
 {
-    private const string ChildToNPCMsg = "ChildToNPC";
+    private const string KidEntriesMsg = "KidEntries";
     private const string ModConfigMsg = "ModConfig";
 
     internal static void Register()
@@ -19,15 +19,15 @@ internal static class MultiplayerSync
     {
         if (!Context.IsMultiplayer)
             return;
-        ModEntry.Log("Send ChildToNPC");
-        ModEntry.help.Multiplayer.SendMessage(KidHandler.KidEntries, ChildToNPCMsg, [ModEntry.ModId], playerIDs);
+        ModEntry.Log($"Send {KidEntriesMsg}");
+        ModEntry.help.Multiplayer.SendMessage(KidHandler.KidEntries, KidEntriesMsg, [ModEntry.ModId], playerIDs);
     }
 
     internal static void SendModConfig(long[]? playerIDs)
     {
         if (!Context.IsMultiplayer)
             return;
-        ModEntry.Log("Send ModConfig");
+        ModEntry.Log($"Send {ModConfigMsg}");
         ModEntry.help.Multiplayer.SendMessage(
             ModEntry.Config as ModConfigValues,
             ModConfigMsg,
@@ -43,7 +43,7 @@ internal static class MultiplayerSync
             ModEntry.Log($"Recv {e.Type}");
             switch (e.Type)
             {
-                case ChildToNPCMsg:
+                case KidEntriesMsg:
                     KidHandler.KidEntries_FromHost(e.ReadAs<Dictionary<string, KidEntry>>());
                     break;
                 case ModConfigMsg:

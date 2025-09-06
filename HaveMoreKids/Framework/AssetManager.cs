@@ -18,6 +18,7 @@ public sealed class KidDefinitionData
     public string? Twin { get; set; } = null;
     public string? TwinCondition { get; set; } = null;
     public string? TwinMessage { get; set; } = null;
+    public string? AdoptedFromNPC { get; set; } = null;
 }
 
 internal static class AssetManager
@@ -114,37 +115,42 @@ internal static class AssetManager
         }
     }
 
-    private static Dictionary<string, KidDefinitionData>? whoseKidsRaw = null;
-    internal static Dictionary<string, KidDefinitionData> WhoseKidsRaw =>
-        whoseKidsRaw ??= Game1.content.Load<Dictionary<string, KidDefinitionData>>(Asset_KidDefinitions);
-    private static Dictionary<string, Dictionary<string, KidDefinitionData>>? whoseKids = null;
-    internal static Dictionary<string, Dictionary<string, KidDefinitionData>> WhoseKids
+    private static Dictionary<string, KidDefinitionData>? kidDefsByKidId = null;
+    internal static Dictionary<string, KidDefinitionData> KidDefsByKidId =>
+        kidDefsByKidId ??= Game1.content.Load<Dictionary<string, KidDefinitionData>>(Asset_KidDefinitions);
+    private static Dictionary<string, Dictionary<string, KidDefinitionData>>? kidDefsByParentId = null;
+    internal static Dictionary<string, Dictionary<string, KidDefinitionData>> KidDefsByParentId
     {
         get
         {
-            if (whoseKids != null)
-                return whoseKids;
-            whoseKids = [];
-            whoseKids[KidHandler.WhoseKids_Shared] = [];
-            foreach ((string kidId, KidDefinitionData whose) in WhoseKidsRaw)
+            if (kidDefsByParentId != null)
+                return kidDefsByParentId;
+            kidDefsByParentId = [];
+            kidDefsByParentId[KidHandler.WhoseKids_Shared] = [];
+            foreach ((string kidId, KidDefinitionData whose) in KidDefsByKidId)
             {
                 if (!ChildData.ContainsKey(kidId))
                     continue;
                 if (whose.Parent != null && Game1.characterData.ContainsKey(whose.Parent))
                 {
-                    if (!whoseKids.TryGetValue(whose.Parent, out Dictionary<string, KidDefinitionData>? npcWhosekids))
+                    if (
+                        !kidDefsByParentId.TryGetValue(
+                            whose.Parent,
+                            out Dictionary<string, KidDefinitionData>? npcWhosekids
+                        )
+                    )
                     {
                         npcWhosekids = [];
-                        whoseKids[whose.Parent] = npcWhosekids;
+                        kidDefsByParentId[whose.Parent] = npcWhosekids;
                     }
                     npcWhosekids[kidId] = whose;
                 }
                 else if (whose.Shared)
                 {
-                    whoseKids[KidHandler.WhoseKids_Shared][kidId] = whose;
+                    kidDefsByParentId[KidHandler.WhoseKids_Shared][kidId] = whose;
                 }
             }
-            return whoseKids;
+            return kidDefsByParentId;
         }
     }
 
@@ -215,17 +221,15 @@ internal static class AssetManager
                 e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
             foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
             {
-                if (entry.KidNPCId == null)
+                if (!entry.NeedAssetEdits || entry.KidNPCId == null)
                     continue;
                 foreach (string fwdAsset in KidNPCForwardAssets)
                 {
-                    if (name.IsEquivalentTo(string.Concat(fwdAsset, entry.KidNPCId)))
+                    if (!name.IsEquivalentTo(string.Concat(fwdAsset, entry.KidNPCId)))
                     {
-                        e.LoadFrom(
-                            () => ForwardFrom_ChildIdAsset(string.Concat(fwdAsset, kidId)),
-                            AssetLoadPriority.Low
-                        );
+                        continue;
                     }
+                    e.LoadFrom(() => ForwardFrom_ChildIdAsset(string.Concat(fwdAsset, kidId)), AssetLoadPriority.Low);
                 }
             }
         }
@@ -271,23 +275,29 @@ internal static class AssetManager
         IDictionary<string, CharacterData> data = asset.AsDictionary<string, CharacterData>().Data;
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
-            if (entry.KidNPCId != null && ChildData.TryGetValue(kidId, out CharacterData? childCharaData))
+            if (
+                !entry.NeedAssetEdits
+                || entry.KidNPCId == null
+                || !ChildData.TryGetValue(kidId, out CharacterData? childCharaData)
+            )
             {
-                childCharaData = childCharaData.ShallowClone();
-                childCharaData.DisplayName = entry.DisplayName;
-                childCharaData.TextureName ??= Asset_DefaultTextureName;
-                childCharaData.SpawnIfMissing = true;
-                childCharaData.BirthSeason = entry.BirthSeason;
-                childCharaData.BirthDay = entry.BirthDay;
-                foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))
-                {
-                    if (KidHandler.AppearanceIsBaby(appearanceData))
-                    {
-                        childCharaData.Appearance.Remove(appearanceData);
-                    }
-                }
-                data[entry.KidNPCId] = childCharaData;
+                continue;
             }
+
+            childCharaData = childCharaData.ShallowClone();
+            childCharaData.DisplayName = entry.DisplayName;
+            childCharaData.TextureName ??= Asset_DefaultTextureName;
+            childCharaData.SpawnIfMissing = true;
+            childCharaData.BirthSeason = entry.BirthSeason;
+            childCharaData.BirthDay = entry.BirthDay;
+            foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))
+            {
+                if (KidHandler.AppearanceIsBaby(appearanceData))
+                {
+                    childCharaData.Appearance.Remove(appearanceData);
+                }
+            }
+            data[entry.KidNPCId] = childCharaData;
         }
     }
 
@@ -296,10 +306,12 @@ internal static class AssetManager
         IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
-            if (entry.KidNPCId != null && data.TryGetValue(kidId, out string? giftTastes))
+            if (!entry.NeedAssetEdits || entry.KidNPCId == null || !data.TryGetValue(kidId, out string? giftTastes))
             {
-                data[entry.KidNPCId] = giftTastes;
+                continue;
             }
+
+            data[entry.KidNPCId] = giftTastes;
         }
     }
 
@@ -322,8 +334,8 @@ internal static class AssetManager
         }
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_KidDefinitions)))
         {
-            whoseKidsRaw = null;
-            whoseKids = null;
+            kidDefsByKidId = null;
+            kidDefsByParentId = null;
             ModEntry.Config.ResetMenu();
         }
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)

@@ -222,7 +222,7 @@ internal static partial class Patches
         }
         if (Game1.player.stats.Get(GameDelegates.Stats_daysUntilBirth) == 1)
         {
-            __result = new HMKBirthingEvent();
+            __result = new HMKNewChildEvent();
             return false;
         }
         return true;
@@ -281,16 +281,16 @@ internal static partial class Patches
             ModEntry.Log($"whichQ: {whichQ}");
             if (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)
             {
-                __result = new HMKPregnancyQuestionEvent(whichQ);
+                __result = new HMKGetChildQuestionEvent(whichQ);
             }
         }
         else if (__result is BirthingEvent)
         {
-            __result = new HMKBirthingEvent();
+            __result = new HMKNewChildEvent();
         }
         else if (__result is PlayerCoupleBirthingEvent)
         {
-            __result = new HMKPlayerCoupleBirthingEvent();
+            __result = new HMKPlayerCoupleNewChildEvent();
         }
     }
 }
