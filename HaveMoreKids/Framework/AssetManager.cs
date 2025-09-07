@@ -19,6 +19,7 @@ public sealed class KidDefinitionData
     public string? TwinCondition { get; set; } = null;
     public string? TwinMessage { get; set; } = null;
     public string? AdoptedFromNPC { get; set; } = null;
+    public string? BirthOrAdoptMessage { get; set; } = null;
 }
 
 internal static class AssetManager
@@ -129,6 +130,8 @@ internal static class AssetManager
             kidDefsByParentId[KidHandler.WhoseKids_Shared] = [];
             foreach ((string kidId, KidDefinitionData whose) in KidDefsByKidId)
             {
+                if (whose.AdoptedFromNPC != null)
+                    continue;
                 if (!ChildData.ContainsKey(kidId))
                     continue;
                 if (whose.Parent != null && Game1.characterData.ContainsKey(whose.Parent))
@@ -149,6 +152,7 @@ internal static class AssetManager
                 {
                     kidDefsByParentId[KidHandler.WhoseKids_Shared][kidId] = whose;
                 }
+                // else, special traction only kid
             }
             return kidDefsByParentId;
         }
@@ -221,7 +225,7 @@ internal static class AssetManager
                 e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
             foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
             {
-                if (!entry.NeedAssetEdits || entry.KidNPCId == null)
+                if (entry.IsAdoptedFromNPC || entry.KidNPCId == null)
                     continue;
                 foreach (string fwdAsset in KidNPCForwardAssets)
                 {
@@ -276,7 +280,7 @@ internal static class AssetManager
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
             if (
-                !entry.NeedAssetEdits
+                entry.IsAdoptedFromNPC
                 || entry.KidNPCId == null
                 || !ChildData.TryGetValue(kidId, out CharacterData? childCharaData)
             )
@@ -306,12 +310,19 @@ internal static class AssetManager
         IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
-            if (!entry.NeedAssetEdits || entry.KidNPCId == null || !data.TryGetValue(kidId, out string? giftTastes))
+            if (entry.KidNPCId == null)
             {
                 continue;
             }
 
-            data[entry.KidNPCId] = giftTastes;
+            if (entry.IsAdoptedFromNPC && data.TryGetValue(entry.KidNPCId, out string? giftTastes))
+            {
+                data[kidId] = giftTastes;
+            }
+            else if (data.TryGetValue(kidId, out giftTastes))
+            {
+                data[entry.KidNPCId] = giftTastes;
+            }
         }
     }
 

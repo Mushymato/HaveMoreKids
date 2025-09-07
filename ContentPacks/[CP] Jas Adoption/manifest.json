@@ -1,9 +1,9 @@
 {
-  "Name": "[CP] Single Parenthood",
+  "Name": "[CP] Jas Adoption",
   "Author": "mushymato",
   "Version": "0.1.0",
-  "Description": "Raise a kid all on your own.",
-  "UniqueID": "mushymato.SingleParenthood",
+  "Description": "Adopt Jas when you marry Shane.",
+  "UniqueID": "mushymato.JasAdoption",
   "MinimumApiVersion": "4.0.0",
   "UpdateKeys": [
     "Nexus:???"

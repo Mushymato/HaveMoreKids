@@ -21,7 +21,7 @@ namespace HaveMoreKids.Framework;
 
 internal sealed record KidEntry(
     string? KidNPCId,
-    bool NeedAssetEdits,
+    bool IsAdoptedFromNPC,
     string DisplayName,
     long PlayerParent,
     string? OtherParent,
@@ -36,10 +36,15 @@ internal static class KidHandler
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
     private const string Child_CustomField_GoOutsideCondition = $"{ModEntry.ModId}/GoOutsideCondition";
-    private const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
+    internal const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
+    private const string Character_CustomField_IsNPCToday = $"{ModEntry.ModId}/IsNPCToday";
     private const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
-    internal const string ChildNPC_Suffix = $"@{ModEntry.ModId}";
+
+    internal const string NPCChild_Prefix = $"{ModEntry.ModId}@AdoptedFromNPC@";
+    internal const string ChildNPC_Suffix = $"@ChildToNPC@{ModEntry.ModId}";
+    internal const string Parent_NPC_ADOPT = "NPC_ADOPT";
+    internal const string Parent_SOLO_BIRTH = "SOLO_BIRTH";
 
     internal static bool AppearanceIsValid(this CharacterAppearanceData appearance)
     {
@@ -84,16 +89,41 @@ internal static class KidHandler
         return allowNull ? null : (kid.displayName ?? kid.Name);
     }
 
+    internal static string? KidHMKFromNPCId(this Character kid)
+    {
+        if (kid.Name?.StartsWith(NPCChild_Prefix) ?? false)
+        {
+            return kid.Name.AsSpan()[NPCChild_Prefix.Length..].ToString();
+        }
+        return null;
+    }
+
     internal static bool TrySetNextKid(NPC parent, string kidId)
     {
         if (
-            TryGetAvailableSpouseOrSharedKidIds(parent, out List<string>? availableKidIds)
+            !string.IsNullOrEmpty(kidId)
+            && !kidId.EqualsIgnoreCase("Any")
+            && TryGetAvailableSpouseOrSharedKidIds(parent, out List<string>? availableKidIds)
             && availableKidIds.Contains(kidId)
         )
         {
             parent.modData[Character_ModData_NextKidId] = kidId;
         }
         return false;
+    }
+
+    internal static void TrySetNextAdoptFromNPCKidId(Farmer player, string kidId)
+    {
+        if (
+            !string.IsNullOrEmpty(kidId)
+            && !kidId.EqualsIgnoreCase("Any")
+            && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef)
+            && kidDef.AdoptedFromNPC == kidId
+        )
+        {
+            ModEntry.Log($"Adopt {kidId} as Child");
+            player.modData[Character_ModData_NextKidId] = kidId;
+        }
     }
 
     internal static IEnumerable<Child> AllKids()
@@ -152,7 +182,7 @@ internal static class KidHandler
                 {
                     if (kid.KidHMKId() is string kidId)
                     {
-                        if (AssetManager.ChildData.ContainsKey(kidId))
+                        if (kidId.StartsWith(NPCChild_Prefix) || AssetManager.ChildData.ContainsKey(kidId))
                         {
                             ModEntry.Log($"Restore on load: '{kid.Name}' ({kidId})");
                             kid.modData[Child_ModData_DisplayName] = kid.Name;
@@ -200,27 +230,32 @@ internal static class KidHandler
             }
 
             string? kidNPCId = null;
-            bool needAssetEdits = false;
-            if (kid.Age > 2 && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData))
+            bool adoptedFromNPC = false;
+
+            if (
+                kid.KidHMKFromNPCId() is string npcId
+                && AssetManager.KidDefsByKidId.TryGetValue(npcId, out KidDefinitionData? kidDef)
+                && kidDef.AdoptedFromNPC == npcId
+                && Game1.characterData.ContainsKey(kidDef.AdoptedFromNPC)
+            )
             {
-                if (
-                    AssetManager.KidDefsByKidId.TryGetValue(kid.Name, out KidDefinitionData? kidDef)
-                    && kidDef.AdoptedFromNPC is not null
-                )
-                {
-                    kidNPCId = kidDef.AdoptedFromNPC;
-                    needAssetEdits = false;
-                }
-                else if (!GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize))
-                {
-                    kidNPCId = FormChildNPCId(kid.Name);
-                    needAssetEdits = true;
-                }
+                kidNPCId = kidDef.AdoptedFromNPC;
+                adoptedFromNPC = true;
+            }
+
+            if (
+                kid.Age > 2
+                && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
+            )
+            {
+                kidNPCId = FormChildNPCId(kid.Name);
+                adoptedFromNPC = false;
             }
 
             KidEntries[kid.Name] = new(
                 kidNPCId,
-                needAssetEdits,
+                adoptedFromNPC,
                 kid.displayName,
                 kid.idOfParent.Value,
                 kid.KidNPCParent(),
@@ -314,6 +349,27 @@ internal static class KidHandler
         }
     }
 
+    private static NPC? GetNonChildNPCByName(string kidNPCId)
+    {
+        NPC? match = null;
+        Utility.ForEachCharacter(
+            delegate(NPC npc)
+            {
+                if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager)
+                {
+                    if (npc.currentLocation?.IsActiveLocation() ?? false)
+                    {
+                        match = npc;
+                        return false;
+                    }
+                }
+                return true;
+            },
+            false
+        );
+        return match;
+    }
+
     /// <summary>Do some kid checks on day started</summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
@@ -325,62 +381,104 @@ internal static class KidHandler
             return;
         }
         CribManager.RecheckCribAssignments();
-        int totalDaysChild = ModEntry.Config.TotalDaysChild;
         // update all kids
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
             kid.reloadSprite();
+            GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
+            string key = kid.KidHMKFromNPCId() ?? kid.Name;
+            ModEntry.Log($"{kid.Name} -> {key}");
             // check if today is a Child day or a NPC day
             if (
-                kid.GetData() is CharacterData childCharaData
-                && KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
+                KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
                 && entry.KidNPCId != null
-                && Game1.getCharacterFromName(entry.KidNPCId) is NPC childAsNPC
+                && GetNonChildNPCByName(entry.KidNPCId) is NPC childAsNPC
             )
             {
                 bool stayHome = true;
-                if (
-                    totalDaysChild >= 0
-                    && kid.daysOld.Value >= totalDaysChild
-                    && !string.IsNullOrEmpty(childCharaData.CanSocialize)
-                )
+                if (entry.IsAdoptedFromNPC)
                 {
-                    kid.Age = 4;
-                    if (
-                        GameStateQuery.CheckConditions(
-                            childCharaData.CanSocialize,
-                            new GameStateQueryContext(null, farmer, null, null, Game1.random)
+                    kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
+                    if (Game1.characterData.TryGetValue(key, out CharacterData? data))
+                    {
+                        if (
+                            data.CustomFields?.TryGetValue(Character_CustomField_IsNPCToday, out string? npcTodayGSQ)
+                            ?? false
                         )
+                        {
+                            stayHome = !GameStateQuery.CheckConditions(npcTodayGSQ, gsqCtx);
+                        }
+                        else
+                        {
+                            stayHome = true;
+                        }
+                    }
+                    if (stayHome)
+                    {
+                        FarmHouse farmHouse = Utility.getHomeOfFarmer(farmer);
+                        Random r = Utility.CreateDaySaveRandom(farmHouse.OwnerId * 2);
+                        Point randomOpenPointInHouse = farmHouse.getRandomOpenPointInHouse(r, 1, 200);
+                        if (!randomOpenPointInHouse.Equals(Point.Zero))
+                        {
+                            kid.setTilePosition(randomOpenPointInHouse);
+                        }
+                        else
+                        {
+                            randomOpenPointInHouse = farmHouse.GetChildBedSpot(kid.GetChildIndex());
+                            if (!randomOpenPointInHouse.Equals(Point.Zero))
+                            {
+                                kid.setTilePosition(randomOpenPointInHouse);
+                            }
+                        }
+                        kid.Sprite.CurrentAnimation = null;
+                    }
+                }
+                else if (kid.GetData() is CharacterData childCharaData)
+                {
+                    if (
+                        ModEntry.Config.DaysChild > -1
+                        && kid.daysOld.Value >= ModEntry.Config.TotalDaysChild
+                        && !string.IsNullOrEmpty(childCharaData.CanSocialize)
                     )
                     {
-                        kid.IsInvisible = true;
-                        kid.daysUntilNotInvisible = 1;
-                        stayHome = false;
+                        if (GameStateQuery.CheckConditions(childCharaData.CanSocialize, gsqCtx))
+                        {
+                            stayHome = false;
+                        }
                     }
                 }
 
+                if (!Game1.player.friendshipData.TryGetValue(key, out Friendship childFriendship))
+                {
+                    childFriendship = new Friendship(0);
+                }
+                childFriendship.ProposalRejected = false;
+                childFriendship.RoommateMarriage = false;
+                childFriendship.WeddingDate = null;
+                childFriendship.NextBirthingDate = null;
+                childFriendship.Status = FriendshipStatus.Friendly;
+                childFriendship.Proposer = 0L;
+                Game1.player.friendshipData[kid.Name] = childFriendship;
+                Game1.player.friendshipData[entry.KidNPCId] = childFriendship;
+
                 if (stayHome)
                 {
+                    kid.Age = 3;
+                    kid.IsInvisible = false;
+                    kid.daysUntilNotInvisible = 0;
                     childAsNPC.IsInvisible = true;
                     childAsNPC.daysUntilNotInvisible = 1;
                     ModEntry.Log($"Child '{kid.displayName}' ({kid.Name}) will stay home today", LogLevel.Info);
                 }
                 else
                 {
+                    kid.Age = 4;
+                    kid.IsInvisible = true;
+                    kid.daysUntilNotInvisible = 1;
+                    childAsNPC.IsInvisible = false;
+                    childAsNPC.daysUntilNotInvisible = 0;
+
                     childAsNPC.GetData();
-                    if (!Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship childFriendship))
-                    {
-                        childFriendship = new Friendship(0);
-                        Game1.player.friendshipData[kid.Name] = childFriendship;
-                    }
-                    childFriendship.ProposalRejected = false;
-                    childFriendship.RoommateMarriage = false;
-                    childFriendship.WeddingDate = null;
-                    childFriendship.NextBirthingDate = null;
-                    childFriendship.Status = FriendshipStatus.Friendly;
-                    childFriendship.Proposer = 0L;
-                    // might be haunted in multiplayer?
-                    Game1.player.friendshipData[entry.KidNPCId] = childFriendship;
                     childAsNPC.reloadSprite(onlyAppearance: true);
                     childAsNPC.InvalidateMasterSchedule();
                     childAsNPC.TryLoadSchedule();
@@ -450,12 +548,13 @@ internal static class KidHandler
         bool isDarkSkinned,
         string babyName,
         out KidDefinitionData? whoseKidForTwin,
-        bool isTwin
+        bool isTwin,
+        bool isAdoptedFromNPC
     )
     {
         // create and add kid
-        Child newKid;
-        if (spouse != null)
+        Child? newKid = null;
+        if (!isAdoptedFromNPC && spouse != null)
         {
             if (PickForSpecificKidId(spouse, babyName) is string specificKidName)
             {
@@ -465,29 +564,55 @@ internal static class KidHandler
         }
 
         FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.player);
-        babyName = AntiNameCollision(babyName);
+
         whoseKidForTwin = null;
-        if (newKidId != null && AssetManager.ChildData.TryGetValue(newKidId, out CharacterData? childData))
+        string spouseNameForKid = spouse?.Name ?? Parent_SOLO_BIRTH;
+        if (newKidId != null)
         {
-            newKid = ApplyKidId(
-                spouse?.Name ?? "SOLO_BIRTH",
-                new(newKidId, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
-                true,
-                babyName,
-                newKidId
-            );
-            if (
-                !isTwin
-                && AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef)
-                && kidDef.Twin != null
-                && GameStateQuery.CheckConditions(kidDef.TwinCondition, farmHouse, Game1.player)
-            )
+            CharacterData? childData = null;
+            if (AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef))
             {
-                whoseKidForTwin = kidDef;
+                if (kidDef.AdoptedFromNPC != null && Game1.characterData.TryGetValue(newKidId, out childData))
+                {
+                    spouseNameForKid = Parent_NPC_ADOPT;
+                    babyName = string.Concat(NPCChild_Prefix, newKidId);
+                    newKidId = babyName;
+                }
+                else
+                {
+                    babyName = AntiNameCollision(babyName);
+                }
+
+                if (
+                    !isTwin
+                    && kidDef?.Twin != null
+                    && GameStateQuery.CheckConditions(kidDef.TwinCondition, farmHouse, Game1.player)
+                )
+                {
+                    whoseKidForTwin = kidDef;
+                }
+            }
+            if (childData == null)
+            {
+                AssetManager.ChildData.TryGetValue(newKidId, out childData);
+            }
+
+            if (childData != null)
+            {
+                newKid = ApplyKidId(
+                    spouseNameForKid,
+                    new(newKidId, childData.Gender == Gender.Male, childData.IsDarkSkinned, Game1.player),
+                    true,
+                    babyName,
+                    newKidId,
+                    childData
+                );
             }
         }
-        else
+
+        if (newKid == null)
         {
+            babyName = AntiNameCollision(babyName);
             bool isMale;
             if (Game1.player.getNumberOfChildren() == 0)
             {
@@ -500,7 +625,15 @@ internal static class KidHandler
             newKid = new(babyName, isMale, isDarkSkinned, Game1.player);
         }
 
-        newKid.Age = 0;
+        if (isAdoptedFromNPC)
+        {
+            newKid.daysOld.Value = ModEntry.Config.TotalDaysChild;
+            newKid.Age = 3;
+        }
+        else
+        {
+            newKid.Age = 0;
+        }
         farmHouse.characters.Add(newKid);
         newKid.currentLocation = farmHouse;
 
@@ -738,7 +871,14 @@ internal static class KidHandler
         return ApplyKidId(spouse.Name, kid, false, kidName, newKidId);
     }
 
-    internal static Child ApplyKidId(string? spouseName, Child newKid, bool newBorn, string kidName, string newKidId)
+    internal static Child ApplyKidId(
+        string? spouseName,
+        Child newKid,
+        bool newBorn,
+        string kidName,
+        string newKidId,
+        CharacterData? characterData = null
+    )
     {
         newKid.Name = newKidId;
         newKid.displayName = kidName;
@@ -751,13 +891,13 @@ internal static class KidHandler
             newKid.Birthday_Season = Utility.getSeasonKey(Game1.season);
             newKid.Birthday_Day = Game1.dayOfMonth;
         }
-        if (newKid.GetData() is not CharacterData data)
+        if ((characterData ??= newKid.GetData()) is null)
         {
             ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);
             return newKid;
         }
-        newKid.Gender = data.Gender;
-        newKid.darkSkinned.Value = data.IsDarkSkinned;
+        newKid.Gender = characterData.Gender;
+        newKid.darkSkinned.Value = characterData.IsDarkSkinned;
         newKid.reloadSprite(onlyAppearance: true);
         ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.", LogLevel.Info);
         return newKid;
@@ -787,7 +927,7 @@ internal static class KidHandler
 
     internal static bool IsTileStandable(GameLocation location, Point tile)
     {
-        return !IsTilePassable(location, tile)
+        return IsTilePassable(location, tile)
             && !location.IsTileBlockedBy(tile.ToVector2(), ignorePassables: CollisionMask.All)
             && !location.isWaterTile(tile.X, tile.Y)
             && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
@@ -809,11 +949,11 @@ internal static class KidHandler
         )
         {
             result = GameStateQuery.CheckConditions(condition, new());
-            ModEntry.LogDebug($"{condition}={result}");
         }
         else
         {
-            result = Random.Shared.NextBool();
+            // result = Random.Shared.NextBool();
+            result = true;
         }
 
         kid.modData[Child_CustomField_GoOutsideCondition] = result ? "T" : "F";
@@ -879,7 +1019,7 @@ internal static class KidHandler
             return false;
         }
 
-        ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> go outside");
+        ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside");
         bool foundWarp = false;
         Point doorExit = new(-1, -1);
         Point houseEntry = new(-1, -1);
@@ -899,9 +1039,9 @@ internal static class KidHandler
             return true;
         }
 
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 1000; i++)
         {
-            Point trial = new(houseEntry.X + Random.Shared.Next(-4, 4), houseEntry.Y + 2 + Random.Shared.Next(0, 8));
+            Point trial = new(houseEntry.X + Random.Shared.Next(-8, 8), houseEntry.Y + 2 + Random.Shared.Next(0, 16));
             if (IsTileStandable(farm, trial))
             {
                 kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, WarpKidToFarm);

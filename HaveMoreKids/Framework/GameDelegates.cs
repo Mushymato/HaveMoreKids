@@ -4,6 +4,7 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.Characters;
 using StardewValley.Delegates;
 using StardewValley.Extensions;
+using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
@@ -253,13 +254,12 @@ internal static class GameDelegates
         }
         if (FindChild(Game1.player, kidId) is Child kid)
         {
-            int totalDaysChild;
             switch (age)
             {
                 case 4:
-                    if ((totalDaysChild = ModEntry.Config.TotalDaysChild) > -1)
+                    if (ModEntry.Config.DaysChild > -1)
                     {
-                        kid.daysOld.Value = totalDaysChild;
+                        kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
                         return true;
                     }
                     goto case 3;
@@ -281,6 +281,23 @@ internal static class GameDelegates
         return false;
     }
 
+    internal static bool PlayerHasValidHome(Farmer player, out string error)
+    {
+        error = null!;
+        FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(player);
+        if (homeOfFarmer.upgradeLevel < 2)
+        {
+            error = "housing market in shambles";
+            return false;
+        }
+        if (!CribManager.HasAvailableCribs(homeOfFarmer))
+        {
+            error = "no crib no baby";
+            return false;
+        }
+        return true;
+    }
+
     private static bool SetChildBirth(string[] args, TriggerActionContext context, out string error)
     {
         if (
@@ -293,31 +310,32 @@ internal static class GameDelegates
             return false;
         }
 
-        if (!Game1.player.getChildren().All(child => child.Age > 2))
-        {
-            error = "Crib is currently occupied, all children must be age 3/toddler before you can have more kids";
-            return false;
-        }
-
         if (daysUntilBirth < 0)
         {
             error = "daysUntilBirth cannot be negative.";
             return false;
         }
 
-        if (Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) is long spouseId)
+        if (!PlayerHasValidHome(Game1.player, out error))
+        {
+            return false;
+        }
+
+        if (spouseName.EqualsIgnoreCase("Player"))
+        {
+            // solo adopt path
+            // this is +1 because stats get unset at 0
+            Game1.player.stats.Set(Stats_daysUntilBirth, daysUntilBirth + 1);
+            ModEntry.Log(kidId);
+            KidHandler.TrySetNextAdoptFromNPCKidId(Game1.player, kidId);
+        }
+        else if (Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) is long spouseId)
         {
             // player couple path
             Friendship friendship = Game1.player.team.GetFriendship(Game1.player.UniqueMultiplayerID, spouseId);
             WorldDate worldDate = new(Game1.Date);
             worldDate.TotalDays += daysUntilBirth;
             friendship.NextBirthingDate = worldDate;
-        }
-        else if (spouseName.EqualsIgnoreCase("Player"))
-        {
-            // solo adopt path
-            // this is +1 because stats get unset at 0
-            Game1.player.stats.Set(Stats_daysUntilBirth, daysUntilBirth + 1);
         }
         else
         {
@@ -349,10 +367,7 @@ internal static class GameDelegates
             worldDate.TotalDays += daysUntilBirth;
             Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
 
-            if (!string.IsNullOrEmpty(kidId) && kidId.EqualsIgnoreCase("Any"))
-            {
-                KidHandler.TrySetNextKid(spouse, kidId);
-            }
+            KidHandler.TrySetNextKid(spouse, kidId);
         }
 
         if (message != null)

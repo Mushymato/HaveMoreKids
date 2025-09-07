@@ -50,7 +50,7 @@ internal sealed class ModConfig : ModConfigValues
     internal sbyte TotalDaysBaby => (sbyte)DaysBaby;
     internal sbyte TotalDaysCrawer => (sbyte)(DaysBaby + DaysCrawler);
     internal sbyte TotalDaysToddler => (sbyte)(DaysBaby + DaysCrawler + DaysToddler);
-    internal sbyte TotalDaysChild => (sbyte)(DaysChild > -1 ? DaysBaby + DaysCrawler + DaysToddler + DaysChild : -1);
+    internal sbyte TotalDaysChild => (sbyte)(DaysBaby + DaysCrawler + DaysToddler + (DaysChild == -1 ? 28 : DaysChild));
 
     /// <summary>Restore default config values</summary>
     private void Reset()

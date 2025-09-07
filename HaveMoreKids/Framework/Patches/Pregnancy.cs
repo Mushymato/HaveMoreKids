@@ -78,15 +78,9 @@ internal static partial class Patches
         }
 
         // valid home
-        FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(player);
-        if (homeOfFarmer.upgradeLevel < 2)
+        if (!GameDelegates.PlayerHasValidHome(player, out string error))
         {
-            ModEntry.Log("- housing market in shambles");
-            return false;
-        }
-        if (!CribManager.HasAvailableCribs(homeOfFarmer))
-        {
-            ModEntry.Log("- no crib no baby");
+            ModEntry.Log($"- {error}");
             return false;
         }
 
@@ -222,7 +216,14 @@ internal static partial class Patches
         }
         if (Game1.player.stats.Get(GameDelegates.Stats_daysUntilBirth) == 1)
         {
-            __result = new HMKNewChildEvent();
+            HMKNewChildEvent hmkNewChildEvent = new();
+            __result = hmkNewChildEvent;
+            if (Game1.player.modData.TryGetValue(KidHandler.Character_ModData_NextKidId, out string? nextKidId))
+            {
+                hmkNewChildEvent.newKidId = nextKidId;
+                hmkNewChildEvent.isAdoptedFromNPC = true;
+                Game1.player.modData.Remove(KidHandler.Character_ModData_NextKidId);
+            }
             return false;
         }
         return true;

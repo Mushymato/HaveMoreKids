@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Events;
 using StardewValley.Extensions;
+using StardewValley.GameData.Characters;
 using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
 
@@ -15,9 +16,11 @@ public class HMKNewChildEvent : BaseFarmEvent
 
     private string? babyName;
 
-    private string? newKidId;
+    internal string? newKidId;
 
     private bool getBabyName;
+
+    internal bool isAdoptedFromNPC = false;
 
     private bool naming;
 
@@ -34,52 +37,73 @@ public class HMKNewChildEvent : BaseFarmEvent
         Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
         spouse = Game1.player.getSpouse();
         Game1.player.CanMove = false;
-        if (spouse != null)
+        if (newKidId == null)
         {
-            isDarkSkinned = random.NextBool(
-                (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-            );
-            newKidId = KidHandler.PickKidId(
-                spouse,
-                darkSkinned: random.NextBool(
-                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-                )
-            );
-        }
-        else
-        {
-            isDarkSkinned = random.NextBool(Game1.player.hasDarkSkin() ? 0.75 : 0.25);
-            if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids))
+            if (spouse != null)
             {
-                newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
+                isDarkSkinned = random.NextBool(
+                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
+                );
+                newKidId = KidHandler.PickKidId(
+                    spouse,
+                    darkSkinned: random.NextBool(
+                        (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
+                    )
+                );
+            }
+            else
+            {
+                isDarkSkinned = random.NextBool(Game1.player.hasDarkSkin() ? 0.75 : 0.25);
+                if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids))
+                {
+                    newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
+                }
             }
         }
 
         string childTerm = AssetManager.LoadString("ChildTerm");
-        if (spouse == null)
+        if (newKidId != null && AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef))
         {
-            if (!AssetManager.TryLoadString("BirthMessage_Solo", out message, childTerm))
+            if (kidDef.BirthOrAdoptMessage is not null)
             {
-                message = Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm);
+                message = string.Format(TokenParser.ParseText(kidDef.BirthOrAdoptMessage), childTerm);
             }
         }
-        else if (
-            !AssetManager.TryLoadString($"BirthMessage_NPC_{spouse.Name}", out message, childTerm, spouse.displayName)
-        )
+        else
         {
-            message = spouse.isAdoptionSpouse()
-                ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
-                : spouse.Gender switch
+            if (spouse == null)
+            {
+                if (!AssetManager.TryLoadString("BirthMessage_Solo", out message, childTerm))
                 {
-                    Gender.Male => Game1.content.LoadString("Strings\\Events:BirthMessage_PlayerMother", childTerm),
-                    Gender.Female => Game1.content.LoadString(
-                        "Strings\\Events:BirthMessage_SpouseMother",
-                        childTerm,
-                        spouse.displayName
-                    ),
-                    Gender.Undefined => Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm),
-                    _ => throw new NotImplementedException(),
-                };
+                    message = Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm);
+                }
+            }
+            else if (
+                !AssetManager.TryLoadString(
+                    $"BirthMessage_NPC_{spouse.Name}",
+                    out message,
+                    childTerm,
+                    spouse.displayName
+                )
+            )
+            {
+                message = spouse.isAdoptionSpouse()
+                    ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
+                    : spouse.Gender switch
+                    {
+                        Gender.Male => Game1.content.LoadString("Strings\\Events:BirthMessage_PlayerMother", childTerm),
+                        Gender.Female => Game1.content.LoadString(
+                            "Strings\\Events:BirthMessage_SpouseMother",
+                            childTerm,
+                            spouse.displayName
+                        ),
+                        Gender.Undefined => Game1.content.LoadString(
+                            "Strings\\Events:BirthMessage_Adoption",
+                            childTerm
+                        ),
+                        _ => throw new NotImplementedException(),
+                    };
+            }
         }
 
         isTwin = false;
@@ -98,13 +122,11 @@ public class HMKNewChildEvent : BaseFarmEvent
         getBabyName = true;
     }
 
-    public void TickUpdate_CheckForName()
+    private void afterMessageNoNaming()
     {
-        if (message != null && !Game1.dialogueUp && Game1.activeClickableMenu == null)
-        {
-            Game1.drawObjectDialogue(message);
-            Game1.afterDialogues = afterMessage;
-        }
+        getBabyName = true;
+        naming = true;
+        babyName = "NPC_CHILD_NAME";
     }
 
     private void TickUpdate_StartNaming()
@@ -121,7 +143,8 @@ public class HMKNewChildEvent : BaseFarmEvent
             isDarkSkinned,
             babyName ?? Dialogue.randomName(),
             out KidDefinitionData? whoseKidForTwin,
-            isTwin
+            isTwin,
+            isAdoptedFromNPC
         );
 
         if (whoseKidForTwin != null)
@@ -200,7 +223,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             }
         }
 
-        Game1.morningQueue.Enqueue(() => KidHandler.KidEntries_Populate());
+        KidHandler.KidEntries_Populate();
 
         // remaining message and cleanup
         if (Game1.keyboardDispatcher != null)
@@ -221,7 +244,11 @@ public class HMKNewChildEvent : BaseFarmEvent
         Game1.fadeToBlackAlpha = 1f;
         if (timer <= 0 && !getBabyName)
         {
-            TickUpdate_CheckForName();
+            if (message != null && !Game1.dialogueUp && Game1.activeClickableMenu == null)
+            {
+                Game1.drawObjectDialogue(message);
+                Game1.afterDialogues = isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
+            }
         }
         else if (getBabyName)
         {

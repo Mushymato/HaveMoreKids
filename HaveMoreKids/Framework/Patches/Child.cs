@@ -7,6 +7,7 @@ using StardewValley;
 using StardewValley.Characters;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
+using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
 
@@ -27,6 +28,7 @@ internal static partial class Patches
     internal const string Condition_KidId = "KID_ID";
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
+    private static bool In_NPC_ChooseAppearance_Call;
 
     private static void MakeDynamicMethods()
     {
@@ -113,7 +115,11 @@ internal static partial class Patches
         // Let child have regular npc dialogue
         harmony.Patch(
             original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.Dialogue)),
-            transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_Dialogue_Transpiler))
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(NPC_Dialogue_Transpiler))
+        );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.GetDialogueSheetName)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_GetDialogueSheetName_Postfix))
         );
         harmony.Patch(
             original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.CurrentDialogue)),
@@ -139,6 +145,14 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
         );
+    }
+
+    private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
+    {
+        if (__instance.KidHMKFromNPCId() is string npcId)
+        {
+            __result = npcId;
+        }
     }
 
     private static IEnumerable<Child> GetChildrenOnFarm(FarmHouse __instance)
@@ -211,9 +225,13 @@ internal static partial class Patches
 
     private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
     {
-        if (__instance is Child)
+        if (In_NPC_ChooseAppearance_Call && __instance.KidHMKFromNPCId() is string npcId)
         {
-            if (In_Billboard_GetEventsForDay)
+            __result = npcId;
+        }
+        else if (__instance is Child)
+        {
+            if (In_Billboard_GetEventsForDay && !__instance.Name.StartsWith(KidHandler.NPCChild_Prefix))
             {
                 __result = null!;
             }
@@ -226,7 +244,14 @@ internal static partial class Patches
 
     private static void Child_translateName_Postfix(Child __instance, ref string __result)
     {
-        if (__instance.KidDisplayName() is string displayName)
+        if (__instance.KidHMKFromNPCId() is string npcId)
+        {
+            if (Game1.characterData.TryGetValue(npcId, out CharacterData? data))
+            {
+                __result = TokenParser.ParseText(data.DisplayName);
+            }
+        }
+        else if (__instance.KidDisplayName() is string displayName)
         {
             __result = displayName;
         }
@@ -258,7 +283,7 @@ internal static partial class Patches
         }
     }
 
-    private static IEnumerable<CodeInstruction> Child_Dialogue_Transpiler(
+    private static IEnumerable<CodeInstruction> NPC_Dialogue_Transpiler(
         IEnumerable<CodeInstruction> instructions,
         ILGenerator generator
     )
@@ -281,6 +306,11 @@ internal static partial class Patches
             ModEntry.Log($"Error in Child_Dialogue_Transpiler:\n{err}", LogLevel.Error);
             return instructions;
         }
+    }
+
+    private static void NPC_Dialogue_Postfix()
+    {
+        throw new NotImplementedException();
     }
 
     private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l, ref bool __result)
@@ -313,13 +343,16 @@ internal static partial class Patches
 
     private static void Child_GetData_Postfix(NPC __instance, ref CharacterData __result)
     {
-        if (__result != null)
+        if (__result != null || __instance.Name == null)
             return;
-        if (
-            __instance is Child
-            && __instance.Name != null
-            && AssetManager.ChildData.TryGetValue(__instance.Name, out CharacterData? data)
-        )
+        if (__instance.KidHMKFromNPCId() is string npcId)
+        {
+            if (Game1.characterData.TryGetValue(npcId, out CharacterData? data))
+            {
+                __result = data;
+            }
+        }
+        else if (__instance is Child && AssetManager.ChildData.TryGetValue(__instance.Name, out CharacterData? data))
         {
             __result = data;
         }
@@ -401,7 +434,7 @@ internal static partial class Patches
             return;
         }
         List<TempCAD> tmpCADs = [];
-        foreach (var data in appearances)
+        foreach (CharacterAppearanceData data in appearances)
         {
             if (__instance.Age < 3)
             {
@@ -433,7 +466,11 @@ internal static partial class Patches
                 }
             }
         }
+
+        In_NPC_ChooseAppearance_Call = true;
         NPC_ChooseAppearance_Call(__instance);
+        In_NPC_ChooseAppearance_Call = false;
+
         if (__instance.Age < 3)
         {
             __instance.Sprite.SpriteWidth = 22;

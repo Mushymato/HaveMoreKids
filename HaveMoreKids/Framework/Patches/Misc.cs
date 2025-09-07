@@ -53,6 +53,22 @@ internal static partial class Patches
             prefix: new HarmonyMethod(typeof(Patches), nameof(Furniture_draw_Prefix)) { priority = Priority.First },
             postfix: new HarmonyMethod(typeof(Patches), nameof(Furniture_draw_Postfix)) { priority = Priority.Last }
         );
+        // Hide the Child friendship entry for a adoptedfromnpc child
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(SocialPage), nameof(SocialPage.FindSocialCharacters)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(SocialPage_FindSocialCharacters_Postfix))
+        );
+    }
+
+    private static void SocialPage_FindSocialCharacters_Postfix(ref List<SocialPage.SocialEntry> __result)
+    {
+        foreach (SocialPage.SocialEntry entry in Enumerable.Reverse(__result))
+        {
+            if (entry.IsChild && entry.Character.KidHMKFromNPCId() is not null)
+            {
+                __result.Remove(entry);
+            }
+        }
     }
 
     private static void Furniture_draw_Prefix(
