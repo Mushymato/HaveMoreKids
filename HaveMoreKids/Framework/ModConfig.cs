@@ -270,11 +270,15 @@ internal sealed class ModConfig : ModConfigValues
                 else
                 {
                     string displayName = key;
-                    if (Game1.characterData.TryGetValue(key, out CharacterData? charaData))
+
+                    SetupSpouseKidsPage(key, () =>
                     {
-                        TokenParser.ParseText(charaData.DisplayName);
-                    }
-                    SetupSpouseKidsPage(key, () => I18n.Config_Page_Spousekids_Name(displayName), kidIds);
+                        if (Game1.characterData.TryGetValue(key, out CharacterData? charaData))
+                        {
+                            TokenParser.ParseText(charaData.DisplayName);
+                        }
+                        return I18n.Config_Page_Spousekids_Name(displayName);
+                    }, kidIds);
                 }
             }
         }
