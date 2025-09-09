@@ -342,6 +342,8 @@ internal static class KidHandler
         // Apply unique kids to any existing children
         foreach (Child kid in Game1.player.getChildren())
         {
+            if (kid.KidHMKFromNPCId() is not null)
+                continue;
             if (Game1.player.getSpouse() is NPC spouse)
             {
                 ChooseAndApplyKidId(spouse, kid);
