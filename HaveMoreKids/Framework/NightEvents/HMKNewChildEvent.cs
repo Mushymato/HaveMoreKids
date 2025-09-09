@@ -69,7 +69,7 @@ public class HMKNewChildEvent : BaseFarmEvent
                 message = string.Format(TokenParser.ParseText(kidDef.BirthOrAdoptMessage), childTerm);
             }
         }
-        else
+        if (message == null)
         {
             if (spouse == null)
             {

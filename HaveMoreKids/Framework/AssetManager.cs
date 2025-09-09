@@ -134,7 +134,7 @@ internal static class AssetManager
                     continue;
                 if (!ChildData.ContainsKey(kidId))
                     continue;
-                if (whose.Parent != null && Game1.characterData.ContainsKey(whose.Parent))
+                if (!string.IsNullOrEmpty(whose.Parent))
                 {
                     if (
                         !kidDefsByParentId.TryGetValue(
@@ -367,6 +367,10 @@ internal static class AssetManager
         if (e.NameWithoutLocale.IsEquivalentTo(Asset_ChildData))
         {
             DelayedAction.functionAfterDelay(() => KidHandler.KidEntries_Populate(), 0);
+        }
+        if (e.NameWithoutLocale.IsEquivalentTo(Asset_DataCharacters))
+        {
+            DelayedAction.functionAfterDelay(ModEntry.Config.ResetMenu, 0);
         }
     }
 }

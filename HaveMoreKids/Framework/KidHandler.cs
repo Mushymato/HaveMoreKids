@@ -353,7 +353,7 @@ internal static class KidHandler
     {
         NPC? match = null;
         Utility.ForEachCharacter(
-            delegate(NPC npc)
+            delegate (NPC npc)
             {
                 if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager)
                 {
@@ -1010,7 +1010,7 @@ internal static class KidHandler
             }
             else
             {
-                return true;
+                return Random.Shared.NextBool();
             }
         }
         // only 1 kid allowed to path to farm at once and they should not be moving

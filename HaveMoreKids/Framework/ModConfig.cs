@@ -109,25 +109,19 @@ internal sealed class ModConfig : ModConfigValues
     private void CheckDefaultEnabled()
     {
         EnabledKidsPages.Clear();
-        string[] kidListKeys = [.. Game1.characterData.Keys, KidHandler.WhoseKids_Shared];
-        foreach (string key in kidListKeys)
+        foreach (
+            (string spouseId, Dictionary<string, KidDefinitionData>? whoseKidsInfo) in AssetManager.KidDefsByParentId
+        )
         {
-            if (
-                !KidHandler.TryGetKidIds(
-                    key,
-                    out List<string>? kidIds,
-                    out Dictionary<string, KidDefinitionData>? whoseKidsInfo
-                )
-            )
+            if (!whoseKidsInfo.Any())
                 continue;
-            foreach (string kidId in kidIds)
+            foreach (string kidId in whoseKidsInfo.Keys)
             {
-                KidIdent kidKey = new(key, kidId);
+                KidIdent kidKey = new(spouseId, kidId);
                 if (!EnabledKids.ContainsKey(kidKey))
                     EnabledKids[kidKey] = whoseKidsInfo[kidId].DefaultEnabled;
             }
-            if (kidIds.Any())
-                EnabledKidsPages[key] = kidIds;
+            EnabledKidsPages[spouseId] = whoseKidsInfo.Keys.ToList();
         }
     }
 
@@ -273,13 +267,14 @@ internal sealed class ModConfig : ModConfigValues
                 {
                     SetupSpouseKidsPage(key, I18n.Config_Page_SharedKids_Name, kidIds);
                 }
-                else if (Game1.characterData.TryGetValue(key, out CharacterData? charaData))
+                else
                 {
-                    SetupSpouseKidsPage(
-                        key,
-                        () => I18n.Config_Page_Spousekids_Name(TokenParser.ParseText(charaData.DisplayName)),
-                        kidIds
-                    );
+                    string displayName = key;
+                    if (Game1.characterData.TryGetValue(key, out CharacterData? charaData))
+                    {
+                        TokenParser.ParseText(charaData.DisplayName);
+                    }
+                    SetupSpouseKidsPage(key, () => I18n.Config_Page_Spousekids_Name(displayName), kidIds);
                 }
             }
         }
