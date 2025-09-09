@@ -353,7 +353,7 @@ internal static class KidHandler
     {
         NPC? match = null;
         Utility.ForEachCharacter(
-            delegate (NPC npc)
+            delegate(NPC npc)
             {
                 if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager)
                 {
@@ -401,6 +401,7 @@ internal static class KidHandler
                     kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
                     if (Game1.characterData.TryGetValue(key, out CharacterData? data))
                     {
+                        kid.displayName = TokenParser.ParseText(data.DisplayName);
                         if (
                             data.CustomFields?.TryGetValue(Character_CustomField_IsNPCToday, out string? npcTodayGSQ)
                             ?? false

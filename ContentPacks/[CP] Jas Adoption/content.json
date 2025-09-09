@@ -6,6 +6,7 @@
       "Action": "EditData",
       "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
+        // debug action mushymato.HaveMoreKids_SetChildBirth 0 Jas Player
         "Jas": {
           "BirthOrAdoptMessage": "Jas has moved in to the farm!",
           "AdoptedFromNPC": "Jas"
