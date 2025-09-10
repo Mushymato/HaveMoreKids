@@ -173,6 +173,10 @@
           "Twin": "{{ModId}}_Laurel"
         }
       }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "Data/HMKDialogue.json"
     }
   ]
 }

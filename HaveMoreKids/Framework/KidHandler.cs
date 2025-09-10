@@ -545,7 +545,7 @@ internal static class KidHandler
         return name;
     }
 
-    internal static void HaveAKid(
+    internal static Child HaveAKid(
         NPC? spouse,
         string? newKidId,
         bool isDarkSkinned,
@@ -653,6 +653,8 @@ internal static class KidHandler
                 newKid.displayName
             );
         });
+
+        return newKid;
     }
 
     /// <summary>Choose a new kid Id. If originalName is given, only choose new one if the existing pick is invalid for the specific spouse</summary>

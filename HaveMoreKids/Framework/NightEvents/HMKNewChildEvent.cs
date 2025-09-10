@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
@@ -137,7 +138,7 @@ public class HMKNewChildEvent : BaseFarmEvent
 
     private bool TickUpdate_FinishNaming()
     {
-        KidHandler.HaveAKid(
+        Child newKid = KidHandler.HaveAKid(
             spouse,
             newKidId,
             isDarkSkinned,
@@ -172,54 +173,36 @@ public class HMKNewChildEvent : BaseFarmEvent
         {
             Game1.player.GetSpouseFriendship().NextBirthingDate = null;
             spouse.daysAfterLastBirth = 5;
-            int childrenCount = Game1.player.getChildrenCount();
 
             spouse.shouldSayMarriageDialogue.Value = true;
+
+            int childrenCount = Game1.player.getChildrenCount();
+
+            MarriageDialogueReference? mdrV = null;
+            // vanilla fallbacks
             if (childrenCount == 1)
             {
                 if (spouse.isAdoptionSpouse())
                 {
-                    spouse.currentMarriageDialogue.Insert(
-                        0,
-                        new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_Adoption", true, babyName)
-                    );
+                    mdrV = new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_Adoption", true, babyName);
                 }
                 else
                 {
-                    spouse.currentMarriageDialogue.Insert(
-                        0,
-                        new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_FirstChild", true, babyName)
-                    );
+                    mdrV = new MarriageDialogueReference("Data\\ExtraDialogue", "NewChild_FirstChild", true, babyName);
                 }
             }
             else if (childrenCount == 2)
             {
-                spouse.currentMarriageDialogue.Insert(
-                    0,
-                    new MarriageDialogueReference(
-                        "Data\\ExtraDialogue",
-                        "NewChild_SecondChild" + Game1.random.Next(1, 3),
-                        true
-                    )
+                mdrV = new MarriageDialogueReference(
+                    "Data\\ExtraDialogue",
+                    "NewChild_SecondChild" + Game1.random.Next(1, 3),
+                    true
                 );
             }
-            else if (
-                AssetManager.LoadMarriageDialogueReference($"NewChild_{childrenCount}")
-                is MarriageDialogueReference marriageDialogueChildCount
-            )
+            if (mdrV != null)
             {
-                spouse.currentMarriageDialogue.Insert(0, marriageDialogueChildCount);
-            }
-            else if (
-                AssetManager.LoadMarriageDialogueReference("NewChild_Generic")
-                is MarriageDialogueReference marriageDialogueGeneral
-            )
-            {
-                spouse.currentMarriageDialogue.Insert(0, marriageDialogueGeneral);
-            }
-            else
-            {
-                spouse.shouldSayMarriageDialogue.Value = false;
+                spouse.shouldSayMarriageDialogue.Value = true;
+                spouse.currentMarriageDialogue.Insert(0, mdrV);
             }
         }
 

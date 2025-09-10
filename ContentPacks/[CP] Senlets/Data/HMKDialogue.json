@@ -1,0 +1,19 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/MarriageDialogueSenS",
+      "Entries": {
+        // questions
+        "HMK_HaveBabyQuestion": "Wouldn't it be amazing if we somehow had a child, @...?",
+        "HMK_HaveBabyQuestion_1": "Wouldn't it be amazing if we somehow had another child, @...?",
+        "HMK_HaveBabyQuestion_2": "Wouldn't it be amazing if we somehow had yet another child, @...?",
+        // dialogues
+        "HMK_NewChild_3": "Oh @, I can't believe we have 3 children now!",
+        "HMK_NewChild_4": "Baby, baby, baby, baby, baby, baby (Yeah).",
+        "HMK_NewChild_5": "Skrell seems pretty concerned about the amount of kids we have... but look at all of them! they're just so precious."
+      }
+    }
+  ]
+}

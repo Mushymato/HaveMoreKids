@@ -172,13 +172,48 @@ internal static class AssetManager
         params object[] substitutions
     ) => (loaded = Game1.content.LoadStringReturnNullIfNotFound($"{Asset_Strings}:{key}", substitutions)) != null;
 
-    internal static MarriageDialogueReference? LoadMarriageDialogueReference(string key)
+    internal static MarriageDialogueReference? TryGetMarriageDialogueReference(string assetName, string key)
     {
-        if (Game1.content.LoadStringReturnNullIfNotFound($"{Asset_Strings}:{key}") is null)
+        if (Game1.content.LoadStringReturnNullIfNotFound($"{assetName}:{key}") is null)
         {
             return null;
         }
-        return new MarriageDialogueReference(Asset_Strings, key, true);
+        return new MarriageDialogueReference(assetName, key, true);
+    }
+
+    internal static bool TryGetDialogueForChildCount(
+        NPC spouse,
+        string keyPrefix,
+        string babyName,
+        int childrenCount,
+        [NotNullWhen(true)] out Dialogue? dialogue,
+        [NotNullWhen(true)] out MarriageDialogueReference? marriageDialogueReference
+    )
+    {
+        dialogue = null;
+        marriageDialogueReference = null;
+        for (int i = childrenCount; i > 0; i--)
+        {
+            string dialogueKey = string.Concat(keyPrefix, "_", i);
+            ModEntry.LogDebug(dialogueKey);
+            if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
+            {
+                marriageDialogueReference = new MarriageDialogueReference(
+                    "MarriageDialogue",
+                    dialogueKey,
+                    false,
+                    babyName
+                );
+                return true;
+            }
+        }
+        ModEntry.LogDebug(keyPrefix);
+        if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(keyPrefix)) is not null)
+        {
+            marriageDialogueReference = new MarriageDialogueReference("MarriageDialogue", keyPrefix, false, babyName);
+            return true;
+        }
+        return false;
     }
 
     internal static void Register()

@@ -24,6 +24,41 @@ internal static partial class Patches
             ),
             postfix: new HarmonyMethod(typeof(Patches), nameof(EventDefaultCommands_LoadActors_Postfix))
         );
+        // Add more spouse dialogue for kid counts
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.marriageDuties)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(NPC_marriageDuties_Prefix)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_marriageDuties_Postfix))
+        );
+    }
+
+    private static void NPC_marriageDuties_Prefix(NPC __instance, ref int __state)
+    {
+        __state = __instance.daysAfterLastBirth;
+    }
+
+    private static void NPC_marriageDuties_Postfix(NPC __instance, ref int __state)
+    {
+        if (__state > 4)
+        {
+            string babyName = Game1.player.getChildren().Last().displayName;
+            int childrenCount = Game1.player.getChildrenCount();
+            if (
+                AssetManager.TryGetDialogueForChildCount(
+                    __instance,
+                    "HMK_NewChild",
+                    babyName,
+                    childrenCount,
+                    out _,
+                    out MarriageDialogueReference? mdr
+                )
+            )
+            {
+                __instance.currentMarriageDialogue.Clear();
+                __instance.shouldSayMarriageDialogue.Value = true;
+                __instance.currentMarriageDialogue.Add(mdr);
+            }
+        }
     }
 
     private static void EventDefaultCommands_LoadActors_Postfix(Event @event, string[] args, EventContext context)

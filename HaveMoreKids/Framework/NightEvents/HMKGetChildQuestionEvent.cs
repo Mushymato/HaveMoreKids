@@ -22,20 +22,43 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
         if (whichQuestion == QuestionEvent.pregnancyQuestion)
         {
             NPC npc = Game1.RequireCharacter(Game1.player.spouse);
+            int childrenCount = Game1.player.getChildrenCount();
+
             if (
-                AssetManager.LoadStringReturnNullIfNotFound($"HaveBabyQuestion_{npc.Name}", Game1.player.Name)
-                is not string question
+                AssetManager.TryGetDialogueForChildCount(
+                    npc,
+                    "HMK_HaveBabyQuestion",
+                    "",
+                    childrenCount,
+                    out Dialogue? dialogue,
+                    out _
+                )
             )
             {
-                question = Game1.content.LoadString(
+                dialogue.onFinish += () =>
+                {
+                    Game1.currentLocation.createQuestionDialogue(
+                        dialogue.dialogues.Last().Text,
+                        YesNot,
+                        AnswerPregnancyQuestion,
+                        npc
+                    );
+                    Game1.messagePause = true;
+                };
+                npc.setNewDialogue(dialogue);
+                Game1.drawDialogue(npc);
+            }
+            else
+            {
+                string question = Game1.content.LoadString(
                     (!npc.isAdoptionSpouse())
                         ? "Strings\\Events:HaveBabyQuestion"
                         : "Strings\\Events:HaveBabyQuestion_Adoption",
                     Game1.player.Name
                 );
+                Game1.currentLocation.createQuestionDialogue(question, YesNot, AnswerPregnancyQuestion, npc);
+                Game1.messagePause = true;
             }
-            Game1.currentLocation.createQuestionDialogue(question, YesNot, AnswerPregnancyQuestion, npc);
-            Game1.messagePause = true;
             return false;
         }
         else if (whichQuestion == QuestionEvent.playerPregnancyQuestion)
