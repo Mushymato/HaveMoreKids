@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using StardewValley;
@@ -14,8 +13,10 @@ internal record CribAssign(Child Baby, Furniture? Furni)
     internal const string PlacedChild = $"{ModEntry.ModId}/CribPlacedChild";
     internal static Vector2 CribChildOffset = new(1f, 0f);
 
-    internal bool IsInFurnitureCrib(Vector2? pos = null)
+    internal bool IsInCrib(Vector2? pos = null)
     {
+        if (Furni == null)
+            return true;
         return Furni?.GetBoundingBox().Contains(pos ?? Baby.Position) ?? false;
     }
 
@@ -60,7 +61,7 @@ internal record CribAssign(Child Baby, Furniture? Furni)
 
     private void OnPositionChange(NetPosition field, Vector2 oldValue, Vector2 newValue)
     {
-        if (!IsInFurnitureCrib(newValue) && !Baby.mutex.IsLocked())
+        if (!IsInCrib(newValue) && !Baby.mutex.IsLocked())
         {
             DelayedAction.functionAfterDelay(UnplaceChild, 0);
         }
@@ -159,6 +160,9 @@ internal static class CribManager
             return false;
         }
         // position the child
+
+        if (cribAssign.Furni == null)
+            return true;
 
         DelayedAction.functionAfterDelay(cribAssign.PlaceChild, 0);
         return true;

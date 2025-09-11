@@ -26,12 +26,12 @@ internal static partial class Patches
             // Allow pregnancy past the second child
             harmony.Patch(
                 original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.canGetPregnant)),
-                finalizer: new HarmonyMethod(typeof(Patches), nameof(NPC_canGetPregnant_Finalizer))
+                postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_canGetPregnant_Postfix))
             );
             // Allow pregnancy past the second child for players
             harmony.Patch(
                 original: AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.playersCanGetPregnantHere)),
-                transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_playersCanGetPregnantHere_Transpiler))
+                postfix: new HarmonyMethod(typeof(Patches), nameof(Utility_playersCanGetPregnantHere_Postfix))
             );
         }
         catch (Exception err)
@@ -41,22 +41,22 @@ internal static partial class Patches
         }
     }
 
-    private static int ModifyBaseKidCount(int count) => ModEntry.Config.BaseMaxChildren;
-
     /// <summary>
     /// Change can get pregnant checking
     /// </summary>
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
     /// <returns></returns>
-    private static bool NPC_canGetPregnant_Finalizer(NPC __instance, ref bool __result)
+    private static void NPC_canGetPregnant_Postfix(NPC __instance, ref bool __result)
     {
-        ModEntry.Log($"Checking NPC.canGetPregnant finalizer for '{__instance.Name}'");
+        if (__result)
+            return;
+        ModEntry.Log($"Checking NPC.canGetPregnant postfix for '{__instance.Name}'");
         __result = false;
         if (__instance is Horse || __instance.IsInvisible)
         {
             ModEntry.Log("- is horse or invisible");
-            return false;
+            return;
         }
         // roommate adoption
         if (
@@ -66,7 +66,7 @@ internal static partial class Patches
         )
         {
             ModEntry.Log("- is roommate and not adopt");
-            return false;
+            return;
         }
 
         // valid marriage
@@ -74,14 +74,14 @@ internal static partial class Patches
         if (player == null || player.divorceTonight.Value || player.GetDaysMarried() < ModEntry.Config.DaysMarried)
         {
             ModEntry.Log("- not married hard enough");
-            return false;
+            return;
         }
 
         // valid home
-        if (!GameDelegates.PlayerHasValidHome(player, out string error))
+        if (!GameDelegates.HomeIsValidForPregnancy(Utility.getHomeOfFarmer(player), out string error))
         {
             ModEntry.Log($"- {error}");
-            return false;
+            return;
         }
 
         // friendly not pregnant spouse
@@ -89,16 +89,22 @@ internal static partial class Patches
         if (spouseFriendship.DaysUntilBirthing > 0)
         {
             ModEntry.Log("- already pregnant");
-            return false;
+            return;
         }
         if (player.getFriendshipHeartLevelForNPC(__instance.Name) < 10)
         {
             ModEntry.Log("- a loveless marriage");
-            return false;
+            return;
         }
 
         __instance.DefaultMap = player.homeLocation.Value;
         List<Child> children = player.getChildren();
+
+        if (ModEntry.Config.BaseMaxChildren != -1 && children.Count < ModEntry.Config.BaseMaxChildren)
+        {
+            ModEntry.Log($"- max child count reached");
+            __result = false;
+        }
 
         if (KidHandler.TryGetSpouseOrSharedKidIds(__instance, out string? pickedKey, out List<string>? availableKidIds))
         {
@@ -115,90 +121,17 @@ internal static partial class Patches
         else
         {
             ModEntry.Log("- success! (generic kids)");
-            __result = children.Count < ModEntry.Config.BaseMaxChildren;
+            __result = true;
         }
-        return false;
     }
 
-    /// <summary>
-    /// Check all kids are of right arge
-    /// </summary>
-    /// <param name="children"></param>
-    /// <returns></returns>
-    private static bool ShouldHaveKidsPlayer(List<Child> children)
+    private static void Utility_playersCanGetPregnantHere_Postfix(FarmHouse farmHouse, ref bool __result)
     {
-        return children.All(child => child.Age > 2);
-    }
-
-    private static IEnumerable<CodeInstruction> Utility_playersCanGetPregnantHere_Transpiler(
-        IEnumerable<CodeInstruction> instructions,
-        ILGenerator generator
-    )
-    {
-        try
+        if (__result)
+            return;
+        if (GameDelegates.HomeIsValidForPregnancy(farmHouse, out _))
         {
-            CodeMatcher matcher = new(instructions, generator);
-
-            matcher
-                .MatchEndForward(
-                    [
-                        new(
-                            OpCodes.Callvirt,
-                            AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.getChildrenCount))
-                        ),
-                        new(OpCodes.Ldc_I4_2),
-                        new(OpCodes.Bge_S),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find 'farmHouse.getChildrenCount() < 2'")
-                .InsertAndAdvance(
-                    [new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyBaseKidCount)))]
-                );
-
-            matcher
-                .MatchEndForward(
-                    [
-                        new(inst => inst.IsLdloc()),
-                        new(
-                            OpCodes.Callvirt,
-                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
-                        ),
-                        new(OpCodes.Ldc_I4_2),
-                        new(OpCodes.Bge_S),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find 'children.Count < 2'");
-            CodeInstruction ldlocChildren = matcher.InstructionAt(-3);
-            ldlocChildren = new(ldlocChildren.opcode, ldlocChildren.operand);
-            matcher.InsertAndAdvance(
-                [new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyBaseKidCount)))]
-            );
-            matcher
-                .MatchEndForward(
-                    [
-                        new(inst => inst.IsLdloc()),
-                        new(
-                            OpCodes.Callvirt,
-                            AccessTools.PropertyGetter(typeof(List<Child>), nameof(List<Child>.Count))
-                        ),
-                        new(OpCodes.Brfalse_S),
-                        new(inst => inst.IsLdloc()),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find 'children.Count != 0'")
-                .Insert(
-                    [
-                        ldlocChildren,
-                        new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ShouldHaveKidsPlayer))),
-                        new(OpCodes.Ret),
-                    ]
-                );
-            return matcher.Instructions();
-        }
-        catch (Exception err)
-        {
-            ModEntry.Log($"Error in Utility_playersCanGetPregnantHere_Transpiler:\n{err}", LogLevel.Error);
-            return instructions;
+            __result = true;
         }
     }
 
@@ -279,7 +212,6 @@ internal static partial class Patches
         ModEntry.Log($"Utility_pickPersonalFarmEvent_Postfix {__result}");
         if (__result is QuestionEvent && whichQuestionField.GetValue(__result) is int whichQ)
         {
-            ModEntry.Log($"whichQ: {whichQ}");
             if (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)
             {
                 __result = new HMKGetChildQuestionEvent(whichQ);
@@ -288,10 +220,6 @@ internal static partial class Patches
         else if (__result is BirthingEvent)
         {
             __result = new HMKNewChildEvent();
-        }
-        else if (__result is PlayerCoupleBirthingEvent)
-        {
-            __result = new HMKPlayerCoupleNewChildEvent();
         }
     }
 }

@@ -281,10 +281,9 @@ internal static class GameDelegates
         return false;
     }
 
-    internal static bool PlayerHasValidHome(Farmer player, out string error)
+    internal static bool HomeIsValidForPregnancy(FarmHouse homeOfFarmer, out string error)
     {
         error = null!;
-        FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(player);
         if (homeOfFarmer.upgradeLevel < 2)
         {
             error = "housing market in shambles";
@@ -316,7 +315,7 @@ internal static class GameDelegates
             return false;
         }
 
-        if (!PlayerHasValidHome(Game1.player, out error))
+        if (!HomeIsValidForPregnancy(Utility.getHomeOfFarmer(Game1.player), out error))
         {
             return false;
         }

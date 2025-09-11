@@ -71,19 +71,20 @@ internal sealed class ModConfig : ModConfigValues
 
     public void SyncAndUnregister(ModConfigValues other)
     {
+        // PregnancyChance = other.PregnancyChance;
+        // BaseMaxChildren = other.BaseMaxChildren;
+        // EnabledKids = other.EnabledKids;
+        // DaysMarried = other.DaysMarried;
+
         UnregistedOnNonHost = true;
 
-        PregnancyChance = other.PregnancyChance;
-        DaysMarried = other.DaysMarried;
         DaysPregnant = other.DaysPregnant;
         DaysBaby = other.DaysBaby;
         DaysCrawler = other.DaysCrawler;
         DaysToddler = other.DaysToddler;
         DaysChild = other.DaysChild;
-        BaseMaxChildren = other.BaseMaxChildren;
         ToddlerRoamOnFarm = other.ToddlerRoamOnFarm;
         UseSingleBedAsChildBed = other.UseSingleBedAsChildBed;
-        EnabledKids = other.EnabledKids;
 
         if (GMCM == null)
             return;
@@ -143,27 +144,54 @@ internal sealed class ModConfig : ModConfigValues
         SetupMenu();
     }
 
-    public void SetupMenu()
+    public void SetupMenuFarmhand()
     {
-        if (GMCM == null)
+        if (!RegisterGMCM())
+        {
             return;
-        GMCM.Register(
-            mod: Mod,
-            reset: () =>
-            {
-                Reset();
-                ModEntry.help.WriteConfig(this);
-                MultiplayerSync.SendModConfig(null);
-            },
-            save: () =>
-            {
-                ModEntry.help.WriteConfig(this);
-                MultiplayerSync.SendModConfig(null);
-            },
-            titleScreenOnly: false
+        }
+
+        GMCM!.AddPageLink(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name, I18n.Config_Page_Pregnancy_Description);
+        GMCM.AddPage(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name);
+        GMCM.AddNumberOption(
+            Mod,
+            () => PregnancyChance,
+            (value) => PregnancyChance = value,
+            I18n.Config_PregnancyChance_Name,
+            I18n.Config_PregnancyChance_Description,
+            min: 0,
+            max: 100
+        );
+        GMCM.AddNumberOption(
+            Mod,
+            () => DaysMarried,
+            (value) => DaysMarried = value,
+            I18n.Config_DaysMarried_Name,
+            I18n.Config_DaysMarried_Description,
+            min: 1,
+            max: 14
         );
 
-        GMCM.AddPageLink(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name, I18n.Config_Page_Pregnancy_Description);
+        GMCM.AddNumberOption(
+            Mod,
+            () => BaseMaxChildren,
+            (value) => BaseMaxChildren = value,
+            I18n.Config_BaseMaxChildren_Name,
+            I18n.Config_BaseMaxChildren_Description,
+            min: 1,
+            max: 8
+        );
+        SetupEnabledKids();
+    }
+
+    public void SetupMenu()
+    {
+        if (!RegisterGMCM())
+        {
+            return;
+        }
+
+        GMCM!.AddPageLink(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name, I18n.Config_Page_Pregnancy_Description);
         GMCM.AddPage(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name);
         GMCM.AddNumberOption(
             Mod,
@@ -229,18 +257,15 @@ internal sealed class ModConfig : ModConfigValues
             max: 56
         );
 
-        if (!EnabledKidsPages.ContainsKey(KidHandler.WhoseKids_Shared))
-        {
-            GMCM.AddNumberOption(
-                Mod,
-                () => BaseMaxChildren,
-                (value) => BaseMaxChildren = value,
-                I18n.Config_BaseMaxChildren_Name,
-                I18n.Config_BaseMaxChildren_Description,
-                min: 1,
-                max: 8
-            );
-        }
+        GMCM.AddNumberOption(
+            Mod,
+            () => BaseMaxChildren,
+            (value) => BaseMaxChildren = value,
+            I18n.Config_BaseMaxChildren_Name,
+            I18n.Config_BaseMaxChildren_Description,
+            min: 1,
+            max: 8
+        );
 
         GMCM.AddBoolOption(
             Mod,
@@ -256,8 +281,12 @@ internal sealed class ModConfig : ModConfigValues
             I18n.Config_UseSingleBedAsChildBed_Name,
             I18n.Config_UseSingleBedAsChildBed_Description
         );
-        GMCM.AddPage(Mod, "");
+        SetupEnabledKids();
+    }
 
+    private void SetupEnabledKids()
+    {
+        GMCM!.AddPage(Mod, "");
         if (EnabledKidsPages.Any())
         {
             GMCM.AddParagraph(Mod, I18n.Config_Page_SpecificKids_Description);
@@ -290,6 +319,28 @@ internal sealed class ModConfig : ModConfigValues
         {
             GMCM.AddParagraph(Mod, I18n.Config_Page_Nokids_Description);
         }
+    }
+
+    private bool RegisterGMCM()
+    {
+        if (GMCM == null)
+            return false;
+        GMCM.Register(
+            mod: Mod,
+            reset: () =>
+            {
+                Reset();
+                ModEntry.help.WriteConfig(this);
+                MultiplayerSync.SendModConfig(null);
+            },
+            save: () =>
+            {
+                ModEntry.help.WriteConfig(this);
+                MultiplayerSync.SendModConfig(null);
+            },
+            titleScreenOnly: false
+        );
+        return true;
     }
 
     private void SetupSpouseKidsPage(string key, Func<string> labelFunc, IList<string> kidIds)
@@ -369,15 +420,20 @@ internal sealed class ModConfig : ModConfigValues
 
     public void ResetMenu()
     {
-        if (UnregistedOnNonHost)
-            return;
         if (GMCM == null)
             return;
         GMCM.Unregister(Mod);
         CheckDefaultEnabled();
-        if (!Context.IsWorldReady || Context.IsMainPlayer)
+        if (!Context.IsWorldReady)
         {
-            SetupMenu();
+            if (UnregistedOnNonHost)
+            {
+                SetupMenuFarmhand();
+            }
+            else
+            {
+                SetupMenu();
+            }
         }
     }
 }

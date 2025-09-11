@@ -8,7 +8,7 @@
   "config.DaysPregnant.name": "Pregnancy Days",
   "config.DaysPregnant.description": "Time until the child arrives after answering the pregnancy question. Vanilla days is 14, must be changed prior to answering the pregnancy question. This feature does not work for player couples.",
   "config.BaseMaxChildren.name": "Base Max Children",
-  "config.BaseMaxChildren.description": "Max number of children to have if no custom babies are available for the spouse.",
+  "config.BaseMaxChildren.description": "Max number of children you can have. If a spouse has any custom children, .",
   "config.DaysBaby.name": "Days until Baby",
   "config.DaysBaby.description": "Number of days until the newborn becomes a baby. Vanilla days is 13.",
   "config.DaysCrawler.name": "Days until Crawler",
@@ -25,5 +25,5 @@
   "config.page.spousekids.name": "{{Name}}'s Kids",
   "config.page.sharedKids.name": "Shared Kids",
   "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply.",
-  "config.page.nonhost.description": "Because you are not the host player, you cannot change settings for this mod."
+  "config.page.nonhost.description": "Because you are not the host player, you cannot change certain settings for this mod."
 }

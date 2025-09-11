@@ -217,7 +217,7 @@ internal static partial class Patches
         if (!__result)
         {
             CribAssign? cribAssign = CribManager.GetCribAssignment(__instance);
-            __result = cribAssign?.IsInFurnitureCrib() ?? false;
+            __result = cribAssign?.IsInCrib() ?? false;
         }
     }
 
