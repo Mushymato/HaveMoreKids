@@ -250,8 +250,7 @@ internal static class KidHandler
             }
 
             if (
-                kid.Age > 2
-                && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
                 && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
             )
             {
@@ -393,6 +392,9 @@ internal static class KidHandler
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
             kid.reloadSprite();
+            if (kid.Age <= 2)
+                continue;
+
             GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
             // check if today is a Child day or a NPC day
             if (
