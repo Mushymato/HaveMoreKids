@@ -152,6 +152,7 @@ internal static class KidHandler
     {
         // events
         ModEntry.help.Events.Specialized.LoadStageChanged += OnLoadStageChanged;
+        ModEntry.help.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
         ModEntry.help.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         ModEntry.help.Events.GameLoop.DayStarted += OnDayStarted;
         ModEntry.help.Events.GameLoop.DayEnding += OnDayEnding;
@@ -170,6 +171,11 @@ internal static class KidHandler
     internal static bool IsHMKChildNPC(this NPC childNPC)
     {
         return childNPC.Name?.EndsWith(ChildNPC_Suffix) ?? false;
+    }
+
+    private static void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+    {
+        KidEntries.Clear();
     }
 
     private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
@@ -355,7 +361,7 @@ internal static class KidHandler
     {
         NPC? match = null;
         Utility.ForEachCharacter(
-            delegate(NPC npc)
+            npc =>
             {
                 if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager)
                 {
@@ -388,8 +394,6 @@ internal static class KidHandler
         {
             kid.reloadSprite();
             GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
-            string key = kid.KidHMKFromNPCId() ?? kid.Name;
-            ModEntry.Log($"{kid.Name} -> {key}");
             // check if today is a Child day or a NPC day
             if (
                 KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
@@ -397,9 +401,13 @@ internal static class KidHandler
                 && GetNonChildNPCByName(entry.KidNPCId) is NPC childAsNPC
             )
             {
+                string key = entry.KidNPCId;
                 bool stayHome = true;
                 if (entry.IsAdoptedFromNPC)
                 {
+                    key = kid.KidHMKFromNPCId() ?? kid.Name;
+                    ModEntry.Log($"{kid.Name} -> {key}");
+
                     kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
                     if (Game1.characterData.TryGetValue(key, out CharacterData? data))
                     {
@@ -416,28 +424,10 @@ internal static class KidHandler
                             stayHome = true;
                         }
                     }
-                    if (stayHome)
-                    {
-                        FarmHouse farmHouse = Utility.getHomeOfFarmer(farmer);
-                        Random r = Utility.CreateDaySaveRandom(farmHouse.OwnerId * 2);
-                        Point randomOpenPointInHouse = farmHouse.getRandomOpenPointInHouse(r, 1, 200);
-                        if (!randomOpenPointInHouse.Equals(Point.Zero))
-                        {
-                            kid.setTilePosition(randomOpenPointInHouse);
-                        }
-                        else
-                        {
-                            randomOpenPointInHouse = farmHouse.GetChildBedSpot(kid.GetChildIndex());
-                            if (!randomOpenPointInHouse.Equals(Point.Zero))
-                            {
-                                kid.setTilePosition(randomOpenPointInHouse);
-                            }
-                        }
-                        kid.Sprite.CurrentAnimation = null;
-                    }
                 }
                 else if (kid.GetData() is CharacterData childCharaData)
                 {
+                    key = entry.KidNPCId;
                     if (
                         ModEntry.Config.DaysChild > -1
                         && kid.daysOld.Value >= ModEntry.Config.TotalDaysChild
