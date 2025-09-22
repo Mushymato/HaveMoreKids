@@ -100,7 +100,7 @@ internal static partial class Patches
         __instance.DefaultMap = player.homeLocation.Value;
         List<Child> children = player.getChildren();
 
-        if (ModEntry.Config.BaseMaxChildren != -1 && children.Count < ModEntry.Config.BaseMaxChildren)
+        if (ModEntry.Config.BaseMaxChildren != -1 && children.Count >= ModEntry.Config.BaseMaxChildren)
         {
             ModEntry.Log($"- max child count reached");
             __result = false;

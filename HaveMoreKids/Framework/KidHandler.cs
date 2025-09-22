@@ -250,7 +250,9 @@ internal static class KidHandler
             }
 
             if (
-                AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                kid.Age > 2
+                && ModEntry.Config.DaysChild > -1
+                && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
                 && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
             )
             {
