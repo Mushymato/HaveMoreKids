@@ -81,9 +81,9 @@ internal static class GameDelegates
 {
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
     internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
-    internal const string Action_SetChildBirth = $"{ModEntry.ModId}_SetChildBirth";
+    internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
-    internal const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
+    internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
     internal const string EventCmd_AddChildActor = $"{ModEntry.ModId}_addChildActor";
     internal const string EventCmd_AddChildActor_Alias = "HMK_addChildActor";
     internal const string TS_Endearment = $"{ModEntry.ModId}_Endearment";
@@ -94,7 +94,7 @@ internal static class GameDelegates
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         // TAction
-        TriggerActionManager.RegisterAction(Action_SetChildBirth, SetChildBirth);
+        TriggerActionManager.RegisterAction(Action_SetNewChildEvent, SetNewChildEvent);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
         // Tokenizable String
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
@@ -297,10 +297,10 @@ internal static class GameDelegates
         return true;
     }
 
-    private static bool SetChildBirth(string[] args, TriggerActionContext context, out string error)
+    private static bool SetNewChildEvent(string[] args, TriggerActionContext context, out string error)
     {
         if (
-            !ArgUtility.TryGetInt(args, 1, out int daysUntilBirth, out error, name: "int daysUntilBirth")
+            !ArgUtility.TryGetInt(args, 1, out int daysUntilNewChild, out error, name: "int daysUntilNewChild")
             || !ArgUtility.TryGetOptional(args, 2, out string? kidId, out error, name: "string? kidId")
             || !ArgUtility.TryGetOptional(args, 3, out string? spouseName, out error, name: "string? spouseName")
             || !ArgUtility.TryGetOptional(args, 4, out string? message, out error, name: "string? message")
@@ -309,9 +309,9 @@ internal static class GameDelegates
             return false;
         }
 
-        if (daysUntilBirth < 0)
+        if (daysUntilNewChild < 0)
         {
-            error = "daysUntilBirth cannot be negative.";
+            error = "daysUntilNewChild cannot be negative.";
             return false;
         }
 
@@ -324,7 +324,7 @@ internal static class GameDelegates
         {
             // solo adopt path
             // this is +1 because stats get unset at 0
-            Game1.player.stats.Set(Stats_daysUntilBirth, daysUntilBirth + 1);
+            Game1.player.stats.Set(Stats_daysUntilNewChild, daysUntilNewChild + 1);
             ModEntry.Log(kidId);
             KidHandler.TrySetNextAdoptFromNPCKidId(Game1.player, kidId);
         }
@@ -333,7 +333,7 @@ internal static class GameDelegates
             // player couple path
             Friendship friendship = Game1.player.team.GetFriendship(Game1.player.UniqueMultiplayerID, spouseId);
             WorldDate worldDate = new(Game1.Date);
-            worldDate.TotalDays += daysUntilBirth;
+            worldDate.TotalDays += daysUntilNewChild;
             friendship.NextBirthingDate = worldDate;
         }
         else
@@ -363,7 +363,7 @@ internal static class GameDelegates
             }
 
             WorldDate worldDate = new(Game1.Date);
-            worldDate.TotalDays += daysUntilBirth;
+            worldDate.TotalDays += daysUntilNewChild;
             Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
 
             KidHandler.TrySetNextKid(spouse, kidId);

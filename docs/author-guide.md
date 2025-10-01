@@ -48,13 +48,15 @@ Gift tastes and dialogue assets are shared between toddler and child NPC.
 
 ## Trigger Actions
 
-You can have child birth happen in non-standard ways by doing these two things:
+You can have a kid via non-standard (i.e. not the vanilla nightly pregnancy question) ways by doing these two things:
 1. Set `SpouseWantsChildren` on your Spouse NPC's `Data/Characters` to `"FALSE"`, to block the vanilla nightly pregnancy question event.
-2. Use trigger action `mushymato.HaveMoreKids_SetChildBirth` to queue a birth event. Trigger actions can be called from a variety of places, please [refer to the wiki page](https://stardewvalleywiki.com/Modding:Trigger_actions).
+2. Use trigger action `mushymato.HaveMoreKids_SetNewChildEvent` to queue a new child event. Trigger actions can be called from a variety of places, please [refer to the wiki page](https://stardewvalleywiki.com/Modding:Trigger_actions).
 
-### mushymato.HaveMoreKids_SetChildBirth \<daysUntilBirth\> [childId] [spouse] [message]
+This is also how you can have a child without being married.
 
-- `daysUntilBirth`: Required argument, number of days until child birth happens. Setting 0 here means it happens tonight.
+### mushymato.HaveMoreKids_SetNewChildEvent \<daysUntilNewChild\> [childId] [spouse] [message]
+
+- `daysUntilNewChild`: Required argument, number of days until child birth happens. Setting 0 here means it happens tonight.
 - `childId`: Optional specific unique child, ignored if the child does not exist or had already been taken. Use `Any` to skip this argument.
 - `spouse`: Optional specific spouse, only do the action if the spouse matches. Use `Any` to skip this argument. For player couples or solo adoption, use `Player`.
 - `message`: Optional HUD message that appear when child birth is successfully set. Can use translation key or LocalizedText.

@@ -110,7 +110,7 @@
               "Id": "{{ModId}}_MakeBaby",
               "ItemId": "DROP_IN",
               "CustomData": {
-                "selph.ExtraMachineConfig.TriggerActionToRunWhenReady": "mushymato.HaveMoreKids_SetChildBirth 0 7thAxis.LitD.CP.Senlet_Chirin SenS Strings\\StringsFromCSFiles:NPC.cs.4439"
+                "selph.ExtraMachineConfig.TriggerActionToRunWhenReady": "mushymato.HaveMoreKids_SetNewChildEvent 0 7thAxis.LitD.CP.Senlet_Chirin SenS Strings\\StringsFromCSFiles:NPC.cs.4439"
               }
             }
           ],

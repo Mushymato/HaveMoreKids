@@ -147,7 +147,7 @@ internal static partial class Patches
         {
             return true;
         }
-        if (Game1.player.stats.Get(GameDelegates.Stats_daysUntilBirth) == 1)
+        if (Game1.player.stats.Get(GameDelegates.Stats_daysUntilNewChild) == 1)
         {
             HMKNewChildEvent hmkNewChildEvent = new();
             __result = hmkNewChildEvent;

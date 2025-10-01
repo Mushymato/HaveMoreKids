@@ -35,12 +35,10 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                 )
             )
             {
-                dialogue = new(
-                    npc,
-                    npc.isAdoptionSpouse()
-                        ? "Strings\\Events:HaveBabyQuestion_Adoption"
-                        : "Strings\\Events:HaveBabyQuestion"
-                );
+                string translationKey = npc.isAdoptionSpouse()
+                    ? "Strings\\Events:HaveBabyQuestion_Adoption"
+                    : "Strings\\Events:HaveBabyQuestion";
+                dialogue = new(npc, translationKey, Game1.content.LoadString(translationKey, Game1.player.Name));
             }
             dialogue.onFinish += () =>
             {

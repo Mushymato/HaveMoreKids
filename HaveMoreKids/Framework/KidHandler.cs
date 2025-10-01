@@ -38,7 +38,6 @@ internal static class KidHandler
     private const string Child_CustomField_GoOutsideCondition = $"{ModEntry.ModId}/GoOutsideCondition";
     internal const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     private const string Character_CustomField_IsNPCToday = $"{ModEntry.ModId}/IsNPCToday";
-    private const string Stats_daysUntilBirth = $"{ModEntry.ModId}_daysUntilBirth";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
 
     internal const string NPCChild_Prefix = $"{ModEntry.ModId}@AdoptedFromNPC@";
@@ -384,7 +383,7 @@ internal static class KidHandler
     /// <param name="e"></param>
     private static void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
-        Game1.player.stats.Decrement(Stats_daysUntilBirth);
+        Game1.player.stats.Decrement(GameDelegates.Stats_daysUntilNewChild);
         if (!Context.IsMainPlayer)
         {
             return;
@@ -409,8 +408,30 @@ internal static class KidHandler
                 bool stayHome = true;
                 if (entry.IsAdoptedFromNPC)
                 {
+                    // For some reason, the NPC flavored child don't get dayUpdate so their positions are messed up
+                    // Redo this work ourselves
+                    kid.speed = 4;
+                    if (kid.currentLocation is FarmHouse farmHouse)
+                    {
+                        Random r = Utility.CreateDaySaveRandom(farmHouse.OwnerId * 2);
+                        Point randomOpenPointInHouse2 = farmHouse.getRandomOpenPointInHouse(r, 1, 200);
+                        if (!randomOpenPointInHouse2.Equals(Point.Zero))
+                        {
+                            kid.setTilePosition(randomOpenPointInHouse2);
+                        }
+                        else
+                        {
+                            randomOpenPointInHouse2 = farmHouse.GetChildBedSpot(kid.GetChildIndex());
+                            if (!randomOpenPointInHouse2.Equals(Point.Zero))
+                            {
+                                kid.setTilePosition(randomOpenPointInHouse2);
+                            }
+                        }
+                        kid.Sprite.CurrentAnimation = null;
+                    }
+
                     key = kid.KidHMKFromNPCId() ?? kid.Name;
-                    ModEntry.Log($"{kid.Name} -> {key}");
+                    ModEntry.Log($"{kid.Name} -> {key} ({kid.daysOld.Value})");
 
                     kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
                     if (Game1.characterData.TryGetValue(key, out CharacterData? data))
