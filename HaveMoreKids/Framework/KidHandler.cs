@@ -395,6 +395,9 @@ internal static class KidHandler
             kid.reloadSprite();
             if (kid.Age <= 2)
                 continue;
+            // make sure dialogue gets reloaded
+            kid.resetSeasonalDialogue();
+            kid.resetCurrentDialogue();
 
             GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
             // check if today is a Child day or a NPC day

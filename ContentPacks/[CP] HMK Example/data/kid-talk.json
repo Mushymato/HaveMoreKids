@@ -13,13 +13,13 @@
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
       "Entries": {
         // this is an ordinary vanilla dialogue asset, and accepts all the same keys
-        "Mon": "{{i18n:{{L@Kid}}.Toddler.Dialog.Mon}}",
-        "Tue": "{{i18n:{{L@Kid}}.Toddler.Dialog.Tue}}",
-        "Wed": "{{i18n:{{L@Kid}}.Toddler.Dialog.Wed}}",
-        "Thu": "{{i18n:{{L@Kid}}.Toddler.Dialog.Thu}}",
-        "Fri": "{{i18n:{{L@Kid}}.Toddler.Dialog.Fri}}",
-        "Sat": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sat}}",
-        "Sun": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sun}}",
+        "Mon": "{{i18n:{{L@Kid}}.Toddler.Dialog.Mon}} {{DayOfWeek}}",
+        "Tue": "{{i18n:{{L@Kid}}.Toddler.Dialog.Tue}} {{DayOfWeek}}",
+        "Wed": "{{i18n:{{L@Kid}}.Toddler.Dialog.Wed}} {{DayOfWeek}}",
+        "Thu": "{{i18n:{{L@Kid}}.Toddler.Dialog.Thu}} {{DayOfWeek}}",
+        "Fri": "{{i18n:{{L@Kid}}.Toddler.Dialog.Fri}} {{DayOfWeek}}",
+        "Sat": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sat}} {{DayOfWeek}}",
+        "Sun": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sun}} {{DayOfWeek}}",
       }
     },
     {

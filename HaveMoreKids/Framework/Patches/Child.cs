@@ -330,6 +330,17 @@ internal static partial class Patches
             __result = __instance.tryToReceiveActiveObject(who);
             return !__result;
         }
+
+        int hearts = 0;
+        if (Game1.player.friendshipData.TryGetValue(__instance.Name, out Friendship friendship))
+        {
+            hearts = friendship.Points / 250;
+        }
+        if (!__instance.checkForNewCurrentDialogue(hearts))
+        {
+            __instance.checkForNewCurrentDialogue(hearts, noPreface: true);
+        }
+
         if (__instance.CurrentDialogue.Count > 0)
         {
             Game1.drawDialogue(__instance);

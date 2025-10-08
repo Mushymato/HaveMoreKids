@@ -171,9 +171,7 @@ internal static class GameDelegates
                     ?? Game1.content.LoadString("Strings/Characters:Relative_Dad"),
                 Gender.Female => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Female")
                     ?? Game1.content.LoadString("Strings/Characters:Relative_Mom"),
-                Gender.Undefined => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Neutral")
-                    ?? player.displayName,
-                _ => null,
+                _ => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Neutral") ?? player.displayName,
             };
         }
         if (endearment is null)
