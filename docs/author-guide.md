@@ -46,14 +46,14 @@ Custom kids in HMK uses the same [appearance system](https://stardewvalleywiki.c
 
 #### Dialogue & Gift Tastes
 
-You can give the child dialogue by editing `Characters/Dialogue/<ChildId>` and gift tastes by adding a `<ChildId>` entry to `Data/NPCGiftTastes`.
+You can give the child dialogue by editing `Characters/Dialogue/<KidId>` and gift tastes by adding a `<KidId>` entry to `Data/NPCGiftTastes`.
 These have same structure as regular [NPC dialogue](https://stardewvalleywiki.com/Modding:Dialogue) and [gift tastes](https://stardewvalleywiki.com/Modding:NPC_data#Gift_tastes).
 
 Gift tastes and dialogue assets are shared between toddler and child NPC.
 
 #### Kid NPC Mode
 
-When `CanSocialize` is not always false, HMK will generate a NPC counterpart to a toddler aged kid. These NPCs can have full schedules, loaded from  `Characters/schedules/<ChildId>`.
+When `CanSocialize` is not always false, HMK will generate a NPC counterpart to a toddler aged kid. These NPCs can have full schedules, loaded from  `Characters/schedules/<KidId>`. They still get dialogue from `Characters/Dialogue/<KidId>` as well.
 
 Every morning, `CanSocialize` is reevaluated, if the result is true then the NPC counterpart of the kid will be visible that day and the Child version is invisible. Conversely if the result is false, the NPC version of the kid will be invisible and the Child version visible.
 
@@ -137,12 +137,12 @@ This trigger action causes guarenteed child birth event to occur this night, or 
 A unique child is not required to use this trigger, though of course the `kidId` argument does nothing in that case.
 
 
-### mushymato.HaveMoreKids_SetChildAge \<childId|childIndex\> \<Age\>
+### mushymato.HaveMoreKids_SetChildAge \<KidId|childIndex\> \<Age\>
 
 This trigger action alters the age of a child, however, the effects only happens on day started. If the action is called in the middle of a day, you must sleep before changes take place.
 Thus, it's recommended to use this action with trigger `DayEnding`.
 
-- `childId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `KidId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
 - `age`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
   - 1: Baby (sitting baby)
@@ -151,20 +151,20 @@ Thus, it's recommended to use this action with trigger `DayEnding`.
 
 ## Game State Queries
 
-### mushymato.HaveMoreKids_CHILD_AGE \<childId|childIndex\> \<Age\>
+### mushymato.HaveMoreKids_CHILD_AGE \<KidId|childIndex\> \<Age\>
 
 Checks a child is at a certain age.
 
-- `childId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `KidId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
 - `age`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
   - 1: Baby (sitting baby)
   - 2: Crawler (crawling around the house)
   - 3: Toddler (running around the house)
 
-### mushymato.HaveMoreKids_HAS_CHILD \<childId|childIndex\>
+### mushymato.HaveMoreKids_HAS_CHILD \<KidId|childIndex\>
 
 Check that the player has a particular child.
 
-- `childId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `KidId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
 
