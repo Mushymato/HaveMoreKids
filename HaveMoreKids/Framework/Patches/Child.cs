@@ -53,7 +53,7 @@ internal static partial class Patches
         NPC_loadCurrentDialogue_Call = dm.CreateDelegate<Func<NPC, Stack<Dialogue>>>();
     }
 
-    internal static void Apply_Child(Harmony harmony)
+    internal static void Apply_Child()
     {
         MakeDynamicMethods();
 

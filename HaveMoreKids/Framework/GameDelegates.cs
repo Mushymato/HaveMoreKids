@@ -341,11 +341,13 @@ internal static class GameDelegates
             NPC? spouse;
             if (string.IsNullOrEmpty(spouseName) || spouseName.EqualsIgnoreCase("Any"))
             {
-                if ((spouse = Game1.player.getSpouse()) == null)
+                IEnumerable<NPC> spouses = SpouseShim.GetSpouses(Game1.player);
+                if (!spouses.Any())
                 {
                     error = "Player does not have a spouse";
                     return false;
                 }
+                spouse = Game1.random.ChooseFrom(spouses.ToList());
             }
             else
             {
@@ -361,9 +363,7 @@ internal static class GameDelegates
                 }
             }
 
-            WorldDate worldDate = new(Game1.Date);
-            worldDate.TotalDays += daysUntilNewChild;
-            Game1.player.GetSpouseFriendship().NextBirthingDate = worldDate;
+            SpouseShim.SetNPCNewChildDate(Game1.player, spouse, daysUntilNewChild);
 
             KidHandler.TrySetNextKid(spouse, kidId);
         }

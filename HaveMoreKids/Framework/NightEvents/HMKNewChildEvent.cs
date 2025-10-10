@@ -3,7 +3,6 @@ using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Events;
 using StardewValley.Extensions;
-using StardewValley.GameData.Characters;
 using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
 
@@ -11,32 +10,32 @@ namespace HaveMoreKids.Framework.NightEvents;
 
 public class HMKNewChildEvent : BaseFarmEvent
 {
-    private int timer;
+    private int timer = 1500;
 
-    private string? message;
+    private string? message = null;
 
-    private string? babyName;
+    private string? babyName = null;
 
-    internal string? newKidId;
+    internal string? newKidId = null;
 
-    private bool getBabyName;
+    private bool getBabyName = false;
 
-    internal bool isAdoptedFromNPC = false;
+    private bool isAdoptedFromNPC = false;
 
-    private bool naming;
+    private bool naming = false;
 
-    private bool isDarkSkinned;
+    private bool isDarkSkinned = false;
 
-    private bool isTwin;
+    private bool isTwin = false;
 
-    private NPC? spouse;
+    private NPC? spouse = null;
 
     /// <inheritdoc />
     public override bool setUp()
     {
         timer = 1500;
         Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
-        spouse = Game1.player.getSpouse();
+        spouse = SpouseShim.GetBirthingSpouse(Game1.player);
         Game1.player.CanMove = false;
         if (newKidId == null)
         {
@@ -69,6 +68,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             {
                 message = string.Format(TokenParser.ParseText(kidDef.BirthOrAdoptMessage), childTerm);
             }
+            isAdoptedFromNPC = kidDef.AdoptedFromNPC != null;
         }
         if (message == null)
         {
@@ -171,7 +171,7 @@ public class HMKNewChildEvent : BaseFarmEvent
         // spouse stuff
         if (spouse != null)
         {
-            Game1.player.GetSpouseFriendship().NextBirthingDate = null;
+            SpouseShim.SetNPCNewChildDate(Game1.player, spouse, -1);
             spouse.daysAfterLastBirth = 5;
 
             spouse.shouldSayMarriageDialogue.Value = true;

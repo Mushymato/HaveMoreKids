@@ -13,7 +13,7 @@ namespace HaveMoreKids.Framework;
 
 internal static partial class Patches
 {
-    internal static void Apply_Misc(Harmony harmony)
+    internal static void Apply_Misc()
     {
         // let child sleep on single beds
         harmony.Patch(

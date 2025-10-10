@@ -9,6 +9,7 @@ namespace HaveMoreKids.Framework.NightEvents;
 
 public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
 {
+    private NPC? spouse;
     public bool forceProceed;
     private static Response[] YesNot =>
         [
@@ -21,12 +22,16 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
     {
         if (whichQuestion == QuestionEvent.pregnancyQuestion)
         {
-            NPC npc = Game1.RequireCharacter(Game1.player.spouse);
+            if ((spouse = SpouseShim.GetPregnantSpouse(Game1.player)) == null)
+            {
+                return true;
+            }
+
             int childrenCount = Game1.player.getChildrenCount();
 
             if (
                 !AssetManager.TryGetDialogueForChildCount(
-                    npc,
+                    spouse,
                     "HMK_HaveBabyQuestion",
                     "",
                     childrenCount,
@@ -35,10 +40,10 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                 )
             )
             {
-                string translationKey = npc.isAdoptionSpouse()
+                string translationKey = spouse.isAdoptionSpouse()
                     ? "Strings\\Events:HaveBabyQuestion_Adoption"
                     : "Strings\\Events:HaveBabyQuestion";
-                dialogue = new(npc, translationKey, Game1.content.LoadString(translationKey, Game1.player.Name));
+                dialogue = new(spouse, translationKey, Game1.content.LoadString(translationKey, Game1.player.Name));
             }
             dialogue.onFinish += () =>
             {
@@ -46,12 +51,12 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                     dialogue.dialogues.Last().Text,
                     YesNot,
                     AnswerPregnancyQuestion,
-                    npc
+                    spouse
                 );
                 Game1.messagePause = true;
             };
-            npc.setNewDialogue(dialogue);
-            Game1.drawDialogue(npc);
+            spouse.setNewDialogue(dialogue);
+            Game1.drawDialogue(spouse);
             return false;
         }
         else if (whichQuestion == QuestionEvent.playerPregnancyQuestion)
@@ -83,11 +88,9 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
 
     private void AnswerPregnancyQuestion(Farmer who, string answer)
     {
-        if (answer.Equals("Yes"))
+        if (spouse != null && answer.Equals("Yes"))
         {
-            WorldDate worldDate = new(Game1.Date);
-            worldDate.TotalDays += ModEntry.Config.DaysPregnant;
-            who.GetSpouseFriendship().NextBirthingDate = worldDate;
+            SpouseShim.SetNPCNewChildDate(who, spouse, ModEntry.Config.DaysPregnant);
         }
     }
 

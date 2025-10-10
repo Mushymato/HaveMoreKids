@@ -6,7 +6,7 @@ namespace HaveMoreKids.Framework;
 
 internal static partial class Patches
 {
-    internal static void Apply_Narrative(Harmony harmony)
+    internal static void Apply_Narrative()
     {
         // Allow easier time of using kid actors in events
         harmony.Patch(

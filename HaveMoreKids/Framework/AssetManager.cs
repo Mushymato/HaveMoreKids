@@ -190,7 +190,6 @@ internal static class AssetManager
         [NotNullWhen(true)] out MarriageDialogueReference? marriageDialogueReference
     )
     {
-        dialogue = null;
         marriageDialogueReference = null;
         for (int i = childrenCount; i > 0; i--)
         {
@@ -207,7 +206,6 @@ internal static class AssetManager
                 return true;
             }
         }
-        ModEntry.LogDebug(keyPrefix);
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(keyPrefix)) is not null)
         {
             marriageDialogueReference = new MarriageDialogueReference("MarriageDialogue", keyPrefix, false, babyName);

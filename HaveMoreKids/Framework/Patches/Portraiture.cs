@@ -7,7 +7,7 @@ namespace HaveMoreKids.Framework;
 
 internal static partial class Patches
 {
-    internal static void Apply_Portraiture(Harmony harmony)
+    internal static void Apply_Portraiture()
     {
         // Portraiture Compat (sigh)
         var modInfo = ModEntry.help.ModRegistry.Get("Platonymous.Portraiture");

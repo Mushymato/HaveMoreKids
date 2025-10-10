@@ -5,12 +5,13 @@ namespace HaveMoreKids.Framework;
 
 internal static partial class Patches
 {
+    private static readonly Harmony harmony = new(ModEntry.ModId);
+
     internal static void Apply()
     {
-        Harmony harmony = new(ModEntry.ModId);
         try
         {
-            Apply_Pregnancy(harmony);
+            Apply_Pregnancy();
         }
         catch (Exception err)
         {
@@ -19,7 +20,7 @@ internal static partial class Patches
         }
         try
         {
-            Apply_Child(harmony);
+            Apply_Child();
         }
         catch (Exception err)
         {
@@ -28,7 +29,7 @@ internal static partial class Patches
         }
         try
         {
-            Apply_Narrative(harmony);
+            Apply_Narrative();
         }
         catch (Exception err)
         {
@@ -36,7 +37,7 @@ internal static partial class Patches
         }
         try
         {
-            Apply_Misc(harmony);
+            Apply_Misc();
         }
         catch (Exception err)
         {
@@ -44,7 +45,7 @@ internal static partial class Patches
         }
         try
         {
-            Apply_Portraiture(harmony);
+            Apply_Portraiture();
         }
         catch (Exception err)
         {

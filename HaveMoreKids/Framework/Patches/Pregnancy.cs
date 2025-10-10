@@ -12,7 +12,7 @@ namespace HaveMoreKids.Framework;
 
 internal static partial class Patches
 {
-    internal static void Apply_Pregnancy(Harmony harmony)
+    internal static void Apply_Pregnancy()
     {
         try
         {
@@ -22,6 +22,9 @@ internal static partial class Patches
                 prefix: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Prefix)),
                 transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Transpiler)),
                 postfix: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Postfix))
+                {
+                    after = SpouseShim.FL_ModIds,
+                }
             );
             // Allow pregnancy past the second child
             harmony.Patch(
@@ -41,6 +44,31 @@ internal static partial class Patches
         }
     }
 
+    internal static void Apply_PregnancyFL()
+    {
+        if (SpouseShim.FL_modType != null)
+        {
+            try
+            {
+                harmony.Patch(
+                    original: AccessTools.DeclaredMethod(
+                        SpouseShim.FL_modType,
+                        "Utility_pickPersonalFarmEvent_Postfix"
+                    ),
+                    transpiler: new HarmonyMethod(
+                        typeof(Patches),
+                        nameof(FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler)
+                    )
+                );
+            }
+            catch (Exception err)
+            {
+                ModEntry.Log($"Failed to patch pregnancy(FL compat):\n{err}", LogLevel.Warn);
+                throw;
+            }
+        }
+    }
+
     /// <summary>
     /// Change can get pregnant checking
     /// </summary>
@@ -50,6 +78,7 @@ internal static partial class Patches
     private static void NPC_canGetPregnant_Postfix(NPC __instance, ref bool __result)
     {
         ModEntry.Log($"Checking NPC.canGetPregnant postfix for '{__instance.Name}'");
+
         __result = false;
         if (__instance is Horse || __instance.IsInvisible)
         {
@@ -69,9 +98,15 @@ internal static partial class Patches
 
         // valid marriage
         Farmer player = __instance.getSpouse();
-        if (player == null || player.divorceTonight.Value || player.GetDaysMarried() < ModEntry.Config.DaysMarried)
+        if (player == null || !SpouseShim.TryGetNPCFriendship(player, __instance, out Friendship? spouseFriendship))
         {
-            ModEntry.Log("- not married hard enough");
+            ModEntry.Log("- not married");
+            return;
+        }
+
+        if (player.divorceTonight.Value || spouseFriendship.DaysMarried < ModEntry.Config.DaysMarried)
+        {
+            ModEntry.Log("- not married long enough");
             return;
         }
 
@@ -83,8 +118,7 @@ internal static partial class Patches
         }
 
         // friendly not pregnant spouse
-        Friendship spouseFriendship = player.GetSpouseFriendship();
-        if (spouseFriendship.DaysUntilBirthing > 0)
+        if (spouseFriendship.DaysUntilBirthing >= 0)
         {
             ModEntry.Log("- already pregnant");
             return;
@@ -139,8 +173,9 @@ internal static partial class Patches
         return ModEntry.Config.PregnancyChance / 100f;
     }
 
-    private static bool Utility_pickPersonalFarmEvent_Prefix(ref FarmEvent __result)
+    private static bool Utility_pickPersonalFarmEvent_Prefix(ref FarmEvent __result, ref string? __state)
     {
+        __state = null;
         if (Game1.weddingToday)
         {
             return true;
@@ -152,7 +187,6 @@ internal static partial class Patches
             if (Game1.player.modData.TryGetValue(KidHandler.Character_ModData_NextKidId, out string? nextKidId))
             {
                 hmkNewChildEvent.newKidId = nextKidId;
-                hmkNewChildEvent.isAdoptedFromNPC = true;
                 Game1.player.modData.Remove(KidHandler.Character_ModData_NextKidId);
             }
             return false;
@@ -164,40 +198,60 @@ internal static partial class Patches
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
     /// <returns></returns>
-    private static IEnumerable<CodeInstruction> Utility_pickPersonalFarmEvent_Transpiler(
+    private static IEnumerable<CodeInstruction> Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(
         IEnumerable<CodeInstruction> instructions,
-        ILGenerator generator
+        ILGenerator generator,
+        int expectedCount
     )
     {
         try
         {
             CodeMatcher matcher = new(instructions, generator);
-            matcher
-                .MatchEndForward(
-                    [
-                        new(OpCodes.Callvirt, AccessTools.DeclaredMethod(typeof(Random), nameof(Random.NextDouble))),
-                        new(OpCodes.Ldc_R8, 0.05),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find first 'random.NextDouble() < 0.05'")
-                .Advance(1)
-                .Insert([new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))])
-                .MatchEndForward(
-                    [
-                        new(OpCodes.Callvirt, AccessTools.DeclaredMethod(typeof(Random), nameof(Random.NextDouble))),
-                        new(OpCodes.Ldc_R8, 0.05),
-                    ]
-                )
-                .ThrowIfNotMatch("Did not find second 'random.NextDouble() < 0.05'")
-                .Advance(1)
-                .Insert([new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))]);
+            for (int i = 0; i < expectedCount; i++)
+            {
+                matcher
+                    .MatchEndForward(
+                        [
+                            new(
+                                OpCodes.Callvirt,
+                                AccessTools.DeclaredMethod(typeof(Random), nameof(Random.NextDouble))
+                            ),
+                            new(OpCodes.Ldc_R8, 0.05),
+                        ]
+                    )
+                    .ThrowIfNotMatch("Did not find 'random.NextDouble() < 0.05'")
+                    .Advance(1)
+                    .InsertAndAdvance(
+                        [new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))]
+                    );
+            }
+            ModEntry.LogDebug($"Replaced {expectedCount} 'random.NextDouble() < 0.05'");
             return matcher.Instructions();
         }
         catch (Exception err)
         {
-            ModEntry.Log($"Error in Utility_pickPersonalFarmEvent_Transpiler:\n{err}", LogLevel.Error);
+            ModEntry.Log(
+                $"Error in Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance({expectedCount}):\n{err}",
+                LogLevel.Warn
+            );
             return instructions;
         }
+    }
+
+    private static IEnumerable<CodeInstruction> Utility_pickPersonalFarmEvent_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        return Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(instructions, generator, 2);
+    }
+
+    private static IEnumerable<CodeInstruction> FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        return Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(instructions, generator, 1);
     }
 
     private static readonly FieldInfo whichQuestionField = AccessTools.DeclaredField(
@@ -205,9 +259,9 @@ internal static partial class Patches
         "whichQuestion"
     );
 
-    private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
+    private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result, ref string? __state)
     {
-        ModEntry.Log($"Utility_pickPersonalFarmEvent_Postfix {__result}");
+        ModEntry.LogDebug($"Utility_pickPersonalFarmEvent_Postfix {__result}");
         if (__result is QuestionEvent && whichQuestionField.GetValue(__result) is int whichQ)
         {
             if (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)

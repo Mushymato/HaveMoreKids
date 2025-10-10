@@ -35,6 +35,7 @@ internal static class KidHandler
     private const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
+    private const string FL_ModData_OtherParent = "aedenthorn.FreeLove/OtherParent";
     private const string Child_CustomField_GoOutsideCondition = $"{ModEntry.ModId}/GoOutsideCondition";
     internal const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     private const string Character_CustomField_IsNPCToday = $"{ModEntry.ModId}/IsNPCToday";
@@ -199,6 +200,8 @@ internal static class KidHandler
                             ModEntry.Log($"Missing custom kid: '{kid.Name}' ({kidId})", LogLevel.Warn);
                             kid.Name = kid.KidDisplayName(allowNull: false);
                         }
+                        // reset displayName
+                        kid.displayName = null;
                     }
                 }
                 KidEntries_Populate();
@@ -352,7 +355,7 @@ internal static class KidHandler
         {
             if (kid.KidHMKFromNPCId() is not null)
                 continue;
-            if (Game1.player.getSpouse() is NPC spouse)
+            foreach (NPC spouse in SpouseShim.GetSpouses(Game1.player))
             {
                 ChooseAndApplyKidId(spouse, kid);
             }
@@ -395,6 +398,7 @@ internal static class KidHandler
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
             kid.reloadSprite();
+            kid.displayName = null;
             if (kid.Age <= 2)
                 continue;
             // make sure dialogue gets reloaded
@@ -660,19 +664,21 @@ internal static class KidHandler
         farmHouse.characters.Add(newKid);
         newKid.currentLocation = farmHouse;
 
-        Game1.morningQueue.Enqueue(() =>
+        if (spouse != null)
         {
-            string text2 =
-                Game1.getCharacterFromName(Game1.player.spouse)?.GetTokenizedDisplayName() ?? Game1.player.spouse;
-            Game1.Multiplayer.globalChatInfoMessage(
-                "Baby",
-                Lexicon.capitalize(Game1.player.Name),
-                text2,
-                Lexicon.getTokenizedGenderedChildTerm(newKid.Gender == Gender.Male),
-                Lexicon.getTokenizedPronoun(newKid.Gender == Gender.Male),
-                newKid.displayName
-            );
-        });
+            Game1.morningQueue.Enqueue(() =>
+            {
+                string text2 = spouse.GetTokenizedDisplayName();
+                Game1.Multiplayer.globalChatInfoMessage(
+                    "Baby",
+                    Lexicon.capitalize(Game1.player.Name),
+                    text2,
+                    Lexicon.getTokenizedGenderedChildTerm(newKid.Gender == Gender.Male),
+                    Lexicon.getTokenizedPronoun(newKid.Gender == Gender.Male),
+                    newKid.displayName
+                );
+            });
+        }
 
         return newKid;
     }
@@ -890,6 +896,10 @@ internal static class KidHandler
 
     internal static Child ChooseAndApplyKidId(NPC spouse, Child kid)
     {
+        if (kid.modData.TryGetValue(Child_ModData_Id, out string? kidId) && KidEntries.ContainsKey(kidId))
+        {
+            return kid;
+        }
         string kidName = kid.Name;
         if (kidName == null || PickKidId(spouse, kid) is not string newKidId)
             return kid;
@@ -1185,7 +1195,7 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        ModEntry.LogDebug("OnDayEnding");
+
         GoingToTheFarm.Clear();
         List<Child> needWarp = [];
         foreach (Child kid in AllKids())

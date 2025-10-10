@@ -52,6 +52,7 @@ public class ModEntry : Mod
     {
         Config.Register(ModManifest);
         GameDelegates.Register(ModManifest);
+        SpouseShim.Register(Helper);
     }
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)

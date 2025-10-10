@@ -310,7 +310,6 @@ internal sealed class ModConfig : ModConfigValues
                 else
                 {
                     string displayName = key;
-
                     SetupSpouseKidsPage(
                         key,
                         () =>
