@@ -324,7 +324,6 @@ internal static class GameDelegates
             // solo adopt path
             // this is +1 because stats get unset at 0
             Game1.player.stats.Set(Stats_daysUntilNewChild, daysUntilNewChild + 1);
-            ModEntry.Log(kidId);
             KidHandler.TrySetNextAdoptFromNPCKidId(Game1.player, kidId);
         }
         else if (Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) is long spouseId)
@@ -364,7 +363,6 @@ internal static class GameDelegates
             }
 
             SpouseShim.SetNPCNewChildDate(Game1.player, spouse, daysUntilNewChild);
-
             KidHandler.TrySetNextKid(spouse, kidId);
         }
 

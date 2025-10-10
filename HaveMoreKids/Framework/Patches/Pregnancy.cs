@@ -271,7 +271,15 @@ internal static partial class Patches
         }
         else if (__result is BirthingEvent)
         {
-            __result = new HMKNewChildEvent();
+            // recheck crib availability before birth event
+            if (!CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(Game1.player)))
+            {
+                __result = null!;
+            }
+            else
+            {
+                __result = new HMKNewChildEvent();
+            }
         }
     }
 }
