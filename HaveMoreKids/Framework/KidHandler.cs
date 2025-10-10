@@ -527,7 +527,6 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        ModEntry.Log("OnSaving");
         foreach (Child kid in AllKids())
         {
             kid.modData.Remove(Child_CustomField_GoOutsideCondition);

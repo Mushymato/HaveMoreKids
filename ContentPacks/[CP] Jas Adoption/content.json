@@ -12,6 +12,17 @@
           "AdoptedFromNPC": "Jas"
         }
       },
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Characters",
+      "TargetField": [
+        "Jas",
+        "CustomFields"
+      ],
+      "Entries": {
+        "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Tuesday"
+      }
     }
   ]
 }

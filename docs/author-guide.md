@@ -19,6 +19,7 @@ These fields are used:
 | `IsDarkSkinned` | bool | Affects picking the kid, will attempt to match the dark skin genetics if possible. |
 | `Appearance` | List\<AppearanceData\> | This works just like normal NPC appearances, but newborn/baby/crawler require special `HMK_BABY*` prefix. |
 | `CanSocialize` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | Controls whether the kid will become a full NPC. When this is null/FALSE, the feature is completely disabled for this kid, otherwise the GSQ is evaluated each morning to determine whether the child will "go outside" that day. |
+| `CustomFields["mushymato.HaveMoreKids/GoOutsideCondition"]` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | When Toddler Roam on Farm is enabled, this controls whether the toddler will go outside and roam on the farm that day. In this case, the entity on the farm is the actual `Child` and not a NPC clone. |
 
 Many fields are forced into a specific value, meaning that you cannot change them by `EditData`.
 
@@ -50,7 +51,7 @@ These have same structure as regular [NPC dialogue](https://stardewvalleywiki.co
 
 Gift tastes and dialogue assets are shared between toddler and child NPC.
 
-#### NPC Mode
+#### Kid NPC Mode
 
 When `CanSocialize` is not always false, HMK will generate a NPC counterpart to a toddler aged kid. These NPCs can have full schedules, loaded from  `Characters/schedules/<ChildId>`.
 
@@ -74,11 +75,13 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 
 #### Parent vs Shared
 
-When `Parent` is set, you can only have this kid with that specific NPC spouse.
+When `AdoptedFromNPC` is set, this kid can only appear through trigger action `mushymato.HaveMoreKids_SetNewChildEvent`.
 
-When `Shared` is set, you may end up with this kid with any NPC spouse, as well as player pairings.
+When `Parent` is set, this kid can only appear with that specific NPC spouse.
 
-When neither are set, this kid can only be obtained through trigger action `mushymato.HaveMoreKids_SetNewChildEvent`.
+When `Shared` is set, you this kid can appear with any NPC spouse, as well as player pairings.
+
+When none of the above are set, this kid can only appear through trigger action `mushymato.HaveMoreKids_SetNewChildEvent`.
 
 #### Twins
 
@@ -88,7 +91,11 @@ Players can have more cribs by placing custom crib furniture.
 
 #### Adopt from NPC
 
-Content packs can specify a kid counter-part 
+Content packs can specify a kid counterpart to an existing NPC, essentially creating a way to adopt them. Kids adopted this way begin as a toddler.
+
+This works very similar to Kid NPC Mode, but instead of `CanSocialize` the daily visible/invisible check uses `Data/Characters` custom field `mushymato.HaveMoreKids/IsNPCToday`.
+
+See [example here](../ContentPacks/[CP]%20Jas%20Adoption/data/content.json).
 
 ## Custom Crib Furniture
 
@@ -106,7 +113,9 @@ While a crib furniture is occupied by a kid that hasn't become a toddler yet, pl
 
 HMK provides these 2 content patcher tokens:
 - `mushymato.HaveMoreKids/KidNPCId:<kidId>`: yields the internal ID of the NPC counterpart of this kid, if there is one. When used without `kidId`, this token yields all the id of all NPC kids.
-- `mushymato.HaveMoreKids/KidDisplayName`: yields ordered list of display names for kids of the player. This token is added because the CP built-in token `ChildNames` now yields the internal kid id.
+- `mushymato.HaveMoreKids/KidDisplayName`: yields ordered list of display names for kids of the player.
+
+In addition, the content patcher built-in token `ChildNames` behaves differently on HMK, it now yields the internal kid id which is separated from display name. Use `mushymato.HaveMoreKids/KidDisplayName` for the display name.
 
 ## Trigger Actions
 
