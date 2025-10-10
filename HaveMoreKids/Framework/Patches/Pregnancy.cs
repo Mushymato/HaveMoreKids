@@ -49,8 +49,6 @@ internal static partial class Patches
     /// <returns></returns>
     private static void NPC_canGetPregnant_Postfix(NPC __instance, ref bool __result)
     {
-        if (__result)
-            return;
         ModEntry.Log($"Checking NPC.canGetPregnant postfix for '{__instance.Name}'");
         __result = false;
         if (__instance is Horse || __instance.IsInvisible)
@@ -100,10 +98,10 @@ internal static partial class Patches
         __instance.DefaultMap = player.homeLocation.Value;
         List<Child> children = player.getChildren();
 
-        if (ModEntry.Config.BaseMaxChildren != -1 && children.Count >= ModEntry.Config.BaseMaxChildren)
+        if (ModEntry.Config.MaxChildren != -1 && children.Count >= ModEntry.Config.MaxChildren)
         {
             ModEntry.Log($"- max child count reached");
-            __result = false;
+            return;
         }
 
         if (KidHandler.TryGetSpouseOrSharedKidIds(__instance, out string? pickedKey, out List<string>? availableKidIds))
@@ -112,17 +110,17 @@ internal static partial class Patches
             {
                 ModEntry.Log($"- success! (custom kids: {pickedKey})");
                 __result = true;
+                return;
             }
-            else
+            else if (!ModEntry.Config.AlwaysAllowGenericChildren)
             {
                 ModEntry.Log($"- no custom kids left!");
+                return;
             }
         }
-        else
-        {
-            ModEntry.Log("- success! (generic kids)");
-            __result = true;
-        }
+
+        ModEntry.Log("- success! (generic kids)");
+        __result = true;
     }
 
     private static void Utility_playersCanGetPregnantHere_Postfix(FarmHouse farmHouse, ref bool __result)

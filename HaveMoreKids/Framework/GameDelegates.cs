@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
@@ -10,72 +11,73 @@ using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework;
 
-// public sealed class CPTokenKidNPC
-// {
-//     private static FarmHouse? farmHouse;
-//     private static Dictionary<string, string>? KidIds = null;
+public sealed class CPTokenKidNPC
+{
+    private static Dictionary<string, string>? KidIds = null;
 
-//     public bool IsMutable() => true;
+    public bool IsMutable() => true;
 
-//     public bool IsDeterministicForInput() => true;
+    public bool IsDeterministicForInput() => false;
 
-//     public bool AllowsInput() => true;
+    public bool AllowsInput() => true;
 
-//     public bool RequiresInput() => false;
+    public bool RequiresInput() => false;
 
-//     public bool CanHaveMultipleValues(string input) => input == null;
+    public bool CanHaveMultipleValues(string input) => input == null;
 
-//     public bool TryValidateInput(string? input, [NotNullWhen(false)] out string? error)
-//     {
-//         error = null!;
-//         if (input != null && (KidIds == null || !KidIds.ContainsKey(input)))
-//         {
-//             error = $"Kid '{input}' not found";
-//             return false;
-//         }
-//         return true;
-//     }
+    public bool TryValidateInput(string? input, [NotNullWhen(false)] out string? error)
+    {
+        error = null!;
+        if (input != null && (KidIds == null || !KidIds.ContainsKey(input)))
+        {
+            error = $"Kid '{input}' not found";
+            return false;
+        }
+        return true;
+    }
 
-//     public bool UpdateContext()
-//     {
-//         if (Game1.getLocationFromName(Game1.player.homeLocation.Value) is not FarmHouse house)
-//             return false;
-//         farmHouse = house;
-//         bool changed = KidIds != null;
-//         Dictionary<string, string> newKidIds = [];
-//         foreach (Child kid in farmHouse.getChildren())
-//         {
-//             if (kid.KidAsNPCId() is not string child2npcA)
-//                 continue;
-//             changed |= !(KidIds?.TryGetValue(kid.Name, out string? child2npcB) ?? false) || child2npcA != child2npcB;
-//             newKidIds[kid.Name] = child2npcA;
-//             if (KidIds?.TryGetValue(kid.Name, out string? child2npcBb) ?? false)
-//             {
-//                 ModEntry.Log($"{kid.Name}: {child2npcBb} -> {child2npcA}");
-//             }
-//         }
-//         KidIds = newKidIds;
-//         return changed;
-//     }
+    public bool UpdateContext()
+    {
+        if (!Context.IsWorldReady)
+            return false;
+        bool changed = KidIds == null || KidIds.Count != KidHandler.KidEntries.Count;
+        Dictionary<string, string> newKidIds = [];
+        foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
+        {
+            if (entry.KidNPCId != null)
+            {
+                newKidIds[kidId] = entry.KidNPCId;
+            }
+            if (
+                !changed
+                && (!(KidIds?.TryGetValue(kidId, out string? prevKidNPCId) ?? false) || prevKidNPCId != entry.KidNPCId)
+            )
+            {
+                changed = true;
+            }
+        }
+        KidIds = newKidIds;
+        return changed;
+    }
 
-//     public bool IsReady() => farmHouse != null;
+    public bool IsReady() => Context.IsWorldReady;
 
-//     public IEnumerable<string> GetValues(string? input)
-//     {
-//         if (input != null && KidIds!.TryGetValue(input, out string? kidNPCid))
-//         {
-//             yield return kidNPCid;
-//             yield break;
-//         }
-//         else
-//         {
-//             foreach (string kidId in KidIds!.Values)
-//             {
-//                 yield return kidId;
-//             }
-//         }
-//     }
-// }
+    public IEnumerable<string> GetValues(string? input)
+    {
+        if (input != null && KidIds!.TryGetValue(input, out string? kidNPCid))
+        {
+            yield return kidNPCid;
+            yield break;
+        }
+        else
+        {
+            foreach (string kidId in KidIds!.Values)
+            {
+                yield return kidId;
+            }
+        }
+    }
+}
 
 internal static class GameDelegates
 {
@@ -84,9 +86,9 @@ internal static class GameDelegates
     internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
-    internal const string EventCmd_AddChildActor = $"{ModEntry.ModId}_addChildActor";
-    internal const string EventCmd_AddChildActor_Alias = "HMK_addChildActor";
     internal const string TS_Endearment = $"{ModEntry.ModId}_Endearment";
+    internal const string CPT_KidDisplayName = "KidDisplayName";
+    internal const string CPT_KidNPCId = "KidNPCId";
 
     internal static void Register(IManifest mod)
     {
@@ -104,7 +106,8 @@ internal static class GameDelegates
             is Integration.IContentPatcherAPI CP
         )
         {
-            CP.RegisterToken(mod, "KidDisplayName", CPTokenChildDisplayNames);
+            CP.RegisterToken(mod, CPT_KidDisplayName, CPTokenChildDisplayNames);
+            CP.RegisterToken(mod, CPT_KidNPCId, new CPTokenKidNPC());
         }
     }
 
@@ -189,11 +192,9 @@ internal static class GameDelegates
 
     private static IEnumerable<string>? CPTokenChildDisplayNames()
     {
-        if (!KidHandler.KidEntries.Any())
+        if (!Context.IsWorldReady)
             return null;
-        return KidHandler
-            .KidEntries.Values.Where(value => value.PlayerParent == Game1.player.UniqueMultiplayerID)
-            .Select(value => value.DisplayName);
+        return Game1.player.getChildren().Select(value => value.displayName);
     }
 
     private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true)

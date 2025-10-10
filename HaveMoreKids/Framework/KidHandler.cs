@@ -174,6 +174,7 @@ internal static class KidHandler
 
     private static void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
+        KidNPCToKid.Clear();
         KidEntries.Clear();
     }
 
@@ -252,6 +253,7 @@ internal static class KidHandler
                 kid.Age > 2
                 && ModEntry.Config.DaysChild > -1
                 && AssetManager.ChildData.TryGetValue(kid.Name, out CharacterData? childCharaData)
+                && childCharaData.CanSocialize != null
                 && !GameStateQuery.IsImmutablyFalse(childCharaData.CanSocialize)
             )
             {
@@ -1167,7 +1169,7 @@ internal static class KidHandler
             }
         }
 
-        ModEntry.Log($"FarmPathFinding({kid.Name}): {kid.TilePoint} -> {targetTile.Value}");
+        ModEntry.LogDebug($"FarmPathFinding({kid.Name}): {kid.TilePoint} -> {targetTile.Value}");
         kid.controller = new PathFindController(kid, farm, targetTile.Value, -1, kid.toddlerReachedDestination);
         if (
             kid.controller.pathToEndPoint == null
@@ -1183,7 +1185,7 @@ internal static class KidHandler
     {
         if (!Context.IsMainPlayer)
             return;
-        ModEntry.Log("OnDayEnding");
+        ModEntry.LogDebug("OnDayEnding");
         GoingToTheFarm.Clear();
         List<Child> needWarp = [];
         foreach (Child kid in AllKids())

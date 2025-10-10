@@ -34,7 +34,8 @@ internal class ModConfigValues
     public int DaysCrawler { get; set; } = 27 - 13;
     public int DaysToddler { get; set; } = 55 - 27;
     public int DaysChild { get; set; } = 84 - 55;
-    public int BaseMaxChildren { get; set; } = 4;
+    public int MaxChildren { get; set; } = 4;
+    public bool AlwaysAllowGenericChildren { get; set; } = false;
     public bool ToddlerRoamOnFarm { get; set; } = false;
     public bool UseSingleBedAsChildBed { get; set; } = false;
     public Dictionary<KidIdent, bool> EnabledKids { get; set; } = [];
@@ -62,7 +63,8 @@ internal sealed class ModConfig : ModConfigValues
         DaysCrawler = 27 - 13;
         DaysToddler = 55 - 27;
         DaysChild = 84 - 55;
-        BaseMaxChildren = 4;
+        MaxChildren = 4;
+        AlwaysAllowGenericChildren = false;
         ToddlerRoamOnFarm = false;
         UseSingleBedAsChildBed = false;
         EnabledKids.Clear();
@@ -71,11 +73,6 @@ internal sealed class ModConfig : ModConfigValues
 
     public void SyncAndUnregister(ModConfigValues other)
     {
-        // PregnancyChance = other.PregnancyChance;
-        // BaseMaxChildren = other.BaseMaxChildren;
-        // EnabledKids = other.EnabledKids;
-        // DaysMarried = other.DaysMarried;
-
         UnregistedOnNonHost = true;
 
         DaysPregnant = other.DaysPregnant;
@@ -86,25 +83,7 @@ internal sealed class ModConfig : ModConfigValues
         ToddlerRoamOnFarm = other.ToddlerRoamOnFarm;
         UseSingleBedAsChildBed = other.UseSingleBedAsChildBed;
 
-        if (GMCM == null)
-            return;
-        GMCM.Unregister(Mod);
-        GMCM.Register(
-            mod: Mod,
-            reset: () =>
-            {
-                Reset();
-                ModEntry.help.WriteConfig(this);
-                MultiplayerSync.SendModConfig(null);
-            },
-            save: () =>
-            {
-                ModEntry.help.WriteConfig(this);
-                MultiplayerSync.SendModConfig(null);
-            },
-            titleScreenOnly: false
-        );
-        GMCM.AddParagraph(Mod, I18n.Config_Page_Nonhost_Description);
+        ResetMenu();
     }
 
     private void CheckDefaultEnabled()
@@ -144,6 +123,20 @@ internal sealed class ModConfig : ModConfigValues
         SetupMenu();
     }
 
+    private string NegativeOneIsUnlimited(int arg)
+    {
+        if (arg == -1)
+            return I18n.Config_Value_Unlimited();
+        return arg.ToString();
+    }
+
+    private string NegativeOneIsDisabled(int arg)
+    {
+        if (arg == -1)
+            return I18n.Config_Value_Disabled();
+        return arg.ToString();
+    }
+
     public void SetupMenuFarmhand()
     {
         if (!RegisterGMCM())
@@ -174,13 +167,22 @@ internal sealed class ModConfig : ModConfigValues
 
         GMCM.AddNumberOption(
             Mod,
-            () => BaseMaxChildren,
-            (value) => BaseMaxChildren = value,
-            I18n.Config_BaseMaxChildren_Name,
-            I18n.Config_BaseMaxChildren_Description,
-            min: 1,
-            max: 8
+            () => MaxChildren,
+            (value) => MaxChildren = value,
+            I18n.Config_MaxChildren_Name,
+            I18n.Config_MaxChildren_Description,
+            min: -1,
+            max: 16,
+            formatValue: NegativeOneIsUnlimited
         );
+        GMCM.AddBoolOption(
+            Mod,
+            () => AlwaysAllowGenericChildren,
+            (value) => AlwaysAllowGenericChildren = value,
+            I18n.Config_AlwaysAllowGenericChildren_Name,
+            I18n.Config_AlwaysAllowGenericChildren_Description
+        );
+
         SetupEnabledKids();
     }
 
@@ -254,17 +256,26 @@ internal sealed class ModConfig : ModConfigValues
             I18n.Config_DaysChild_Name,
             I18n.Config_DaysChild_Description,
             min: -1,
-            max: 56
+            max: 56,
+            formatValue: NegativeOneIsDisabled
         );
 
         GMCM.AddNumberOption(
             Mod,
-            () => BaseMaxChildren,
-            (value) => BaseMaxChildren = value,
-            I18n.Config_BaseMaxChildren_Name,
-            I18n.Config_BaseMaxChildren_Description,
-            min: 1,
-            max: 8
+            () => MaxChildren,
+            (value) => MaxChildren = value,
+            I18n.Config_MaxChildren_Name,
+            I18n.Config_MaxChildren_Description,
+            min: -1,
+            max: 16,
+            formatValue: NegativeOneIsUnlimited
+        );
+        GMCM.AddBoolOption(
+            Mod,
+            () => AlwaysAllowGenericChildren,
+            (value) => AlwaysAllowGenericChildren = value,
+            I18n.Config_AlwaysAllowGenericChildren_Name,
+            I18n.Config_AlwaysAllowGenericChildren_Description
         );
 
         GMCM.AddBoolOption(

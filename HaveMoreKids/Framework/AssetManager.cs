@@ -345,10 +345,8 @@ internal static class AssetManager
         IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
-            if (entry.KidNPCId == null)
-            {
+            if (entry.IsAdoptedFromNPC || entry.KidNPCId == null)
                 continue;
-            }
 
             if (entry.IsAdoptedFromNPC && data.TryGetValue(entry.KidNPCId, out string? giftTastes))
             {
@@ -386,6 +384,8 @@ internal static class AssetManager
         }
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
+            if (entry.KidNPCId == null)
+                continue;
             foreach (string fwdAsset in KidNPCForwardAssets)
             {
                 if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, kidId))))
