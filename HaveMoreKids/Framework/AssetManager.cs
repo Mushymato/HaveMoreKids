@@ -194,7 +194,6 @@ internal static class AssetManager
         for (int i = childrenCount; i > 0; i--)
         {
             string dialogueKey = string.Concat(keyPrefix, "_", i);
-            ModEntry.LogDebug(dialogueKey);
             if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
             {
                 marriageDialogueReference = new MarriageDialogueReference(

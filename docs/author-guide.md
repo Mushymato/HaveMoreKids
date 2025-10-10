@@ -1,6 +1,6 @@
 # Author Guide
 
-Have More Kids allow content pack authors to create unique kids for their NPC. For full example, see [the example pack](../ContentPacks/[CP]%20HMK%20Example).
+Have More Kids (HMK) allow content pack authors to create unique kids for their NPC. For full example, see [the example pack](../ContentPacks/[CP]%20HMK%20Example).
 
 ## Data Models
 
@@ -50,6 +50,12 @@ These have same structure as regular [NPC dialogue](https://stardewvalleywiki.co
 
 Gift tastes and dialogue assets are shared between toddler and child NPC.
 
+#### NPC Mode
+
+When `CanSocialize` is not always false, HMK will generate a NPC counterpart to a toddler aged kid. These NPCs can have full schedules, loaded from  `Characters/schedules/<ChildId>`.
+
+Every morning, `CanSocialize` is reevaluated, if the result is true then the NPC counterpart of the kid will be visible that day and the Child version is invisible. Conversely if the result is false, the NPC version of the kid will be invisible and the Child version visible.
+
 ### mushymato.HaveMoreKids/Kids
 
 Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy/adoption. This is also how you can create a child version associated with an existing NPC. The key `mushymato.HaveMoreKids/Kids` is the kid id, and should match an entry in `mushymato.HaveMoreKids/ChildData`.
@@ -76,9 +82,31 @@ When neither are set, this kid can only be obtained through trigger action `mush
 
 #### Twins
 
-You can define a child as the twin of another child such that if one is born, the other will be immediately born in the same night event so as long as there are enough cribs.
+Content packs can define a kid as the twin of another kid such that if one is born, the other will be immediately born in the same night event, so as long as there are enough cribs.
 
-You can have more cribs by placing custom crib furniture.
+Players can have more cribs by placing custom crib furniture.
+
+#### Adopt from NPC
+
+Content packs can specify a kid counter-part 
+
+## Custom Crib Furniture
+
+By default, HMK provides a furniture custom crib that can be purchased from the Carpenter shop. Having these placed in the farmhouse allows you to have more kids at once.
+
+Content packs can add more cribs by creating a furniture that:
+- Has bounding box `3 2`
+- Has context tag `hmk_crib`
+
+See [example here](../ContentPacks/[CP]%20HMK%20Example/data/crib.json).
+
+While a crib furniture is occupied by a kid that hasn't become a toddler yet, player cannot move the crib.
+
+## Content Patcher Tokens
+
+HMK provides these 2 content patcher tokens:
+- `mushymato.HaveMoreKids/KidNPCId:<kidId>`: yields the internal ID of the NPC counterpart of this kid, if there is one. When used without `kidId`, this token yields all the id of all NPC kids.
+- `mushymato.HaveMoreKids/KidDisplayName`: yields ordered list of display names for kids of the player. This token is added because the CP built-in token `ChildNames` now yields the internal kid id.
 
 ## Trigger Actions
 

@@ -187,7 +187,7 @@ internal static partial class Patches
     private static void FarmHouse_getChildren_Postfix(FarmHouse __instance, ref List<Child> __result)
     {
         __result.AddRange(GetChildrenOnFarm(__instance));
-        __result.Sort((kidA, kidB) => kidA.daysOld.Value.CompareTo(kidB.daysOld.Value));
+        __result.Sort((kidA, kidB) => kidB.daysOld.Value.CompareTo(kidA.daysOld.Value));
     }
 
     private static void FarmHouse_getChildrenCount_Postfix(FarmHouse __instance, ref int __result)
