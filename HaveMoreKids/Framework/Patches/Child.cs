@@ -145,6 +145,17 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getTextureName)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_getTextureName_Postfix))
         );
+        // When getRidOfChildren(), summon back any kids roaming in the farm first
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.getRidOfChildren)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Farmer_getRidOfChildren_Prefix))
+        );
+    }
+
+    private static void Farmer_getRidOfChildren_Prefix(Farmer __instance)
+    {
+        KidHandler.GoingToTheFarm.Remove(__instance.UniqueMultiplayerID);
+        KidHandler.ReturnKidsToHouse(__instance.getChildren());
     }
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)

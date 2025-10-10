@@ -1127,14 +1127,13 @@ internal static class KidHandler
 
     private static void WarpKidToFarm(Character c, GameLocation l)
     {
-        if (
-            c is not Child kid
-            || l.GetParentLocation() is not Farm farm
-            || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info)
-        )
+        if (c is not Child kid || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info))
             return;
-        if (kid != info.Item1)
+        if (kid != info.Item1 || kid.currentLocation?.GetParentLocation() is not Farm farm)
+        {
+            GoingToTheFarm.Remove(kid.idOfParent.Value);
             return;
+        }
 
         kid.Halt();
         kid.controller = null;
@@ -1197,8 +1196,13 @@ internal static class KidHandler
             return;
 
         GoingToTheFarm.Clear();
+        ReturnKidsToHouse(AllKids());
+    }
+
+    internal static void ReturnKidsToHouse(IEnumerable<Child> kidsList)
+    {
         List<Child> needWarp = [];
-        foreach (Child kid in AllKids())
+        foreach (Child kid in kidsList)
         {
             if (kid.currentLocation is not FarmHouse)
             {
