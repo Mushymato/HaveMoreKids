@@ -83,8 +83,10 @@ internal static class GameDelegates
 {
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
     internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
+    internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
     internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
+    internal const string Action_ToggleChildNPC = $"{ModEntry.ModId}_ToggleChildNPC";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
     internal const string TS_Endearment = $"{ModEntry.ModId}_Endearment";
     internal const string CPT_KidDisplayName = "KidDisplayName";
@@ -95,6 +97,7 @@ internal static class GameDelegates
         // GSQ
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
+        GameStateQuery.Register(GSQ_HAS_ADOPTED_NPC, HAS_ADOPTED_NPC);
         // TAction
         TriggerActionManager.RegisterAction(Action_SetNewChildEvent, SetNewChildEvent);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
@@ -120,6 +123,12 @@ internal static class GameDelegates
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
+        string endearmentSubkey = ":Endearment_";
+        if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? entry))
+        {
+            endearmentSubkey =
+                entry.PlayerParent != player.UniqueMultiplayerID ? ":Endearment_NonParent" : ":Endearment";
+        }
         string? endearment;
         if (
             (
@@ -127,7 +136,8 @@ internal static class GameDelegates
                     string.Concat(
                         AssetManager.Asset_CharactersDialogue,
                         kidId,
-                        ":Endearment_",
+                        endearmentSubkey,
+                        "_",
                         player.Gender.ToString()
                     )
                 )
@@ -140,7 +150,7 @@ internal static class GameDelegates
         else if (
             (
                 endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, ":Endearment")
+                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, endearmentSubkey)
                 )
             )
             is not null
@@ -154,7 +164,8 @@ internal static class GameDelegates
                     string.Concat(
                         AssetManager.Asset_CharactersDialogue,
                         kidId,
-                        ":Endearment_",
+                        endearmentSubkey,
+                        "_",
                         player.Gender.ToString()
                     )
                 )
@@ -162,7 +173,7 @@ internal static class GameDelegates
                 is null
             && (
                 endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, ":Endearment")
+                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, endearmentSubkey)
                 )
             )
                 is null
@@ -197,12 +208,26 @@ internal static class GameDelegates
         return Game1.player.getChildren().Select(value => value.displayName);
     }
 
-    private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true)
+    private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true, bool searchForAdoptedNPC = false)
     {
         List<Child> children = player.getChildren();
         if (allowIdx && kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
             return children[index];
-        return children.FirstOrDefault(child => child.Name == kidId);
+        if (searchForAdoptedNPC)
+        {
+            return children.FirstOrDefault(kid =>
+            {
+                if (kid.KidHMKFromNPCId() is string kidNPCId && KidHandler.KidEntries.TryGetValue(kidNPCId, out KidEntry? kidEntry))
+                {
+                    return kidEntry.KidNPCId == kidId;
+                }
+                return false;
+            });
+        }
+        else
+        {
+            return children.FirstOrDefault(kid => kid.Name == kidId);
+        }
     }
 
     private static bool HAS_CHILD(string[] query, GameStateQueryContext context)
@@ -213,6 +238,16 @@ internal static class GameDelegates
             return false;
         }
         return FindChild(context.Player, kidId) != null;
+    }
+
+    private static bool HAS_ADOPTED_NPC(string[] query, GameStateQueryContext context)
+    {
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error))
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+        return FindChild(context.Player, kidId, allowIdx: false, searchForAdoptedNPC: true) != null;
     }
 
     private static bool CHILD_AGE(string[] query, GameStateQueryContext context)

@@ -111,7 +111,7 @@ While a crib furniture is occupied by a kid that hasn't become a toddler yet, pl
 
 ## Content Patcher Tokens
 
-HMK provides these 2 content patcher tokens:
+HMK provides these content patcher tokens:
 - `mushymato.HaveMoreKids/KidNPCId:<kidId>`: yields the internal ID of the NPC counterpart of this kid, if there is one. When used without `kidId`, this token yields all the id of all NPC kids.
 - `mushymato.HaveMoreKids/KidDisplayName`: yields ordered list of display names for kids of the player.
 
@@ -136,13 +136,12 @@ This trigger action causes guarenteed child birth event to occur this night, or 
 
 A unique child is not required to use this trigger, though of course the `kidId` argument does nothing in that case.
 
-
 ### mushymato.HaveMoreKids_SetChildAge \<KidId|childIndex\> \<Age\>
 
 This trigger action alters the age of a child, however, the effects only happens on day started. If the action is called in the middle of a day, you must sleep before changes take place.
 Thus, it's recommended to use this action with trigger `DayEnding`.
 
-- `KidId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `KidId|childIndex`: This argument is either a unique kid id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
 - `age`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
   - 1: Baby (sitting baby)
@@ -155,7 +154,7 @@ Thus, it's recommended to use this action with trigger `DayEnding`.
 
 Checks a child is at a certain age.
 
-- `KidId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `KidId|childIndex`: This argument is either a unique kid id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
 - `age`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
   - 1: Baby (sitting baby)
@@ -166,5 +165,11 @@ Checks a child is at a certain age.
 
 Check that the player has a particular child.
 
-- `KidId|childIndex`: This argument is either a unique child id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `KidId|childIndex`: This argument is either a unique kid id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+
+### mushymato.HaveMoreKids_HAS_CHILD \<NPCId\>
+
+Check that the player has a child who is adopted from NPC.
+
+- `NPCId`: This argument is the NPC Id.
 

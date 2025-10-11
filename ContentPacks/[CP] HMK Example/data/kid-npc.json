@@ -53,6 +53,10 @@
       "Action": "EditData",
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
       "Entries": {
+        // these are a custom endearment terms, used when you have [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1]
+        "Endearment_Male": "darth",
+        "Endearment_Female": "mum",
+        "Endearment_Neutral": "thou",
         // this is an ordinary vanilla dialogue asset, and accepts all the same keys
         "Mon": "{{i18n:{{L@Kid}}.Toddler.Dialog.Mon}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
         "Tue": "{{i18n:{{L@Kid}}.Toddler.Dialog.Tue}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",

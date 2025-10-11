@@ -264,12 +264,19 @@ internal static class KidHandler
                 adoptedFromNPC = false;
             }
 
+            string? npcParentId = kid.KidNPCParent();
+            if (npcParentId != null && Game1.getCharacterFromName(npcParentId) is NPC parent)
+            {
+                // FL parent name display support
+                kid.modData[FL_ModData_OtherParent] = parent.displayName;
+            }
+
             KidEntries[kid.Name] = new(
                 kidNPCId,
                 adoptedFromNPC,
                 kid.displayName,
                 kid.idOfParent.Value,
-                kid.KidNPCParent(),
+                npcParentId,
                 season,
                 kid.Birthday_Day
             );
@@ -502,6 +509,7 @@ internal static class KidHandler
                     kid.Age = 4;
                     kid.IsInvisible = true;
                     kid.daysUntilNotInvisible = 1;
+
                     childAsNPC.IsInvisible = false;
                     childAsNPC.daysUntilNotInvisible = 0;
 
@@ -667,7 +675,7 @@ internal static class KidHandler
         {
             Game1.morningQueue.Enqueue(() =>
             {
-                string text2 = spouse.GetTokenizedDisplayName();
+                string text2 = spouse.displayName;
                 Game1.Multiplayer.globalChatInfoMessage(
                     "Baby",
                     Lexicon.capitalize(Game1.player.Name),
@@ -1010,13 +1018,14 @@ internal static class KidHandler
             return false;
         }
 
+        // kid not in a proper farmhouse, return early
+        if (kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
+        {
+            return false;
+        }
+
         // before 1000, roll and see if the child could go outside
-        if (
-            ModEntry.Config.ToddlerRoamOnFarm
-            && Game1.timeOfDay <= 1000
-            && kid.currentLocation is FarmHouse farmhouse
-            && farmhouse.GetParentLocation() is Farm farm
-        )
+        if (ModEntry.Config.ToddlerRoamOnFarm && Game1.timeOfDay <= 1000)
         {
             return SendKidToOutside(kid, farmhouse, farm);
         }
@@ -1034,44 +1043,23 @@ internal static class KidHandler
             return false;
         }
 
-        // if kid ought to be outside already, skip directly to warp
-        if (GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo))
+        if (SendEnrouteKidOutside(kid, farm))
         {
-            if (goingInfo.Item1 == kid)
-            {
-                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
-                return false;
-            }
-            else
-            {
-                return Random.Shared.NextBool();
-            }
+            return false;
         }
+
         // only 1 kid allowed to path to farm at once and they should not be moving
         if (kid.isMoving() || kid.mutex.IsLocked())
         {
             return false;
         }
 
-        ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside");
-        bool foundWarp = false;
-        Point doorExit = new(-1, -1);
-        Point houseEntry = new(-1, -1);
-        foreach (Warp warp in farmhouse.warps)
-        {
-            if (warp.TargetName != farm.NameOrUniqueName)
-            {
-                continue;
-            }
-            doorExit = new(warp.X, warp.Y - 2);
-            houseEntry = new(warp.TargetX, warp.TargetY);
-            foundWarp = true;
-        }
-
-        if (!foundWarp)
+        if (!FindFarmhouseDoors(farmhouse, farm, out Point doorExit, out Point houseEntry))
         {
             return true;
         }
+
+        ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside");
 
         for (int i = 0; i < 1000; i++)
         {
@@ -1097,6 +1085,55 @@ internal static class KidHandler
         }
 
         return true;
+    }
+
+    private static bool SendEnrouteKidOutside(Child kid, Farm farm)
+    {
+        // if kid ought to be outside already, skip directly to warp
+        if (GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo))
+        {
+            if (goingInfo.Item1 == kid)
+            {
+                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static bool SendKidToOutsideThenHide(Child kid, FarmHouse farmhouse, Farm farm)
+    {
+        if (SendEnrouteKidOutside(kid, farm))
+        {
+            return false;
+        }
+
+        if (!FindFarmhouseDoors(farmhouse, farm, out Point doorExit, out Point houseEntry))
+        {
+            return false;
+        }
+
+        kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, MakeKidInvisible);
+        GoingToTheFarm[kid.idOfParent.Value] = new(kid, Point.Zero);
+
+        return true;
+    }
+
+    private static bool FindFarmhouseDoors(FarmHouse farmhouse, Farm farm, out Point doorExit, out Point houseEntry)
+    {
+        doorExit = new(-1, -1);
+        houseEntry = new(-1, -1);
+        foreach (Warp warp in farmhouse.warps)
+        {
+            if (warp.TargetName != farm.NameOrUniqueName)
+            {
+                continue;
+            }
+            doorExit = new(warp.X, warp.Y - 2);
+            houseEntry = new(warp.TargetX, warp.TargetY);
+            return true;
+        }
+        return false;
     }
 
     private static void WarpKidToHouse(Child kid, bool delay = true)
@@ -1139,6 +1176,19 @@ internal static class KidHandler
         GoingToTheFarm.Remove(kid.idOfParent.Value);
         Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
         kid.toddlerReachedDestination(kid, farm);
+    }
+
+    private static void MakeKidInvisible(Character c, GameLocation l)
+    {
+        if (c is not Child kid)
+            return;
+
+        kid.IsInvisible = false;
+        kid.daysUntilNotInvisible = 0;
+
+        kid.Halt();
+        kid.controller = null;
+        GoingToTheFarm.Remove(kid.idOfParent.Value);
     }
 
     private static void FarmPathFinding(Child kid)
