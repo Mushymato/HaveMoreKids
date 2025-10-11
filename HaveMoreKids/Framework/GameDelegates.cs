@@ -217,7 +217,10 @@ internal static class GameDelegates
         {
             return children.FirstOrDefault(kid =>
             {
-                if (kid.KidHMKFromNPCId() is string kidNPCId && KidHandler.KidEntries.TryGetValue(kidNPCId, out KidEntry? kidEntry))
+                if (
+                    kid.KidHMKFromNPCId() is string kidNPCId
+                    && KidHandler.KidEntries.TryGetValue(kidNPCId, out KidEntry? kidEntry)
+                )
                 {
                     return kidEntry.KidNPCId == kidId;
                 }

@@ -158,6 +158,7 @@ internal static class KidHandler
         ModEntry.help.Events.GameLoop.DayEnding += OnDayEnding;
         ModEntry.help.Events.GameLoop.Saving += OnSaving;
         ModEntry.help.Events.GameLoop.Saved += OnSaved;
+        ModEntry.help.Events.GameLoop.TimeChanged += SendKidsThatAreNPCsOutside;
     }
 
     internal static Dictionary<string, KidEntry> KidEntries { get; private set; } = [];
@@ -401,6 +402,7 @@ internal static class KidHandler
             return;
         }
         CribManager.RecheckCribAssignments();
+        WillGoToFarmAsNPC.Clear();
         // update all kids
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
@@ -506,9 +508,7 @@ internal static class KidHandler
                 }
                 else
                 {
-                    kid.Age = 4;
-                    kid.IsInvisible = true;
-                    kid.daysUntilNotInvisible = 1;
+                    WillGoToFarmAsNPC.Add(kid);
 
                     childAsNPC.IsInvisible = false;
                     childAsNPC.daysUntilNotInvisible = 0;
@@ -522,7 +522,6 @@ internal static class KidHandler
                     childAsNPC.resetCurrentDialogue();
                     childAsNPC.Sprite.UpdateSourceRect();
                     ModEntry.Log($"Child '{kid.displayName}' ({kid.Name}) will go to town today", LogLevel.Info);
-                    // ModEntry.help.Events.Player.Warped += OnWarped;
                 }
             }
         }
@@ -975,10 +974,16 @@ internal static class KidHandler
             && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
     }
 
+    internal static readonly List<Child> WillGoToFarmAsNPC = [];
     internal static readonly Dictionary<long, (Child, Point)> GoingToTheFarm = [];
 
     internal static bool KidShouldGoOutside(this Child kid)
     {
+        if (WillGoToFarmAsNPC.Contains(kid))
+        {
+            return false;
+        }
+
         if (kid.modData.TryGetValue(Child_CustomField_GoOutsideCondition, out string value))
         {
             return value == "T";
@@ -1043,7 +1048,7 @@ internal static class KidHandler
             return false;
         }
 
-        if (SendEnrouteKidOutside(kid, farm))
+        if (SendEnrouteKidOutside(kid, farm, WarpKidToFarm))
         {
             return false;
         }
@@ -1087,36 +1092,63 @@ internal static class KidHandler
         return true;
     }
 
-    private static bool SendEnrouteKidOutside(Child kid, Farm farm)
+    private static bool SendEnrouteKidOutside(Child kid, Farm farm, Action<Character, GameLocation> callback)
     {
         // if kid ought to be outside already, skip directly to warp
         if (GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo))
         {
             if (goingInfo.Item1 == kid)
             {
-                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
+                DelayedAction.functionAfterDelay(() => callback(kid, farm), 0);
                 return true;
             }
         }
         return false;
     }
 
-    private static bool SendKidToOutsideThenHide(Child kid, FarmHouse farmhouse, Farm farm)
+    private static void SendKidsThatAreNPCsOutside(object? sender, TimeChangedEventArgs e)
     {
-        if (SendEnrouteKidOutside(kid, farm))
+        if (!Context.IsMainPlayer)
+            return;
+        if (WillGoToFarmAsNPC.Count == 0)
+            return;
+        if (e.NewTime >= 1000)
         {
-            return false;
+            foreach (Child kid in WillGoToFarmAsNPC)
+            {
+                kid.IsInvisible = true;
+                kid.daysUntilNotInvisible = 1;
+            }
+            WillGoToFarmAsNPC.Clear();
         }
 
-        if (!FindFarmhouseDoors(farmhouse, farm, out Point doorExit, out Point houseEntry))
+        Farm playerFarm = Game1.getFarm();
+        foreach ((Child kid, _) in GoingToTheFarm.Values)
         {
-            return false;
+            SendEnrouteKidOutside(kid, playerFarm, MakeKidInvisible);
         }
 
-        kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, MakeKidInvisible);
-        GoingToTheFarm[kid.idOfParent.Value] = new(kid, Point.Zero);
-
-        return true;
+        ModEntry.LogDebug("SendKidsThatAreNPCsOutside");
+        foreach (Child kid in WillGoToFarmAsNPC.AsEnumerable().Reverse())
+        {
+            if (kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
+            {
+                kid.IsInvisible = true;
+                kid.daysUntilNotInvisible = 1;
+                WillGoToFarmAsNPC.Remove(kid);
+                continue;
+            }
+            if (!FindFarmhouseDoors(farmhouse, farm, out Point doorExit, out _))
+            {
+                kid.IsInvisible = true;
+                kid.daysUntilNotInvisible = 1;
+                WillGoToFarmAsNPC.Remove(kid);
+                continue;
+            }
+            kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, MakeKidInvisible);
+            GoingToTheFarm[kid.idOfParent.Value] = new(kid, Point.Zero);
+            WillGoToFarmAsNPC.Remove(kid);
+        }
     }
 
     private static bool FindFarmhouseDoors(FarmHouse farmhouse, Farm farm, out Point doorExit, out Point houseEntry)
@@ -1180,15 +1212,15 @@ internal static class KidHandler
 
     private static void MakeKidInvisible(Character c, GameLocation l)
     {
-        if (c is not Child kid)
-            return;
-
-        kid.IsInvisible = false;
-        kid.daysUntilNotInvisible = 0;
-
-        kid.Halt();
-        kid.controller = null;
-        GoingToTheFarm.Remove(kid.idOfParent.Value);
+        if (c is Child kid)
+        {
+            kid.Age = 4;
+            kid.IsInvisible = true;
+            kid.daysUntilNotInvisible = 1;
+            kid.Halt();
+            kid.controller = null;
+            GoingToTheFarm.Remove(kid.idOfParent.Value);
+        }
     }
 
     private static void FarmPathFinding(Child kid)
