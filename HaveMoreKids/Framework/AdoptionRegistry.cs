@@ -26,6 +26,13 @@ internal static class AdoptionRegistry
         foreach ((string kidId, KidDefinitionData def) in AssetManager.KidDefsByKidId)
         {
             if (
+                KidHandler.KidEntries.ContainsKey(kidId)
+                || def.AdoptedFromNPC != null && KidHandler.KidEntries.Values.Any(entry => entry.KidNPCId == kidId)
+            )
+            {
+                continue;
+            }
+            if (
                 def.CanAdoptFromAdoptionRegistry != null
                 && GameStateQuery.CheckConditions(def.CanAdoptFromAdoptionRegistry, ctx)
             )
