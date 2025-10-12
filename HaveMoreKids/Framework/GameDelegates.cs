@@ -341,11 +341,24 @@ internal static class GameDelegates
             || !ArgUtility.TryGetOptional(args, 2, out string? kidId, out error, name: "string? kidId")
             || !ArgUtility.TryGetOptional(args, 3, out string? spouseName, out error, name: "string? spouseName")
             || !ArgUtility.TryGetOptional(args, 4, out string? message, out error, name: "string? message")
+            || !ArgUtility.TryGetOptionalEnum(args, 5, out Gender gender, out error, name: "string? gender")
         )
         {
             return false;
         }
 
+        return DoSetNewChildEvent(out error, daysUntilNewChild, kidId, spouseName, message, gender);
+    }
+
+    private static bool DoSetNewChildEvent(
+        out string error,
+        int daysUntilNewChild,
+        string kidId,
+        string spouseName,
+        string message,
+        Gender gender
+    )
+    {
         if (daysUntilNewChild < 0)
         {
             error = "daysUntilNewChild cannot be negative.";
@@ -400,8 +413,12 @@ internal static class GameDelegates
                 }
             }
 
+            if (kidId != "Any" && !KidHandler.TrySetNextKid(Game1.player, spouse, kidId))
+            {
+                error = $"Kid '{kidId}' is not available";
+                return false;
+            }
             SpouseShim.SetNPCNewChildDate(Game1.player, spouse, daysUntilNewChild);
-            KidHandler.TrySetNextKid(spouse, kidId);
         }
 
         if (message != null)

@@ -4,5 +4,7 @@
   "SpouseNaming": "{0} is naming your baby",
   "Crib_Name": "Crib",
   "Crib_Empty": "Gramps would want you to have another kid.",
-  "BirthMessage_Twin": "Surprise! Twins!"
+  "BirthMessage_Twin": "Surprise! Twins!",
+  "Adoption_Prompt": "Adoption Registry",
+  "Adoption_Generic": "Adopt a Cy"
 }

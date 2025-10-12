@@ -140,7 +140,13 @@ internal static partial class Patches
 
         if (KidHandler.TryGetSpouseOrSharedKidIds(__instance, out string? pickedKey, out List<string>? availableKidIds))
         {
-            if (KidHandler.FilterAvailableKidIds(pickedKey, ref availableKidIds))
+            if (
+                KidHandler.FilterAvailableKidIds(
+                    pickedKey,
+                    ref availableKidIds,
+                    KidHandler.GetDarkSkinnedRestrict(player, __instance)
+                )
+            )
             {
                 ModEntry.Log($"- success! (custom kids: {pickedKey})");
                 __result = true;
@@ -275,11 +281,15 @@ internal static partial class Patches
             if (!CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(Game1.player)))
             {
                 __result = null!;
+                return;
             }
-            else
+            HMKNewChildEvent hmkNewChildEvent = new();
+            if (!hmkNewChildEvent.TryPickKidId())
             {
-                __result = new HMKNewChildEvent();
+                __result = null!;
+                return;
             }
+            __result = hmkNewChildEvent;
         }
     }
 }

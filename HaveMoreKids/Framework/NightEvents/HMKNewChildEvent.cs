@@ -33,33 +33,13 @@ public class HMKNewChildEvent : BaseFarmEvent
     /// <inheritdoc />
     public override bool setUp()
     {
-        timer = 1500;
-        Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
-        spouse = SpouseShim.GetBirthingSpouse(Game1.player);
-        Game1.player.CanMove = false;
         if (newKidId == null)
         {
-            if (spouse != null)
-            {
-                isDarkSkinned = random.NextBool(
-                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-                );
-                newKidId = KidHandler.PickKidId(
-                    spouse,
-                    darkSkinned: random.NextBool(
-                        (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-                    )
-                );
-            }
-            else
-            {
-                isDarkSkinned = random.NextBool(Game1.player.hasDarkSkin() ? 0.75 : 0.25);
-                if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids))
-                {
-                    newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
-                }
-            }
+            return true;
         }
+
+        Game1.player.CanMove = false;
+        timer = 1500;
 
         string childTerm = AssetManager.LoadString("ChildTerm");
         if (newKidId != null && AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef))
@@ -110,6 +90,30 @@ public class HMKNewChildEvent : BaseFarmEvent
         isTwin = false;
 
         return false;
+    }
+
+    public bool TryPickKidId()
+    {
+        Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
+        spouse = SpouseShim.GetBirthingSpouse(Game1.player);
+        if (newKidId == null)
+        {
+            if (spouse != null)
+            {
+                isDarkSkinned = random.NextBool(
+                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
+                );
+                newKidId = KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned);
+            }
+            else
+            {
+                if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids, Game1.player.hasDarkSkin()))
+                {
+                    newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
+                }
+            }
+        }
+        return newKidId != null;
     }
 
     public void returnBabyName(string name)

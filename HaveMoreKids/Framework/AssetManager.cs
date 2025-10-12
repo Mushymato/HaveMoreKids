@@ -14,6 +14,7 @@ public sealed class KidDefinitionData
     public string? Parent { get; set; } = null;
     public bool Shared { get; set; } = false;
     public bool DefaultEnabled { get; set; } = true;
+    public bool AvailableForSpecificAdoption { get; set; } = false;
     public string? Condition { get; set; } = null;
     public string? Twin { get; set; } = null;
     public string? TwinCondition { get; set; } = null;
@@ -233,6 +234,8 @@ internal static class AssetManager
             e.Edit(Edit_DataFurniture, AssetEditPriority.Default);
         if (e.Name.IsEquivalentTo("Data/Shops"))
             e.Edit(Edit_DataShops, AssetEditPriority.Default);
+        if (e.Name.IsEquivalentTo("Maps/Hospital"))
+            e.Edit(Edit_MapsHospital, AssetEditPriority.Default);
         if (name.IsEquivalentTo(Asset_Strings))
         {
             string stringsAsset = Path.Combine("i18n", e.Name.LanguageCode.ToString() ?? "default", "strings.json");
@@ -269,6 +272,19 @@ internal static class AssetManager
                 }
             }
         }
+    }
+
+    private static void Edit_MapsHospital(IAssetData asset)
+    {
+        xTile.Map map = asset.AsMap().Data;
+        xTile.Layers.Layer? buildingLayer = map.GetLayer("Buildings");
+        buildingLayer.Tiles[3, 15] = new xTile.Tiles.StaticTile(
+            buildingLayer,
+            map.GetTileSheet("1"),
+            xTile.Tiles.BlendMode.Alpha,
+            675
+        );
+        buildingLayer.Tiles[3, 15].Properties["Action"] = AdoptionRegistry.Action_ShowAdoption;
     }
 
     private static void Edit_DataFurniture(IAssetData asset)

@@ -80,6 +80,15 @@ internal static class KidHandler
         return null;
     }
 
+    internal static string? TryGetFLSpouseParent(Child kid)
+    {
+        if (kid.modData.TryGetValue(FL_ModData_OtherParent, out string npcParent))
+        {
+            return npcParent;
+        }
+        return null;
+    }
+
     internal static string? KidDisplayName(this Child kid, bool allowNull = true)
     {
         if (kid.modData.TryGetValue(Child_ModData_DisplayName, out string kidDisplayName))
@@ -98,16 +107,33 @@ internal static class KidHandler
         return null;
     }
 
-    internal static bool TrySetNextKid(NPC parent, string kidId)
+    internal static bool? GetDarkSkinnedRestrict(Farmer player, NPC __instance)
+    {
+        bool darkSkinnedPlayer = player.hasDarkSkin();
+        bool darkSkinnedSpouse = __instance.hasDarkSkin();
+        bool? darkSkinnedRestrict = null;
+        if (darkSkinnedPlayer == darkSkinnedSpouse)
+        {
+            darkSkinnedRestrict = darkSkinnedPlayer;
+        }
+        return darkSkinnedRestrict;
+    }
+
+    internal static bool TrySetNextKid(Farmer player, NPC parent, string kidId)
     {
         if (
             !string.IsNullOrEmpty(kidId)
             && !kidId.EqualsIgnoreCase("Any")
-            && TryGetAvailableSpouseOrSharedKidIds(parent, out List<string>? availableKidIds)
+            && TryGetAvailableSpouseOrSharedKidIds(
+                parent,
+                out List<string>? availableKidIds,
+                KidHandler.GetDarkSkinnedRestrict(player, parent)
+            )
             && availableKidIds.Contains(kidId)
         )
         {
             parent.modData[Character_ModData_NextKidId] = kidId;
+            return true;
         }
         return false;
     }
@@ -363,9 +389,20 @@ internal static class KidHandler
         {
             if (kid.KidHMKFromNPCId() is not null)
                 continue;
-            foreach (NPC spouse in SpouseShim.GetSpouses(Game1.player))
+            if ((kid.KidNPCParent() ?? TryGetFLSpouseParent(kid)) is string npcParent)
             {
-                ChooseAndApplyKidId(spouse, kid);
+                if (npcParent == Parent_NPC_ADOPT || npcParent == Parent_SOLO_BIRTH)
+                {
+                    continue;
+                }
+                if (SpouseShim.GetSpouses(Game1.player).FirstOrDefault(npc => npc.Name == npcParent) is NPC spouse)
+                {
+                    ChooseAndApplyKidId(spouse, kid);
+                }
+            }
+            else if (SpouseShim.GetSpouses(Game1.player).FirstOrDefault() is NPC firstSpouse)
+            {
+                ChooseAndApplyKidId(firstSpouse, kid);
             }
         }
     }
@@ -706,7 +743,7 @@ internal static class KidHandler
             return null;
         }
 
-        if (!FilterAvailableKidIds(pickedKey, ref availableKidIds))
+        if (!FilterAvailableKidIds(pickedKey, ref availableKidIds, darkSkinned))
         {
             return null;
         }
@@ -775,7 +812,7 @@ internal static class KidHandler
         return false;
     }
 
-    internal static bool FilterAvailableKidIds(string key, ref List<string> kidIds)
+    internal static bool FilterAvailableKidIds(string key, ref List<string> kidIds, bool? darkSkinnedRestrict)
     {
         if (kidIds == null)
             return false;
@@ -783,8 +820,9 @@ internal static class KidHandler
         kidIds = kidIds
             .Where(id =>
                 !children.Contains(id)
-                && AssetManager.ChildData.ContainsKey(id)
                 && ModEntry.Config.EnabledKids.GetValueOrDefault(new(key, id))
+                && AssetManager.ChildData.TryGetValue(id, out CharacterData? kidData)
+                && (darkSkinnedRestrict == null || kidData.IsDarkSkinned == darkSkinnedRestrict)
             )
             .ToList();
         return kidIds.Count > 0;
@@ -803,10 +841,13 @@ internal static class KidHandler
         return TryGetKidIds(WhoseKids_Shared, out availableKidIds);
     }
 
-    internal static bool TryGetAvailableSharedKidIds([NotNullWhen(true)] out List<string>? availableKidIds)
+    internal static bool TryGetAvailableSharedKidIds(
+        [NotNullWhen(true)] out List<string>? availableKidIds,
+        bool? darkSkinnedRestrict
+    )
     {
         return TryGetKidIds(WhoseKids_Shared, out availableKidIds)
-            && FilterAvailableKidIds(WhoseKids_Shared, ref availableKidIds);
+            && FilterAvailableKidIds(WhoseKids_Shared, ref availableKidIds, darkSkinnedRestrict);
     }
 
     internal static bool TryGetSpouseOrSharedKidIds(
@@ -831,25 +872,29 @@ internal static class KidHandler
 
     internal static bool TryGetAvailableSpouseOrSharedKidIds(
         NPC spouse,
-        [NotNullWhen(true)] out List<string>? availableKidIds
+        [NotNullWhen(true)] out List<string>? availableKidIds,
+        bool? darkSkinnedRestrict
     )
     {
         return (
                 TryGetSpouseKidIds(spouse, out availableKidIds)
-                && FilterAvailableKidIds(spouse.Name, ref availableKidIds)
+                && FilterAvailableKidIds(spouse.Name, ref availableKidIds, darkSkinnedRestrict)
             )
             || (
-                TryGetSharedKidIds(out availableKidIds) && FilterAvailableKidIds(WhoseKids_Shared, ref availableKidIds)
+                TryGetSharedKidIds(out availableKidIds)
+                && FilterAvailableKidIds(WhoseKids_Shared, ref availableKidIds, darkSkinnedRestrict)
             );
     }
 
-    internal static string PickMostLikelyKidId(
+    internal static string? PickMostLikelyKidId(
         List<string> availableKidIds,
         bool? darkSkinned,
         Gender? gender,
         string? name
     )
     {
+        if (!availableKidIds.Any())
+            return null;
         // Prioritize matching gender/darkskinned
         List<string> moreLikelyMatch = [];
         foreach (var kidId in availableKidIds)
@@ -876,7 +921,7 @@ internal static class KidHandler
     internal static string? PickForSpecificKidId(NPC spouse, string name)
     {
         // Check for "real name" kid
-        if (!TryGetAvailableSpouseOrSharedKidIds(spouse, out List<string>? availableKidIds))
+        if (!TryGetAvailableSpouseOrSharedKidIds(spouse, out List<string>? availableKidIds, null))
         {
             return null;
         }
