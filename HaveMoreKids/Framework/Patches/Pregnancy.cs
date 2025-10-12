@@ -193,6 +193,7 @@ internal static partial class Patches
             if (Game1.player.modData.TryGetValue(KidHandler.Character_ModData_NextKidId, out string? nextKidId))
             {
                 hmkNewChildEvent.newKidId = nextKidId;
+                hmkNewChildEvent.isSoloAdopt = true;
                 Game1.player.modData.Remove(KidHandler.Character_ModData_NextKidId);
             }
             return false;
@@ -283,13 +284,7 @@ internal static partial class Patches
                 __result = null!;
                 return;
             }
-            HMKNewChildEvent hmkNewChildEvent = new();
-            if (!hmkNewChildEvent.TryPickKidId())
-            {
-                __result = null!;
-                return;
-            }
-            __result = hmkNewChildEvent;
+            __result = new HMKNewChildEvent();
         }
     }
 }

@@ -31,6 +31,7 @@ public class ModEntry : Mod
         KidHandler.Register();
         AssetManager.Register();
         MultiplayerSync.Register();
+        AdoptionRegistry.Register();
         Patches.Apply();
 
         help.ConsoleCommands.Add("hmk-list_npcs", "List all NPC in the world", ConsoleListNPCs);

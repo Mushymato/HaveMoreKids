@@ -9,7 +9,9 @@
         // debug action mushymato.HaveMoreKids_SetNewChildEvent 0 Jas Player
         "Jas": {
           "BirthOrAdoptMessage": "Jas has moved in to the farm!",
-          "AdoptedFromNPC": "Jas"
+          "AdoptedFromNPC": "Jas",
+          // Add Jas to the adoption registry in the hospital, this is a GSQ
+          "CanAdoptFromAdoptionRegistry": "TRUE"
         }
       },
     },

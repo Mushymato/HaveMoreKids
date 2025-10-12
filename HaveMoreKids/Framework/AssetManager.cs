@@ -14,13 +14,13 @@ public sealed class KidDefinitionData
     public string? Parent { get; set; } = null;
     public bool Shared { get; set; } = false;
     public bool DefaultEnabled { get; set; } = true;
-    public bool AvailableForSpecificAdoption { get; set; } = false;
     public string? Condition { get; set; } = null;
     public string? Twin { get; set; } = null;
     public string? TwinCondition { get; set; } = null;
     public string? TwinMessage { get; set; } = null;
     public string? AdoptedFromNPC { get; set; } = null;
     public string? BirthOrAdoptMessage { get; set; } = null;
+    public string? CanAdoptFromAdoptionRegistry { get; set; } = null;
 }
 
 internal static class AssetManager
@@ -277,14 +277,19 @@ internal static class AssetManager
     private static void Edit_MapsHospital(IAssetData asset)
     {
         xTile.Map map = asset.AsMap().Data;
-        xTile.Layers.Layer? buildingLayer = map.GetLayer("Buildings");
-        buildingLayer.Tiles[3, 15] = new xTile.Tiles.StaticTile(
-            buildingLayer,
-            map.GetTileSheet("1"),
-            xTile.Tiles.BlendMode.Alpha,
-            675
-        );
-        buildingLayer.Tiles[3, 15].Properties["Action"] = AdoptionRegistry.Action_ShowAdoption;
+        if (map.GetLayer("Front2") is xTile.Layers.Layer front2)
+        {
+            front2.Tiles[3, 15] = new xTile.Tiles.StaticTile(
+                front2,
+                map.GetTileSheet("1"),
+                xTile.Tiles.BlendMode.Alpha,
+                675
+            );
+        }
+        if (map.GetLayer("Buildings") is xTile.Layers.Layer buildings)
+        {
+            buildings.Tiles[3, 16].Properties["Action"] = AdoptionRegistry.Action_ShowAdoption;
+        }
     }
 
     private static void Edit_DataFurniture(IAssetData asset)

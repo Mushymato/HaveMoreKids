@@ -46,9 +46,16 @@ public sealed class CPTokenKidNPC
         {
             if (entry.KidNPCId != null)
             {
-                newKidIds[kidId] = entry.KidNPCId;
+                if (entry.IsAdoptedFromNPC)
+                {
+                    newKidIds[entry.KidNPCId] = entry.KidNPCId;
+                }
+                else
+                {
+                    newKidIds[kidId] = entry.KidNPCId;
+                }
             }
-            if (
+            else if (
                 !changed
                 && (!(KidIds?.TryGetValue(kidId, out string? prevKidNPCId) ?? false) || prevKidNPCId != entry.KidNPCId)
             )
@@ -64,10 +71,13 @@ public sealed class CPTokenKidNPC
 
     public IEnumerable<string> GetValues(string? input)
     {
-        if (input != null && KidIds!.TryGetValue(input, out string? kidNPCid))
+        if (input != null)
         {
-            yield return kidNPCid;
-            yield break;
+            if (KidIds!.TryGetValue(input, out string? kidNPCid))
+            {
+                yield return kidNPCid;
+                yield break;
+            }
         }
         else
         {
@@ -185,7 +195,7 @@ internal static class GameDelegates
                     ?? Game1.content.LoadString("Strings/Characters:Relative_Dad"),
                 Gender.Female => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Female")
                     ?? Game1.content.LoadString("Strings/Characters:Relative_Mom"),
-                _ => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Neutral") ?? player.displayName,
+                _ => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Undefined") ?? player.displayName,
             };
         }
         if (endearment is null)
@@ -350,12 +360,12 @@ internal static class GameDelegates
         return DoSetNewChildEvent(out error, daysUntilNewChild, kidId, spouseName, message, gender);
     }
 
-    private static bool DoSetNewChildEvent(
+    internal static bool DoSetNewChildEvent(
         out string error,
         int daysUntilNewChild,
-        string kidId,
-        string spouseName,
-        string message,
+        string? kidId,
+        string? spouseName,
+        string? message,
         Gender gender
     )
     {
@@ -413,7 +423,7 @@ internal static class GameDelegates
                 }
             }
 
-            if (kidId != "Any" && !KidHandler.TrySetNextKid(Game1.player, spouse, kidId))
+            if (kidId != null && kidId != "Any" && !KidHandler.TrySetNextKid(Game1.player, spouse, kidId))
             {
                 error = $"Kid '{kidId}' is not available";
                 return false;

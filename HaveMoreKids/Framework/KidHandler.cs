@@ -138,7 +138,7 @@ internal static class KidHandler
         return false;
     }
 
-    internal static void TrySetNextAdoptFromNPCKidId(Farmer player, string kidId)
+    internal static void TrySetNextAdoptFromNPCKidId(Farmer player, string? kidId)
     {
         if (
             !string.IsNullOrEmpty(kidId)
@@ -562,6 +562,7 @@ internal static class KidHandler
                 }
             }
         }
+        ModEntry.LogDebug("Done day started setup");
     }
 
     /// <summary>Unset HMK related data on saving</summary>
@@ -1161,6 +1162,7 @@ internal static class KidHandler
         {
             foreach (Child kid in WillGoToFarmAsNPC)
             {
+                ModEntry.Log($"IsInvisible on '{kid.Name}' (1)");
                 kid.IsInvisible = true;
                 kid.daysUntilNotInvisible = 1;
             }
@@ -1170,14 +1172,17 @@ internal static class KidHandler
         Farm playerFarm = Game1.getFarm();
         foreach ((Child kid, _) in GoingToTheFarm.Values)
         {
-            SendEnrouteKidOutside(kid, playerFarm, MakeKidInvisible);
+            if (WillGoToFarmAsNPC.Contains(kid))
+            {
+                SendEnrouteKidOutside(kid, playerFarm, MakeKidInvisible);
+            }
         }
 
-        ModEntry.LogDebug("SendKidsThatAreNPCsOutside");
         foreach (Child kid in WillGoToFarmAsNPC.AsEnumerable().Reverse())
         {
             if (kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
             {
+                ModEntry.Log($"IsInvisible on '{kid.Name}' (2)");
                 kid.IsInvisible = true;
                 kid.daysUntilNotInvisible = 1;
                 WillGoToFarmAsNPC.Remove(kid);
@@ -1185,6 +1190,7 @@ internal static class KidHandler
             }
             if (!FindFarmhouseDoors(farmhouse, farm, out Point doorExit, out _))
             {
+                ModEntry.Log($"IsInvisible on '{kid.Name}' (3)");
                 kid.IsInvisible = true;
                 kid.daysUntilNotInvisible = 1;
                 WillGoToFarmAsNPC.Remove(kid);
@@ -1259,6 +1265,7 @@ internal static class KidHandler
     {
         if (c is Child kid)
         {
+            ModEntry.Log($"IsInvisible on '{kid.Name}' (4)");
             kid.Age = 4;
             kid.IsInvisible = true;
             kid.daysUntilNotInvisible = 1;

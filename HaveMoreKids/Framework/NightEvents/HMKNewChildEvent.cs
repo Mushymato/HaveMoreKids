@@ -30,12 +30,32 @@ public class HMKNewChildEvent : BaseFarmEvent
 
     private NPC? spouse = null;
 
+    internal bool isSoloAdopt = false;
+
     /// <inheritdoc />
     public override bool setUp()
     {
+        Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
+        if (!isSoloAdopt)
+        {
+            spouse = SpouseShim.GetBirthingSpouse(Game1.player);
+        }
         if (newKidId == null)
         {
-            return true;
+            if (spouse != null)
+            {
+                isDarkSkinned = random.NextBool(
+                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
+                );
+                newKidId = KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned);
+            }
+            else
+            {
+                if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids, Game1.player.hasDarkSkin()))
+                {
+                    newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
+                }
+            }
         }
 
         Game1.player.CanMove = false;
@@ -90,30 +110,6 @@ public class HMKNewChildEvent : BaseFarmEvent
         isTwin = false;
 
         return false;
-    }
-
-    public bool TryPickKidId()
-    {
-        Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
-        spouse = SpouseShim.GetBirthingSpouse(Game1.player);
-        if (newKidId == null)
-        {
-            if (spouse != null)
-            {
-                isDarkSkinned = random.NextBool(
-                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-                );
-                newKidId = KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned);
-            }
-            else
-            {
-                if (KidHandler.TryGetAvailableSharedKidIds(out List<string>? sharedKids, Game1.player.hasDarkSkin()))
-                {
-                    newKidId = KidHandler.PickMostLikelyKidId(sharedKids, isDarkSkinned, null, null);
-                }
-            }
-        }
-        return newKidId != null;
     }
 
     public void returnBabyName(string name)

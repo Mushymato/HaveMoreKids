@@ -71,7 +71,8 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 | `TwinCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | A condition on whether the twin should be born. |
 | `TwinMessage` | string | _null_ | A special message to show when a twin is born. |
 | `AdoptedFromNPC` | string | _null_ | The internal id of the NPC to adopt as a Child. |
-| `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid. |
+| `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid, accepts tokenized strings. |
+| `CanAdoptFromAdoptionRegistry` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true, this child can be adopted from the adoption registry at Harvey's Clinic. |
 
 #### Parent vs Shared
 
