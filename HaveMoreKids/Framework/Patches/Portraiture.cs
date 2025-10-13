@@ -10,10 +10,10 @@ internal static partial class Patches
     internal static void Apply_Portraiture()
     {
         // Portraiture Compat (sigh)
-        var modInfo = ModEntry.help.ModRegistry.Get("Platonymous.Portraiture");
+        IModInfo? modInfo = ModEntry.help.ModRegistry.Get("Platonymous.Portraiture");
         if (modInfo?.GetType().GetProperty("Mod")?.GetValue(modInfo) is IMod mod)
         {
-            var assembly = mod.GetType().Assembly;
+            Assembly assembly = mod.GetType().Assembly;
             if (
                 assembly.GetType("Portraiture.TextureLoader") is Type portraitureTxLoaderType
                 && AccessTools.DeclaredMethod(portraitureTxLoaderType, "getPortrait")

@@ -53,14 +53,17 @@
       "Action": "EditData",
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
       "Entries": {
-        // these are a custom endearment terms, used when you have [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1]
-        "Endearment_Male": "darth",
-        "Endearment_Female": "mum",
-        "Endearment_Undefined": "thou",
+        // these are a custom endearment terms, used when you have [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1] (or short form [HMK_Endearment mushymato.HMK.Example_girl1])
+        "HMK_Endearment_Male": "darth",
+        "HMK_Endearment_Female": "mum",
+        "HMK_Endearment_Undefined": "thou",
+        "HMK_Endearment_NonParent_Male": "vader",
+        "HMK_Endearment_NonParent_Female": "auntie",
+        "HMK_Endearment_NonParent_Undefined": "thy",
         // this is an ordinary vanilla dialogue asset, and accepts all the same keys
-        "Mon": "{{i18n:{{L@Kid}}.Toddler.Dialog.Mon}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
-        "Tue": "{{i18n:{{L@Kid}}.Toddler.Dialog.Tue}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
-        "Wed": "{{i18n:{{L@Kid}}.Toddler.Dialog.Wed}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
+        "Mon": "{{i18n:{{L@Kid}}.Toddler.Dialog.Mon}} HI [HMK_Endearment {{TargetWithoutPath}}], I AM {{mushymato.HaveMoreKids/KidDisplayName:{{TargetWithoutPath}}}}",
+        "Tue": "{{i18n:{{L@Kid}}.Toddler.Dialog.Tue}} HI [HMK_Endearment {{TargetWithoutPath}}], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
+        "Wed": "{{i18n:{{L@Kid}}.Toddler.Dialog.Wed}} HI [HMK_Endearment {{TargetWithoutPath}}], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
         "Thu": "{{i18n:{{L@Kid}}.Toddler.Dialog.Thu}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
         "Fri": "{{i18n:{{L@Kid}}.Toddler.Dialog.Fri}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",
         "Sat": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sat}} HI [mushymato.HaveMoreKids_Endearment mushymato.HMK.Example_girl1], OUR FAMILY IS {{mushymato.HaveMoreKids/KidDisplayName}}",

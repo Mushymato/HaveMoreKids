@@ -89,6 +89,82 @@ public sealed class CPTokenKidNPC
     }
 }
 
+public sealed class CPTokenKidDisplayName
+{
+    private static Dictionary<string, string>? KidDisplayNames = null;
+
+    public bool IsMutable() => true;
+
+    public bool IsDeterministicForInput() => false;
+
+    public bool AllowsInput() => true;
+
+    public bool RequiresInput() => false;
+
+    public bool CanHaveMultipleValues(string input) => input == null;
+
+    public bool TryValidateInput(string? input, [NotNullWhen(false)] out string? error)
+    {
+        error = null!;
+        if (input != null && (KidDisplayNames == null || !KidDisplayNames.ContainsKey(input)))
+        {
+            error = $"Kid '{input}' not found";
+            return false;
+        }
+        return true;
+    }
+
+    public bool UpdateContext()
+    {
+        if (!Context.IsWorldReady)
+            return false;
+
+        Dictionary<string, string>? newKids = Game1
+            .player.getChildren()
+            .ToDictionary(kid => kid.Name, kid => kid.displayName);
+        bool changed = false;
+        if (KidDisplayNames == null || KidDisplayNames.Count != newKids.Count)
+        {
+            changed = true;
+        }
+        else
+        {
+            foreach (string key in KidDisplayNames.Keys)
+            {
+                changed |= newKids.ContainsKey(key);
+            }
+        }
+
+        KidDisplayNames = newKids;
+        return changed;
+    }
+
+    public bool IsReady() => Context.IsWorldReady;
+
+    public IEnumerable<string> GetValues(string? input)
+    {
+        if (KidDisplayNames == null)
+        {
+            throw new InvalidDataException("Never had UpdateContext");
+        }
+        if (input != null)
+        {
+            if (KidDisplayNames.TryGetValue(input, out string? kidDisplayName))
+            {
+                yield return kidDisplayName;
+            }
+            yield break;
+        }
+        else
+        {
+            foreach (string kidDisplayName in KidDisplayNames.Values)
+            {
+                yield return kidDisplayName;
+            }
+        }
+    }
+}
+
 internal static class GameDelegates
 {
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
@@ -99,6 +175,7 @@ internal static class GameDelegates
     internal const string Action_ToggleChildNPC = $"{ModEntry.ModId}_ToggleChildNPC";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
     internal const string TS_Endearment = $"{ModEntry.ModId}_Endearment";
+    internal const string TS_Endearment_Short = "HMK_Endearment";
     internal const string CPT_KidDisplayName = "KidDisplayName";
     internal const string CPT_KidNPCId = "KidNPCId";
 
@@ -113,13 +190,14 @@ internal static class GameDelegates
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
         // Tokenizable String
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
+        TokenParser.RegisterParser(TS_Endearment_Short, TSEndearment);
         // CP Tokens
         if (
             ModEntry.help.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")
             is Integration.IContentPatcherAPI CP
         )
         {
-            CP.RegisterToken(mod, CPT_KidDisplayName, CPTokenChildDisplayNames);
+            CP.RegisterToken(mod, CPT_KidDisplayName, new CPTokenKidDisplayName());
             CP.RegisterToken(mod, CPT_KidNPCId, new CPTokenKidNPC());
         }
     }
@@ -133,11 +211,11 @@ internal static class GameDelegates
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
-        string endearmentSubkey = ":Endearment_";
+        string endearmentSubkey = ":HMK_Endearment_";
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? entry))
         {
             endearmentSubkey =
-                entry.PlayerParent != player.UniqueMultiplayerID ? ":Endearment_NonParent" : ":Endearment";
+                entry.PlayerParent != player.UniqueMultiplayerID ? ":HMK_Endearment_NonParent" : ":HMK_Endearment";
         }
         string? endearment;
         if (
@@ -209,13 +287,6 @@ internal static class GameDelegates
             replacement = Lexicon.capitalize(replacement);
         }
         return true;
-    }
-
-    private static IEnumerable<string>? CPTokenChildDisplayNames()
-    {
-        if (!Context.IsWorldReady)
-            return null;
-        return Game1.player.getChildren().Select(value => value.displayName);
     }
 
     private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true, bool searchForAdoptedNPC = false)
