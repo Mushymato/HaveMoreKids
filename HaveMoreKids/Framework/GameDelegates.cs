@@ -299,7 +299,7 @@ internal static class GameDelegates
             return children.FirstOrDefault(kid =>
             {
                 if (
-                    kid.KidHMKFromNPCId() is string kidNPCId
+                    kid.GetHMKAdoptedFromNPCId() is string kidNPCId
                     && KidHandler.KidEntries.TryGetValue(kidNPCId, out KidEntry? kidEntry)
                 )
                 {

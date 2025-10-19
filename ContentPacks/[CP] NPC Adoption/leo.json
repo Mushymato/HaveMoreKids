@@ -1,16 +1,15 @@
 {
   "$schema": "https://smapi.io/schemas/content-patcher.json",
-  "Format": "2.8.0",
   "Changes": [
     {
       "Action": "EditData",
       "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
-        // debug action mushymato.HaveMoreKids_SetNewChildEvent 0 Jas Player
-        "Jas": {
-          "BirthOrAdoptMessage": "Jas has moved in to the farm!",
-          "AdoptedFromNPC": "Jas",
-          // Add Jas to the adoption registry in the hospital, this is a GSQ
+        // debug action mushymato.HaveMoreKids_SetNewChildEvent 0 Leo Player
+        "Leo": {
+          "BirthOrAdoptMessage": "Leo came to the farm!",
+          "AdoptedFromNPC": "Leo",
+          // Add Leo to the adoption registry in the hospital, this is a GSQ
           "CanAdoptFromAdoptionRegistry": "TRUE"
         }
       },
@@ -19,25 +18,25 @@
       "Action": "EditData",
       "Target": "Data/Characters",
       "TargetField": [
-        "Jas",
+        "Leo",
         "CustomFields"
       ],
       "Entries": {
         // control 
         "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Tuesday",
-        // optional: use alternate dialogue sheet name for the child version of Jas
-        "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidJasDialogue"
+        // optional: use alternate dialogue sheet name for the child version
+        "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidLeoDialogue"
       }
     },
     // 
     {
       "Action": "Load",
-      "Target": "Characters/Dialogue/{{ModId}}_KidJasDialogue",
+      "Target": "Characters/Dialogue/{{ModId}}_KidLeoDialogue",
       "FromFile": "blank.json"
     },
     {
       "Action": "EditData",
-      "Target": "Characters/Dialogue/{{ModId}}_KidJasDialogue",
+      "Target": "Characters/Dialogue/{{ModId}}_KidLeoDialogue",
       "Entries": {
         "Mon": "Mon",
         "Tue": "Tue",

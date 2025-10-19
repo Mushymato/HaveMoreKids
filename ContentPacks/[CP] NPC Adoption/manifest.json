@@ -1,9 +1,9 @@
 {
-  "Name": "[CP] Jas Adoption",
+  "Name": "[CP] NPC Adoption",
   "Author": "mushymato",
   "Version": "0.1.0",
-  "Description": "Adopt Jas.",
-  "UniqueID": "mushymato.JasAdoption",
+  "Description": "Adopt Jas/Leo.",
+  "UniqueID": "mushymato.NPCAdoption",
   "MinimumApiVersion": "4.0.0",
   "UpdateKeys": [
     "Nexus:???"

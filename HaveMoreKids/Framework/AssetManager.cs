@@ -34,8 +34,7 @@ internal static class AssetManager
     internal const string Asset_DataNPCGiftTastes = "Data/NPCGiftTastes";
     private const string Furniture_DefaultCrib = $"{ModEntry.ModId}_Crib";
     internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
-    private const string Asset_CharactersSchedule = "Characters/schedules/";
-    private static readonly string[] KidNPCForwardAssets = [Asset_CharactersDialogue, Asset_CharactersSchedule];
+    internal const string Asset_CharactersSchedule = "Characters/schedules/";
 
     private static Dictionary<string, CharacterData>? childData = null;
 
@@ -258,19 +257,6 @@ internal static class AssetManager
                 e.Edit(Edit_DataCharacters, AssetEditPriority.Late);
             if (name.IsEquivalentTo(Asset_DataNPCGiftTastes))
                 e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
-            foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
-            {
-                if (entry.IsAdoptedFromNPC || entry.KidNPCId == null)
-                    continue;
-                foreach (string fwdAsset in KidNPCForwardAssets)
-                {
-                    if (!name.IsEquivalentTo(string.Concat(fwdAsset, entry.KidNPCId)))
-                    {
-                        continue;
-                    }
-                    e.LoadFrom(() => ForwardFrom_ChildIdAsset(string.Concat(fwdAsset, kidId)), AssetLoadPriority.Low);
-                }
-            }
         }
     }
 
@@ -399,19 +385,6 @@ internal static class AssetManager
             kidDefsByKidId = null;
             kidDefsByParentId = null;
             ModEntry.Config.ResetMenu();
-        }
-        foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
-        {
-            if (entry.KidNPCId == null)
-                continue;
-            foreach (string fwdAsset in KidNPCForwardAssets)
-            {
-                if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(string.Concat(fwdAsset, kidId))))
-                {
-                    ModEntry.Log($"Propagate {fwdAsset}{kidId} -> {fwdAsset}{entry.KidNPCId}");
-                    ModEntry.help.GameContent.InvalidateCache(string.Concat(fwdAsset, entry.KidNPCId));
-                }
-            }
         }
     }
 

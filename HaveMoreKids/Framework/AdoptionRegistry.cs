@@ -35,12 +35,14 @@ internal static class AdoptionRegistry
             if (
                 def.CanAdoptFromAdoptionRegistry != null
                 && GameStateQuery.CheckConditions(def.CanAdoptFromAdoptionRegistry, ctx)
+                && !Game1.getAllFarmers().Any(player => player.NextKidId() is string nextKidId && nextKidId == kidId)
             )
             {
                 string? displayName = null;
                 if (
                     def.AdoptedFromNPC != null
-                    && Game1.characterData.TryGetValue(def.AdoptedFromNPC, out CharacterData? npcData)
+                    && KidHandler.GetNonChildNPCByName(def.AdoptedFromNPC) is NPC npc
+                    && npc.GetData() is CharacterData npcData
                 )
                 {
                     displayName = TokenParser.ParseText(npcData.DisplayName);

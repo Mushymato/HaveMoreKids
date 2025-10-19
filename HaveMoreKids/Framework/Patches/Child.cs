@@ -27,6 +27,7 @@ internal static partial class Patches
 {
     internal const string Condition_KidId = "KID_ID";
     internal const string Child_CustomField_DialogueSheet = $"{ModEntry.ModId}/KidDialogueSheet";
+    internal const string Child_CustomField_ScheduleAsset = $"{ModEntry.ModId}/KidScheduleAsset";
 
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
@@ -152,6 +153,66 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.getRidOfChildren)),
             prefix: new HarmonyMethod(typeof(Patches), nameof(Farmer_getRidOfChildren_Prefix))
         );
+        // Change schedule data name
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getMasterScheduleRawData)),
+            transpiler: new HarmonyMethod(typeof(Patches), nameof(NPC_getMasterScheduleRawData_Transpiler))
+        );
+    }
+
+    private static string ModifyScheduleAssetName(NPC npc, string scheduleAssetName)
+    {
+        if (
+            npc.GetData() is CharacterData data
+            && (data.CustomFields?.TryGetValue(Child_CustomField_ScheduleAsset, out string? scheduleAsset) ?? false)
+            && scheduleAsset != null
+        )
+        {
+            return $"{AssetManager.Asset_CharactersSchedule}\\{scheduleAsset}";
+        }
+        else if (npc.GetHMKChildNPCKidId() is string kidId)
+        {
+            return $"{AssetManager.Asset_CharactersSchedule}\\{kidId}";
+        }
+        return scheduleAssetName;
+    }
+
+    private static IEnumerable<CodeInstruction> NPC_getMasterScheduleRawData_Transpiler(
+        IEnumerable<CodeInstruction> instructions,
+        ILGenerator generator
+    )
+    {
+        try
+        {
+            CodeMatcher matcher = new(instructions, generator);
+
+            // IL_0048: ldstr "Mainland"
+            // IL_004d: call string [System.Runtime]System.String::Concat(string, string)
+            // IL_0052: stloc.0
+            matcher.MatchStartForward(
+                [new(inst => inst.IsLdloc()), new(OpCodes.Ldstr), new(OpCodes.Call), new(inst => inst.IsStloc())]
+            );
+            CodeInstruction ldLoc = matcher.Instruction.Clone();
+            matcher.Advance(3);
+            CodeInstruction stLoc = matcher.Instruction.Clone();
+            matcher
+                .Advance(2)
+                .Insert(
+                    [
+                        new(OpCodes.Ldarg_0),
+                        ldLoc,
+                        new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyScheduleAssetName))),
+                        stLoc,
+                    ]
+                );
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in NPC_getMasterScheduleRawData_Transpiler:\n{err}", LogLevel.Error);
+            return instructions;
+        }
     }
 
     private static void Farmer_getRidOfChildren_Prefix(Farmer __instance)
@@ -162,8 +223,6 @@ internal static partial class Patches
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
     {
-        if (__instance is not Child)
-            return;
         if (
             __instance.GetData() is CharacterData data
             && (data.CustomFields?.TryGetValue(Child_CustomField_DialogueSheet, out string? dialogueSheet) ?? false)
@@ -171,7 +230,11 @@ internal static partial class Patches
         {
             __result = dialogueSheet;
         }
-        else if (__instance.KidHMKFromNPCId() is string npcId)
+        else if (__instance.GetHMKChildNPCKidId() is string kidId)
+        {
+            __result = kidId;
+        }
+        else if (__instance.GetHMKAdoptedFromNPCId() is string npcId)
         {
             __result = npcId;
         }
@@ -247,18 +310,18 @@ internal static partial class Patches
 
     private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
     {
-        if (In_NPC_ChooseAppearance_Call && __instance.KidHMKFromNPCId() is string npcId)
+        if (In_NPC_ChooseAppearance_Call && __instance.GetHMKAdoptedFromNPCId() is string npcId)
         {
-            __result = npcId;
+            __result = __instance.GetData()?.TextureName ?? npcId;
         }
         else if (__instance is Child)
         {
-            if (In_Billboard_GetEventsForDay && !__instance.Name.StartsWith(KidHandler.NPCChild_Prefix))
+            if (In_Billboard_GetEventsForDay && __instance.GetHMKAdoptedFromNPCId() is null)
             {
                 __result = null!;
             }
         }
-        else if (__instance.IsHMKChildNPC())
+        else if (__instance.GetHMKChildNPCKidId() != null)
         {
             __result = __instance.GetData()?.TextureName ?? AssetManager.Asset_DefaultTextureName;
         }
@@ -266,7 +329,7 @@ internal static partial class Patches
 
     private static void Child_translateName_Postfix(Child __instance, ref string __result)
     {
-        if (__instance.KidHMKFromNPCId() is string npcId)
+        if (__instance.GetHMKAdoptedFromNPCId() is string npcId)
         {
             if (Game1.characterData.TryGetValue(npcId, out CharacterData? data))
             {
@@ -378,7 +441,7 @@ internal static partial class Patches
     {
         if (__result != null || __instance.Name == null)
             return;
-        if (__instance.KidHMKFromNPCId() is string npcId)
+        if (__instance.GetHMKAdoptedFromNPCId() is string npcId)
         {
             if (Game1.characterData.TryGetValue(npcId, out CharacterData? data))
             {

@@ -64,7 +64,7 @@ internal static partial class Patches
     {
         foreach (SocialPage.SocialEntry entry in Enumerable.Reverse(__result))
         {
-            if (entry.IsChild && entry.Character.KidHMKFromNPCId() is not null)
+            if (entry.IsChild && entry.Character.GetHMKAdoptedFromNPCId() is not null)
             {
                 __result.Remove(entry);
             }

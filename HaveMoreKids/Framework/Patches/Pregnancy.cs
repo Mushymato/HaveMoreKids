@@ -190,7 +190,7 @@ internal static partial class Patches
         {
             HMKNewChildEvent hmkNewChildEvent = new();
             __result = hmkNewChildEvent;
-            if (Game1.player.modData.TryGetValue(KidHandler.Character_ModData_NextKidId, out string? nextKidId))
+            if (Game1.player.NextKidId() is string nextKidId)
             {
                 hmkNewChildEvent.newKidId = nextKidId;
                 hmkNewChildEvent.isSoloAdopt = true;

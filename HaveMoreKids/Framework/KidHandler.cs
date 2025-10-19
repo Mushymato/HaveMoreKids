@@ -98,13 +98,36 @@ internal static class KidHandler
         return allowNull ? null : (kid.displayName ?? kid.Name);
     }
 
-    internal static string? KidHMKFromNPCId(this Character kid)
+    internal static string? GetHMKAdoptedFromNPCId(this Character kid)
     {
         if (kid.Name?.StartsWith(NPCChild_Prefix) ?? false)
         {
             return kid.Name.AsSpan()[NPCChild_Prefix.Length..].ToString();
         }
         return null;
+    }
+
+    internal static string? GetHMKChildNPCKidId(this NPC childNPC)
+    {
+        if (childNPC.Name?.EndsWith(ChildNPC_Suffix) ?? false)
+        {
+            return childNPC.Name.AsSpan()[..(childNPC.Name.Length - ChildNPC_Suffix.Length)].ToString();
+        }
+        return null;
+    }
+
+    internal static string? NextKidId(this Character farmer)
+    {
+        if (farmer.modData.TryGetValue(Character_ModData_NextKidId, out string nextKidId))
+        {
+            return nextKidId;
+        }
+        return null;
+    }
+
+    internal static string FormChildNPCId(string childName)
+    {
+        return string.Concat(childName, ChildNPC_Suffix);
     }
 
     internal static bool? GetDarkSkinnedRestrict(Farmer player, NPC __instance)
@@ -127,7 +150,7 @@ internal static class KidHandler
             && TryGetAvailableSpouseOrSharedKidIds(
                 parent,
                 out List<string>? availableKidIds,
-                KidHandler.GetDarkSkinnedRestrict(player, parent)
+                GetDarkSkinnedRestrict(player, parent)
             )
             && availableKidIds.Contains(kidId)
         )
@@ -145,9 +168,10 @@ internal static class KidHandler
             && !kidId.EqualsIgnoreCase("Any")
             && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef)
             && kidDef.AdoptedFromNPC == kidId
+            && GetNonChildNPCByName(kidId) is not null
         )
         {
-            ModEntry.Log($"Adopt {kidId} as Child");
+            ModEntry.Log($"Adopt '{kidId}' as Child");
             player.modData[Character_ModData_NextKidId] = kidId;
         }
     }
@@ -189,16 +213,6 @@ internal static class KidHandler
 
     internal static Dictionary<string, KidEntry> KidEntries { get; private set; } = [];
     internal static Dictionary<string, string> KidNPCToKid { get; private set; } = [];
-
-    internal static string FormChildNPCId(string childName)
-    {
-        return string.Concat(childName, ChildNPC_Suffix);
-    }
-
-    internal static bool IsHMKChildNPC(this NPC childNPC)
-    {
-        return childNPC.Name?.EndsWith(ChildNPC_Suffix) ?? false;
-    }
 
     private static void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
@@ -269,7 +283,7 @@ internal static class KidHandler
             bool adoptedFromNPC = false;
 
             if (
-                kid.KidHMKFromNPCId() is string npcId
+                kid.GetHMKAdoptedFromNPCId() is string npcId
                 && AssetManager.KidDefsByKidId.TryGetValue(npcId, out KidDefinitionData? kidDef)
                 && kidDef.AdoptedFromNPC == npcId
                 && Game1.characterData.ContainsKey(kidDef.AdoptedFromNPC)
@@ -387,7 +401,7 @@ internal static class KidHandler
         // Apply unique kids to any existing children
         foreach (Child kid in Game1.player.getChildren())
         {
-            if (kid.KidHMKFromNPCId() is not null)
+            if (kid.GetHMKAdoptedFromNPCId() is not null)
                 continue;
             if ((kid.KidNPCParent() ?? TryGetFLSpouseParent(kid)) is string npcParent)
             {
@@ -407,13 +421,13 @@ internal static class KidHandler
         }
     }
 
-    private static NPC? GetNonChildNPCByName(string kidNPCId)
+    internal static NPC? GetNonChildNPCByName(string kidNPCId)
     {
         NPC? match = null;
         Utility.ForEachCharacter(
             npc =>
             {
-                if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager)
+                if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager && !npc.EventActor)
                 {
                     if (npc.currentLocation?.IsActiveLocation() ?? false)
                     {
@@ -485,7 +499,7 @@ internal static class KidHandler
                         kid.Sprite.CurrentAnimation = null;
                     }
 
-                    key = kid.KidHMKFromNPCId() ?? kid.Name;
+                    key = kid.GetHMKAdoptedFromNPCId() ?? kid.Name;
                     ModEntry.Log($"{kid.Name} -> {key} ({kid.daysOld.Value})");
 
                     kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
@@ -750,10 +764,7 @@ internal static class KidHandler
         }
 
         // Prioritize the kid id set by trigger action, if it is valid
-        if (
-            spouse.modData.TryGetValue(Character_ModData_NextKidId, out string? nextKidId)
-            && availableKidIds.Contains(nextKidId)
-        )
+        if (spouse.NextKidId() is string nextKidId && availableKidIds.Contains(nextKidId))
         {
             return nextKidId;
         }
@@ -927,10 +938,7 @@ internal static class KidHandler
             return null;
         }
         // Prioritize the kid id set by trigger action, if it is valid
-        if (
-            spouse.modData.TryGetValue(Character_ModData_NextKidId, out string? nextKidId)
-            && availableKidIds.Contains(nextKidId)
-        )
+        if (spouse.NextKidId() is string nextKidId && availableKidIds.Contains(nextKidId))
         {
             return nextKidId;
         }
@@ -1094,7 +1102,7 @@ internal static class KidHandler
             return false;
         }
 
-        if (SendEnrouteKidOutside(kid, farm, WarpKidToFarm))
+        if (SendEnrouteKidOutside(kid, farm))
         {
             return false;
         }
@@ -1138,14 +1146,19 @@ internal static class KidHandler
         return true;
     }
 
-    private static bool SendEnrouteKidOutside(Child kid, Farm farm, Action<Character, GameLocation> callback)
+    private static bool SendEnrouteKidOutside(Child kid, Farm farm)
     {
         // if kid ought to be outside already, skip directly to warp
         if (GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo))
         {
             if (goingInfo.Item1 == kid)
             {
-                DelayedAction.functionAfterDelay(() => callback(kid, farm), 0);
+                if (kid.controller == null)
+                {
+                    ModEntry.Log($"Kid '{kid.Name}' lost controller");
+                    return false;
+                }
+                DelayedAction.functionAfterDelay(() => kid.controller.endBehaviorFunction?.Invoke(kid, farm), 0);
                 return true;
             }
         }
@@ -1154,19 +1167,35 @@ internal static class KidHandler
 
     private static void SendKidsThatAreNPCsOutside(object? sender, TimeChangedEventArgs e)
     {
+        SendKidsThatAreNPCsOutside(e.NewTime);
+    }
+
+    private static void SendKidsThatAreNPCsOutside(int newTime)
+    {
         if (!Context.IsMainPlayer)
             return;
-        if (WillGoToFarmAsNPC.Count == 0)
-            return;
-        if (e.NewTime >= 1000)
+
+        if (newTime >= 1000)
         {
             foreach (Child kid in WillGoToFarmAsNPC)
             {
                 ModEntry.Log($"IsInvisible on '{kid.Name}' (1)");
-                kid.IsInvisible = true;
-                kid.daysUntilNotInvisible = 1;
+                SetKidInvisible(kid);
             }
             WillGoToFarmAsNPC.Clear();
+            return;
+        }
+        else
+        {
+            foreach (Child kid in WillGoToFarmAsNPC.AsEnumerable().Reverse())
+            {
+                if (kid.currentLocation.farmers.Count == 0)
+                {
+                    ModEntry.Log($"IsInvisible on '{kid.Name}' (2)");
+                    SetKidInvisible(kid);
+                    WillGoToFarmAsNPC.Remove(kid);
+                }
+            }
         }
 
         Farm playerFarm = Game1.getFarm();
@@ -1174,7 +1203,7 @@ internal static class KidHandler
         {
             if (WillGoToFarmAsNPC.Contains(kid))
             {
-                SendEnrouteKidOutside(kid, playerFarm, MakeKidInvisible);
+                SendEnrouteKidOutside(kid, playerFarm);
             }
         }
 
@@ -1182,18 +1211,14 @@ internal static class KidHandler
         {
             if (kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
             {
-                ModEntry.Log($"IsInvisible on '{kid.Name}' (2)");
-                kid.IsInvisible = true;
-                kid.daysUntilNotInvisible = 1;
-                WillGoToFarmAsNPC.Remove(kid);
+                ModEntry.Log($"IsInvisible on '{kid.Name}' (3)");
+                SetKidInvisible(kid);
                 continue;
             }
             if (!FindFarmhouseDoors(farmhouse, farm, out Point doorExit, out _))
             {
-                ModEntry.Log($"IsInvisible on '{kid.Name}' (3)");
-                kid.IsInvisible = true;
-                kid.daysUntilNotInvisible = 1;
-                WillGoToFarmAsNPC.Remove(kid);
+                ModEntry.Log($"IsInvisible on '{kid.Name}' (4)");
+                SetKidInvisible(kid);
                 continue;
             }
             kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, MakeKidInvisible);
@@ -1265,14 +1290,19 @@ internal static class KidHandler
     {
         if (c is Child kid)
         {
-            ModEntry.Log($"IsInvisible on '{kid.Name}' (4)");
-            kid.Age = 4;
-            kid.IsInvisible = true;
-            kid.daysUntilNotInvisible = 1;
-            kid.Halt();
-            kid.controller = null;
+            ModEntry.Log($"IsInvisible on '{kid.Name}' (5)");
+            SetKidInvisible(kid);
             GoingToTheFarm.Remove(kid.idOfParent.Value);
         }
+    }
+
+    private static void SetKidInvisible(Child kid)
+    {
+        kid.Age = 4;
+        kid.IsInvisible = true;
+        kid.daysUntilNotInvisible = 1;
+        kid.Halt();
+        kid.controller = null;
     }
 
     private static void FarmPathFinding(Child kid)
