@@ -26,6 +26,8 @@ internal record TempCAD(CharacterAppearanceData Data)
 internal static partial class Patches
 {
     internal const string Condition_KidId = "KID_ID";
+    internal const string Child_CustomField_DialogueSheet = $"{ModEntry.ModId}/KidDialogueSheet";
+
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
     private static bool In_NPC_ChooseAppearance_Call;
@@ -160,7 +162,16 @@ internal static partial class Patches
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
     {
-        if (__instance.KidHMKFromNPCId() is string npcId)
+        if (__instance is not Child)
+            return;
+        if (
+            __instance.GetData() is CharacterData data
+            && (data.CustomFields?.TryGetValue(Child_CustomField_DialogueSheet, out string? dialogueSheet) ?? false)
+        )
+        {
+            __result = dialogueSheet;
+        }
+        else if (__instance.KidHMKFromNPCId() is string npcId)
         {
             __result = npcId;
         }

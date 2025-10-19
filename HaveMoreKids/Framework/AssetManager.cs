@@ -239,7 +239,7 @@ internal static class AssetManager
         if (name.IsEquivalentTo(Asset_Strings))
         {
             string stringsAsset = Path.Combine("i18n", e.Name.LanguageCode.ToString() ?? "default", "strings.json");
-            if (File.Exists(stringsAsset))
+            if (File.Exists(Path.Combine(ModEntry.help.DirectoryPath, stringsAsset)))
             {
                 e.LoadFromModFile<Dictionary<string, string>>(stringsAsset, AssetLoadPriority.Exclusive);
             }
