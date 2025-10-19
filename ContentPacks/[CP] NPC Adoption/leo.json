@@ -23,12 +23,11 @@
       ],
       "Entries": {
         // control 
-        "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Tuesday",
+        "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Thurs",
         // optional: use alternate dialogue sheet name for the child version
-        "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidLeoDialogue"
+        "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidLeoDialogue",
       }
     },
-    // 
     {
       "Action": "Load",
       "Target": "Characters/Dialogue/{{ModId}}_KidLeoDialogue",

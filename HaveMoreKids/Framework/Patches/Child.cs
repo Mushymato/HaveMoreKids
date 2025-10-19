@@ -27,7 +27,6 @@ internal static partial class Patches
 {
     internal const string Condition_KidId = "KID_ID";
     internal const string Child_CustomField_DialogueSheet = $"{ModEntry.ModId}/KidDialogueSheet";
-    internal const string Child_CustomField_ScheduleAsset = $"{ModEntry.ModId}/KidScheduleAsset";
 
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
@@ -162,15 +161,7 @@ internal static partial class Patches
 
     private static string ModifyScheduleAssetName(NPC npc, string scheduleAssetName)
     {
-        if (
-            npc.GetData() is CharacterData data
-            && (data.CustomFields?.TryGetValue(Child_CustomField_ScheduleAsset, out string? scheduleAsset) ?? false)
-            && scheduleAsset != null
-        )
-        {
-            return $"{AssetManager.Asset_CharactersSchedule}\\{scheduleAsset}";
-        }
-        else if (npc.GetHMKChildNPCKidId() is string kidId)
+        if (npc.GetHMKChildNPCKidId() is string kidId)
         {
             return $"{AssetManager.Asset_CharactersSchedule}\\{kidId}";
         }
@@ -223,21 +214,38 @@ internal static partial class Patches
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
     {
-        if (
-            __instance.GetData() is CharacterData data
-            && (data.CustomFields?.TryGetValue(Child_CustomField_DialogueSheet, out string? dialogueSheet) ?? false)
-        )
+        string? defaultSheetName = null;
+        if (__instance is Child)
         {
-            __result = dialogueSheet;
+            if (__instance.GetHMKAdoptedFromNPCId() is string npcId)
+            {
+                defaultSheetName = npcId;
+            }
+            else
+            {
+                defaultSheetName = __instance.Name;
+            }
         }
         else if (__instance.GetHMKChildNPCKidId() is string kidId)
         {
-            __result = kidId;
+            defaultSheetName = kidId;
         }
-        else if (__instance.GetHMKAdoptedFromNPCId() is string npcId)
+        if (defaultSheetName != null)
         {
-            __result = npcId;
+            __result = GetHMKDialogueSheet(__instance) ?? defaultSheetName;
         }
+    }
+
+    private static string? GetHMKDialogueSheet(NPC npc)
+    {
+        if (
+            npc.GetData() is CharacterData data
+            && (data.CustomFields?.TryGetValue(Child_CustomField_DialogueSheet, out string? dialogueSheet) ?? false)
+        )
+        {
+            return dialogueSheet;
+        }
+        return null;
     }
 
     private static IEnumerable<Child> GetChildrenOnFarm(FarmHouse __instance)
