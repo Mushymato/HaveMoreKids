@@ -18,6 +18,12 @@ internal static class AdoptionRegistry
 
     private static bool TileShowAdoption(GameLocation location, string[] args, Farmer farmer, Point point)
     {
+        if (Game1.player.HouseUpgradeLevel <= 1)
+        {
+            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet"));
+            return false;
+        }
+
         List<KeyValuePair<string, string>> responses =
         [
             new("Adoption_Generic", AssetManager.LoadString("Adoption_Generic", ModEntry.Config.DaysPregnant)),

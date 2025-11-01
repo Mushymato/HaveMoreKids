@@ -3,10 +3,11 @@
   "BabyNamingTitle": "What should we name our child?",
   "SpouseNaming": "{0} is naming your baby",
   "Crib_Name": "Crib",
-  "Crib_Empty": "Gramps would want you to have another kid.",
+  "Crib_Empty": "Grandpa would want you to have another kid.",
   "BirthMessage_Twin": "Surprise! Twins!",
   "Adoption_Prompt": "Welcome to the adoption registry! You can sign up to adopt a child here, regardless of whether you are married.",
   "Adoption_Generic": "Register for adoption ({0} days)",
   "Adoption_Specific": "Register to adopt {0} ({1} days)",
-  "Adoption_Done": "Your adopted child will arrive in {0} days!"
+  "Adoption_Done": "Your adopted child will arrive in {0} days!",
+  "Adoption_CantAdoptYet": "You'll need a bigger house before you can adopt."
 }

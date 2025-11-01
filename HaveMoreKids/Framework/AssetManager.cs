@@ -234,7 +234,7 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo("Data/Shops"))
             e.Edit(Edit_DataShops, AssetEditPriority.Default);
         if (e.Name.IsEquivalentTo("Maps/Hospital"))
-            e.Edit(Edit_MapsHospital, AssetEditPriority.Default);
+            e.Edit(Edit_MapsHospital, AssetEditPriority.Late);
         if (name.IsEquivalentTo(Asset_Strings))
         {
             string stringsAsset = Path.Combine("i18n", e.Name.LanguageCode.ToString() ?? "default", "strings.json");

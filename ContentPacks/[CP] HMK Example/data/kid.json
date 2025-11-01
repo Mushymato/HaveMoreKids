@@ -30,6 +30,7 @@
               "Id": "HMK_BABY_1",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}/baby"
             },
+            // TODDLER APPEARANCE
             {
               // this is the normal toddler/npc sprite
               // for tecnical reasons, all HMK children need at least one unconditional Appearance entry like this

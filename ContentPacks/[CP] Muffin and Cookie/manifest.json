@@ -1,0 +1,26 @@
+{
+  "$schema": "https://smapi.io/schemas/manifest.json",
+  "Name": "ARV Muffin and Cookie",
+  "Author": "Himetarts",
+  "Version": "0.1.0",
+  "Description": "Adding Sterling kids to the game, HaveMoreKids edition.",
+  "UniqueID": "Himetarts.ARV.HMK",
+  "UpdateKeys": [
+    "Nexus:???"
+  ],
+  "MinimumApiVersion": "4.0.0",
+  "MinimumGameVersion": "1.6",
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "mushymato.HaveMoreKids",
+      "IsRequired": true
+    },
+    {
+      "UniqueID": "Himetarts.ARV.CP",
+      "IsRequired": true
+    }
+  ]
+}
