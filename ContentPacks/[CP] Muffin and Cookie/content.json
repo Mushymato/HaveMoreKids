@@ -22,11 +22,13 @@
       "Entries": {
         "{{ModId}}_muffin": {
           "Parent": "Sterling",
+          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Muffin?"
         },
         "{{ModId}}_cookie": {
           "Parent": "Sterling",
           // guarentees that Cookie will be born after Muffin
-          "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_muffin"
+          "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_muffin",
+          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Cookie?"
         }
       }
     },

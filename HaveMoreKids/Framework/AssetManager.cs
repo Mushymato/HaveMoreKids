@@ -183,19 +183,13 @@ internal static class AssetManager
     {
         string dialogueKey;
         dialogue = null;
-        string specialPortraitPath = string.Concat(spouse.getTextureName(), "_", keyPrefix);
-        Texture2D? overridePortrait = null;
-        if (Game1.content.DoesAssetExist<Texture2D>(specialPortraitPath))
-        {
-            overridePortrait = Game1.content.Load<Texture2D>(specialPortraitPath);
-        }
+
         // case 1 specific child
         if (mostRecentChild != null)
         {
             dialogueKey = string.Concat(keyPrefix, "_", mostRecentChild.Name);
             if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
             {
-                dialogue.overridePortrait = overridePortrait;
                 return true;
             }
         }
@@ -205,7 +199,6 @@ internal static class AssetManager
             dialogueKey = string.Concat(keyPrefix, "_", i);
             if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
             {
-                dialogue.overridePortrait = overridePortrait;
                 return true;
             }
         }
@@ -216,10 +209,20 @@ internal static class AssetManager
         // case 3 default
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(keyPrefix)) is not null)
         {
-            dialogue.overridePortrait = overridePortrait;
             return true;
         }
         return false;
+    }
+
+    internal static Texture2D? GetSpouseSpecialPortrait(NPC spouse, string keyPrefix)
+    {
+        string specialPortraitPath = string.Concat("Portraits\\", spouse.getTextureName(), "_", keyPrefix);
+        ModEntry.Log(specialPortraitPath);
+        if (Game1.content.DoesAssetExist<Texture2D>(specialPortraitPath))
+        {
+            return Game1.content.Load<Texture2D>(specialPortraitPath);
+        }
+        return null;
     }
 
     internal static void Register()

@@ -131,11 +131,15 @@ public class HMKNewChildEvent : BaseFarmEvent
 
     public void afterMessage()
     {
+        Game1.activeClickableMenu = null;
+        Game1.currentSpeaker = null;
         getBabyName = true;
     }
 
     private void afterMessageNoNaming()
     {
+        Game1.activeClickableMenu = null;
+        Game1.currentSpeaker = null;
         getBabyName = true;
         naming = true;
         babyName = "NPC_CHILD_NAME";
@@ -240,8 +244,12 @@ public class HMKNewChildEvent : BaseFarmEvent
         {
             if (message != null && !Game1.dialogueUp && Game1.activeClickableMenu == null)
             {
-                if (messageDialogue != null)
+                if (messageDialogue != null && messageDialogue.speaker != null)
                 {
+                    messageDialogue.overridePortrait = AssetManager.GetSpouseSpecialPortrait(
+                        messageDialogue.speaker,
+                        "HMK_BirthMessage"
+                    );
                     messageDialogue.onFinish += isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
                     messageDialogue.speaker.setNewDialogue(messageDialogue);
                     Game1.drawDialogue(spouse);

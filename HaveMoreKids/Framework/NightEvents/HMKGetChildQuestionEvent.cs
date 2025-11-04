@@ -44,6 +44,7 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                     : "Strings\\Events:HaveBabyQuestion";
                 dialogue = new(spouse, translationKey, Game1.content.LoadString(translationKey, Game1.player.Name));
             }
+            dialogue.overridePortrait = AssetManager.GetSpouseSpecialPortrait(spouse, "HMK_HaveBabyQuestion");
             dialogue.onFinish += () =>
             {
                 Game1.currentLocation.createQuestionDialogue(
