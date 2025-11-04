@@ -28,7 +28,6 @@
         "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidJasDialogue"
       }
     },
-    // 
     {
       "Action": "Load",
       "Target": "Characters/Dialogue/{{ModId}}_KidJasDialogue",

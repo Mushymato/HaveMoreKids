@@ -14,6 +14,8 @@ public class HMKNewChildEvent : BaseFarmEvent
 
     private string? message = null;
 
+    private Dialogue? messageDialogue = null;
+
     private string? babyName = null;
 
     internal string? newKidId = null;
@@ -67,6 +69,10 @@ public class HMKNewChildEvent : BaseFarmEvent
             if (kidDef.BirthOrAdoptMessage is not null)
             {
                 message = string.Format(TokenParser.ParseText(kidDef.BirthOrAdoptMessage), childTerm);
+                if (spouse != null)
+                {
+                    messageDialogue = new Dialogue(spouse, "", message);
+                }
             }
             isAdoptedFromNPC = kidDef.AdoptedFromNPC != null;
         }
@@ -80,13 +86,18 @@ public class HMKNewChildEvent : BaseFarmEvent
                 }
             }
             else if (
-                !AssetManager.TryLoadString(
-                    $"BirthMessage_NPC_{spouse.Name}",
-                    out message,
-                    childTerm,
-                    spouse.displayName
+                AssetManager.TryGetDialogueForChild(
+                    spouse,
+                    null,
+                    "HMK_BirthMessage",
+                    Game1.player.getChildrenCount(),
+                    out messageDialogue
                 )
             )
+            {
+                message = messageDialogue.ToString();
+            }
+            else
             {
                 message = spouse.isAdoptionSpouse()
                     ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
@@ -229,8 +240,17 @@ public class HMKNewChildEvent : BaseFarmEvent
         {
             if (message != null && !Game1.dialogueUp && Game1.activeClickableMenu == null)
             {
-                Game1.drawObjectDialogue(message);
-                Game1.afterDialogues = isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
+                if (messageDialogue != null)
+                {
+                    messageDialogue.onFinish += isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
+                    messageDialogue.speaker.setNewDialogue(messageDialogue);
+                    Game1.drawDialogue(spouse);
+                }
+                else
+                {
+                    Game1.drawObjectDialogue(message);
+                    Game1.afterDialogues = isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
+                }
             }
         }
         else if (getBabyName)

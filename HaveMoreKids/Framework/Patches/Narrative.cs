@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Characters;
@@ -6,6 +8,8 @@ namespace HaveMoreKids.Framework;
 
 internal static partial class Patches
 {
+    private static readonly Regex dialogueTokenizedStringPattern = new(@"\[(HMK_\w+)\]");
+
     internal static void Apply_Narrative()
     {
         // Allow easier time of using kid actors in events
@@ -30,6 +34,29 @@ internal static partial class Patches
             prefix: new HarmonyMethod(typeof(Patches), nameof(NPC_marriageDuties_Prefix)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_marriageDuties_Postfix))
         );
+        // Put in default value for HMK tokenized strings
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Dialogue), "parseDialogueString"),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Dialogue_parseDialogueString_Prefix))
+        );
+    }
+
+    private static void Dialogue_parseDialogueString_Prefix(Dialogue __instance, ref string masterString)
+    {
+        string? kidId;
+        if (__instance.speaker is Child child)
+        {
+            kidId = child.Name;
+        }
+        else
+        {
+            kidId = __instance.speaker.GetHMKChildNPCKidId();
+        }
+        if (kidId == null)
+        {
+            return;
+        }
+        masterString = dialogueTokenizedStringPattern.Replace(masterString, $"[$1 {kidId}]");
     }
 
     private static void NPC_marriageDuties_Prefix(NPC __instance, ref int __state)
@@ -39,25 +66,19 @@ internal static partial class Patches
 
     private static void NPC_marriageDuties_Postfix(NPC __instance, ref int __state)
     {
-        if (__state > 4)
+        if (__state > 0)
         {
-            string babyName = Game1.player.getChildren().Last().displayName;
-            int childrenCount = Game1.player.getChildrenCount();
-            if (
-                AssetManager.TryGetDialogueForChildCount(
-                    __instance,
-                    "HMK_NewChild",
-                    babyName,
-                    childrenCount,
-                    out _,
-                    out MarriageDialogueReference? mdr
-                )
-            )
-            {
-                __instance.currentMarriageDialogue.Clear();
-                __instance.shouldSayMarriageDialogue.Value = true;
-                __instance.currentMarriageDialogue.Add(mdr);
-            }
+            return;
+        }
+        int childrenCount = Game1.player.getChildrenCount();
+        Child? mostRecentChild = childrenCount > 0 ? Game1.player.getChildren().Last() : null;
+        if (AssetManager.TryGetDialogueForChild(__instance, mostRecentChild, "HMK_NewChild", childrenCount, out _))
+        {
+            MarriageDialogueReference marriageDialogueReference =
+                new("MarriageDialogue", "HMK_NewChild", false, mostRecentChild?.displayName ?? "");
+            __instance.currentMarriageDialogue.Clear();
+            __instance.shouldSayMarriageDialogue.Value = true;
+            __instance.currentMarriageDialogue.Add(marriageDialogueReference);
         }
     }
 

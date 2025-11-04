@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Characters;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Shops;
 
@@ -172,42 +173,50 @@ internal static class AssetManager
         params object[] substitutions
     ) => (loaded = Game1.content.LoadStringReturnNullIfNotFound($"{Asset_Strings}:{key}", substitutions)) != null;
 
-    internal static MarriageDialogueReference? TryGetMarriageDialogueReference(string assetName, string key)
-    {
-        if (Game1.content.LoadStringReturnNullIfNotFound($"{assetName}:{key}") is null)
-        {
-            return null;
-        }
-        return new MarriageDialogueReference(assetName, key, true);
-    }
-
-    internal static bool TryGetDialogueForChildCount(
+    internal static bool TryGetDialogueForChild(
         NPC spouse,
+        Child? mostRecentChild,
         string keyPrefix,
-        string babyName,
         int childrenCount,
-        [NotNullWhen(true)] out Dialogue? dialogue,
-        [NotNullWhen(true)] out MarriageDialogueReference? marriageDialogueReference
+        [NotNullWhen(true)] out Dialogue? dialogue
     )
     {
-        marriageDialogueReference = null;
-        for (int i = childrenCount; i > 0; i--)
+        string dialogueKey;
+        dialogue = null;
+        string specialPortraitPath = string.Concat(spouse.getTextureName(), "_", keyPrefix);
+        Texture2D? overridePortrait = null;
+        if (Game1.content.DoesAssetExist<Texture2D>(specialPortraitPath))
         {
-            string dialogueKey = string.Concat(keyPrefix, "_", i);
+            overridePortrait = Game1.content.Load<Texture2D>(specialPortraitPath);
+        }
+        // case 1 specific child
+        if (mostRecentChild != null)
+        {
+            dialogueKey = string.Concat(keyPrefix, "_", mostRecentChild.Name);
             if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
             {
-                marriageDialogueReference = new MarriageDialogueReference(
-                    "MarriageDialogue",
-                    dialogueKey,
-                    false,
-                    babyName
-                );
+                dialogue.overridePortrait = overridePortrait;
                 return true;
             }
         }
+        // case 2 child count
+        for (int i = childrenCount; i > 0; i--)
+        {
+            dialogueKey = string.Concat(keyPrefix, "_", i);
+            if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
+            {
+                dialogue.overridePortrait = overridePortrait;
+                return true;
+            }
+        }
+        if (childrenCount <= 2)
+        {
+            return false;
+        }
+        // case 3 default
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(keyPrefix)) is not null)
         {
-            marriageDialogueReference = new MarriageDialogueReference("MarriageDialogue", keyPrefix, false, babyName);
+            dialogue.overridePortrait = overridePortrait;
             return true;
         }
         return false;

@@ -174,8 +174,9 @@ internal static class GameDelegates
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
     internal const string Action_ToggleChildNPC = $"{ModEntry.ModId}_ToggleChildNPC";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
-    internal const string TS_Endearment = $"{ModEntry.ModId}_Endearment";
-    internal const string TS_Endearment_Short = "HMK_Endearment";
+    internal const string TS_Endearment = "HMK_Endearment";
+    internal const string TS_EndearmentCap = "HMK_EndearmentCap";
+    internal const string TS_KidName = "HMK_KidName";
     internal const string CPT_KidDisplayName = "KidDisplayName";
     internal const string CPT_KidNPCId = "KidNPCId";
 
@@ -190,7 +191,8 @@ internal static class GameDelegates
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
         // Tokenizable String
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
-        TokenParser.RegisterParser(TS_Endearment_Short, TSEndearment);
+        TokenParser.RegisterParser(TS_EndearmentCap, TSEndearment);
+        TokenParser.RegisterParser(TS_KidName, TSKidName);
         // CP Tokens
         if (
             ModEntry.help.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")
@@ -204,14 +206,12 @@ internal static class GameDelegates
 
     private static bool TSEndearment(string[] query, out string replacement, Random random, Farmer player)
     {
-        if (
-            !ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId")
-            || !ArgUtility.TryGetOptionalBool(query, 2, out bool capitalize, out error, name: "bool capitalize")
-        )
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
-        string endearmentSubkey = ":HMK_Endearment_";
+        bool capitalize = query[0] == TS_EndearmentCap;
+        string endearmentSubkey = ":HMK_Endearment";
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? entry))
         {
             endearmentSubkey =
@@ -221,47 +221,19 @@ internal static class GameDelegates
         if (
             (
                 endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(
-                        AssetManager.Asset_CharactersDialogue,
-                        kidId,
-                        endearmentSubkey,
-                        "_",
-                        player.Gender.ToString()
-                    )
-                )
-            )
-            is not null
-        )
-        {
-            replacement = endearment;
-        }
-        else if (
-            (
-                endearment = Game1.content.LoadStringReturnNullIfNotFound(
                     string.Concat(AssetManager.Asset_CharactersDialogue, kidId, endearmentSubkey)
-                )
-            )
-            is not null
-        )
-        {
-            replacement = endearment;
-        }
-        if (
-            (
-                endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(
-                        AssetManager.Asset_CharactersDialogue,
-                        kidId,
-                        endearmentSubkey,
-                        "_",
-                        player.Gender.ToString()
-                    )
                 )
             )
                 is null
             && (
                 endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, endearmentSubkey)
+                    string.Concat(
+                        AssetManager.Asset_CharactersDialogue,
+                        kidId,
+                        endearmentSubkey,
+                        "_",
+                        player.Gender.ToString()
+                    )
                 )
             )
                 is null
@@ -286,6 +258,20 @@ internal static class GameDelegates
         {
             replacement = Lexicon.capitalize(replacement);
         }
+        return true;
+    }
+
+    private static bool TSKidName(string[] query, out string replacement, Random random, Farmer player)
+    {
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        {
+            return TokenParser.LogTokenError(query, error, out replacement);
+        }
+        if (!KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? kidEntry))
+        {
+            return TokenParser.LogTokenError(query, $"Kid '{kidId}' not found", out replacement);
+        }
+        replacement = kidEntry.DisplayName;
         return true;
     }
 

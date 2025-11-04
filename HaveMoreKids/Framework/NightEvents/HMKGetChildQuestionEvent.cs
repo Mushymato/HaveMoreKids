@@ -30,13 +30,12 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
             int childrenCount = Game1.player.getChildrenCount();
 
             if (
-                !AssetManager.TryGetDialogueForChildCount(
+                !AssetManager.TryGetDialogueForChild(
                     spouse,
+                    null,
                     "HMK_HaveBabyQuestion",
-                    "",
                     childrenCount,
-                    out Dialogue? dialogue,
-                    out _
+                    out Dialogue? dialogue
                 )
             )
             {

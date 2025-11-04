@@ -652,7 +652,7 @@ internal static class KidHandler
 
         whoseKidForTwin = null;
         string spouseNameForKid = spouse?.Name ?? Parent_SOLO_BIRTH;
-        if (newKidId != null)
+        if (!string.IsNullOrEmpty(newKidId))
         {
             CharacterData? childData = null;
             if (AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef))
@@ -671,6 +671,7 @@ internal static class KidHandler
                 if (
                     !isTwin
                     && kidDef?.Twin != null
+                    && kidDef.Twin != newKidId
                     && GameStateQuery.CheckConditions(kidDef.TwinCondition, farmHouse, Game1.player)
                 )
                 {

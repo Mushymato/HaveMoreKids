@@ -300,7 +300,7 @@ internal static partial class Patches
         }
         catch (Exception err)
         {
-            ModEntry.Log($"Error in Child_Dialogue_Transpiler:\n{err}", LogLevel.Error);
+            ModEntry.Log($"Error in Child_draw_Transpiler:\n{err}", LogLevel.Error);
             return instructions;
         }
     }
