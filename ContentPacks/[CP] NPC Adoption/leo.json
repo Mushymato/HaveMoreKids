@@ -19,19 +19,6 @@
       },
     },
     {
-      "Action": "EditData",
-      "Target": "Data/Characters",
-      "TargetField": [
-        "Leo",
-        "CustomFields"
-      ],
-      "Entries": {
-        // control 
-        "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Thurs",
-        "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidLeoDialogue",
-      }
-    },
-    {
       "Action": "Load",
       "Target": "Characters/Dialogue/{{ModId}}_KidLeoDialogue",
       "FromFile": "blank.json"
