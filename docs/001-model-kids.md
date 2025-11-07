@@ -6,16 +6,16 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 
 | Field | Type | Default | Notes |
 | ----- | ---- | ------- | ----- |
-| `Parent` | string | _null_ | This is the NPC parent of the kid. If this is set, this kid may appear when you |
+| `Parent` | string | _null_ | This is the NPC parent of the kid. If this is set, this kid may appear via night time pregnancy + new child event as long as you are married to that NPC. |
 | `Shared` | bool | `false` | When `Parent` is null and this field is true, any spouse can have this kid, including single parent adoption. |
 | `AdoptedFromNPC` | string | _null_ | The internal id of the NPC to adopt as a Child. |
-| `DefaultEnabled` | bool | `true` | If this kid should be enabled by default in the config menu. |
-| `Condition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | Controls whether this kid is available from content pack side. |
-| `IsNPCTodayCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | Controls whether the kid will become a full NPC. When this is null/FALSE, the feature is completely disabled for this kid, otherwise the GSQ is evaluated each morning to determine whether the child will "go outside" that day. |
-| `Twin` | string | The kid id of the twin who will be born during the same new child night event, as long as there's enough cribs. |
+| `DefaultEnabled` | bool | `true` | Controls whether this kid is enabled by default in config menu, player can enable/disable the kid there. |
+| `Condition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | Controls whether this kid is available from content pack side via GSQ, players cannot affect this check. |
+| `IsNPCTodayCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | Controls whether the kid will become a full NPC. When this is null/FALSE, the feature is completely disabled for this kid, otherwise the GSQ is evaluated each morning to determine whether the child will "go outside" that day. |
+| `Twin` | string | _null_ | The kid id of the twin who will be born during the same new child night event, as long as there's enough cribs. |
 | `TwinCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | A condition on whether the twin should be born. |
 | `TwinMessage` | string | _null_ | A special message to show when a twin is born. |
-| `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid, accepts tokenized strings. Will be spoken by the spouse NPC if applicable. |
+| `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid, accepts tokenized strings. Will be spoken by the parent NPC if kid is already picked ahead of night event via adoption registry or action. |
 | `CanAdoptFromAdoptionRegistry` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true, this child can be adopted from the adoption registry at Harvey's Clinic. |
 | `RoamOnFarmCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true and the config `Toddlers Roam on Farm` is enabled, the kid will go out to the farm that day. Checked once at 0610 each day. |
 | `DialogueSheetName` | string | _null_ | If set, this will be the dialogue asset name used for the Child. The final asset name will be `Characters/Dialogue/<DialogueSheetName OR KidId>`. |

@@ -16,7 +16,7 @@ Checks a child is at a certain age, works for both generic and custom kids. For 
 
 Age increases from 0 to 3 as days pass, but a given kid can switch between Toddler mode and Child NPC mode depending on [`mushymato.HaveMoreKids/Kids`](./001-model-child_data.md)'s `IsNPCTodayCondition`.
 
-HMK also provides the [`mushymato.HaveMoreKids_SetChildAge`](docs/002-extensions-triggers_actions.md) action which may change a child's age.
+HMK also provides the [`mushymato.HaveMoreKids_SetChildAge`](./002-extensions-triggers_actions.md) action which may change a child's age.
 
 ## mushymato.HaveMoreKids_HAS_CHILD \<KidId|childIndex\>
 

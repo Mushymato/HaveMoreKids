@@ -2,13 +2,13 @@
 
 HMK provides these [tokenizable strings](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
 
-All of them require a kid id as their first argument, but special logic is applied to dialogue spoken by a HMK Child/Child NPC to automatically supply the first argument if not given. This means you can simply write `[HMK_KidName]` in the kid's dialogue and it will automatically become `[HMK_KidName <own kid id>]`. However if you want the spouse to talk about the kid, then you need to explicitly write the full kid id.
+All of them require a kid id as their first argument, but special logic is applied to dialogue spoken by a HMK Child/Child NPC to automatically supply the first argument if not given. This means you can simply write `[HMK_KidName]` in the kid's dialogue and it will automatically become `[HMK_KidName <kidId of speaker>]`. However if you want to use these tokenizable strings elsewere, e.g. to have the spouse to talk about the kid, then you need to explicitly write the full kid id.
 
 ## `[HMK_Endearment <kid id>]`
 
 Resolves to the endearment this kid should use for the player.
 
-Endearments are set in the kid's dialogue asset (e.g. `Characters/Dialogue/kidId`) via special keys that are checked in-order:
+Endearments are set in the kid's dialogue asset (e.g. `Characters/Dialogue/<kidId>`) via special keys that are checked in-order:
 
 - `HMK_Endearment`: The most prioritized endearment term, ignores gender.
 - `HMK_Endearment_<gender>`: One of `HMK_Endearment_Male`, `HMK_Endearment_Female`, and `HMK_Endearment_Undefined`, respects player gender.

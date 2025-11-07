@@ -2,7 +2,7 @@
 
 A Have More Kids (HMK) content pack is a [content patcher](https://www.nexusmods.com/stardewvalley/mods/1915) content pack that provides specific data. This document assumes that you understand the basics of content patcher.
 
-This page covers the pieces need to create custom kids.
+This page covers the pieces needed to create custom kids.
 
 ## Index
 
@@ -22,7 +22,7 @@ This page covers the pieces need to create custom kids.
 
 A custom kid in HMK can have these features, as long as relevant data is provided.
 
-- Unique look that is tracked on a individual kid basis, no need to conditionally edit `Characters/Baby` and `Characters/Toddler`. Their appearance persists even if you divorce your spouse, or if you have multiple spouses via polyamory mods.
+- Unique look that is tracked on a per kid basis, no need to conditionally edit `Characters/Baby` and `Characters/Toddler`. Their appearance persists even if you divorce your spouse, or if you have multiple spouses via polyamory mods.
 - Seasonal outfits via the same `Appearance` system used by vanilla NPC.
 - Daily dialogue via dialogue asset.
 - Gifting to build friendship.
@@ -35,7 +35,7 @@ There are 2 mandatory assets that defines a kid:
 
 - [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md) is an asset identical to [vanilla NPC data](https://stardewvalleywiki.com/Modding:NPC_data) and mainly serves as a way to utilize NPC like data, especially [`Appearances`](https://stardewvalleywiki.com/Modding:NPC_data#Appearance_.26_sprite), for custom kids. See [this page](./001-model-child_data.md) for more details.
 
-Both are dictionary type data and in both cases the key of the dictionary is what the author guide refers to as "kid Id" or `kidId`.
+Both are dictionary type data and in both cases the key of the dictionary is what the author guide refers to as "kid id" or `<kidId>`.
 
 ### Dialogue
 
@@ -47,13 +47,15 @@ Things to be aware of:
 
 - You must do a `Load` to initialize the dialogue asset. Generally this is done by loading a `blank.json`.
 - You can change the child's dialogue asset name if needed, by setting [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md)'s `DialogueSheetName` field.
-- HMK adds a number of [tokenizable strings](docs/docs/002-extensions-tokenizable_strings.md) for things like parent title and kid display name. Normally they require a kid id to work, but when they appear in a dialogue asset, they will default to using the kid id of the speaking kid if applicable.
+- HMK adds a number of [tokenizable strings](./002-extensions-tokenizable_strings.md) for things like parent title and kid display name. Normally they require a kid id to work, but when they appear in a dialogue asset, they will default to using the kid id of the speaking kid if applicable.
 
 ### Gifting
 
-If you want the kid to have dialogue and accept gifts then you need to provide a gift taste data, much like normal NPC:
+If you want the kid to accept gifts then you need to provide a gift taste data, much like a normal NPC:
 
-[`Data/NPCGiftTastes`](https://stardewvalleywiki.com/Modding:Gift_taste_data) is where gift tastes are defined, you can add an entry with `<kidId>` as the key to give your child gift tastes. Additionally, the dialogue keys for accepting and rejecting items work as well, so as long as you put those in the dialogue asset.
+[`Data/NPCGiftTastes`](https://stardewvalleywiki.com/Modding:Gift_taste_data) is where gift tastes are defined, you can add an entry with `<kidId>` as the key to give your child gift tastes.
+
+Additionally, the dialogue keys for accepting and rejecting items work as well, so as long as you put those in the dialogue asset.
 
 ## Where do Kids come from?
 
@@ -74,19 +76,25 @@ HMK allows nearly all aspects of baby acquisition to be customized by the user, 
 
 The player may use the adoption registry to adopt a child at any time. By default, kids marked as `Shared` in [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md) may appear this way, and if there are no matching kids then the baby is a non-custom vanilla baby.
 
-Content pack may have a particular kid available via adoption registry by setting  `CanAdoptFromAdoptionRegistry` in [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md) to a game state query that resolves to true.
+A content pack may have a particular kid available via adoption registry by setting  `CanAdoptFromAdoptionRegistry` in [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md) to a game state query that resolves to true.
 
 ## Full NPC Mode
 
 Beyond having the kid move about the house (and optionally roam around on the farm), you can make them eventually grow up into a real NPC.
 
-This works by transforming a `mushymato.HaveMoreKids/ChildData` entry into actual `Data/Characters` entry with a generated internal NPC Id, causing them to spawn in the world. This NPC shares dialogue, appearance, friendship values with the Child, but follows a real NPC schedule. HMK then manages whether the Child in the farmhouse or the NPC in the world is visible on a given day, based on content pack condition.
+This works by transforming a `mushymato.HaveMoreKids/ChildData` entry into actual `Data/Characters` entry with a generated internal NPC Id, causing them to spawn in the world. This NPC shares dialogue, appearance, friendship values with the Child, but follows a real NPC schedule.
 
-To help with the illusion, on a day where the NPC mode should be visible, HMK will start the child off visible in the farmhouse then have them walk out the door.
+Thus there are 2 entities that are ostensibly the player's kid.
+- Child, in the farmhouse and sometimes farm
+- NPC, outside of farm
+
+On a given day, HMK manages whether the Child or the NPC is visible, based on GSQ condition set by the content pack.
+
+To help with the illusion, on a day where the NPC mode should be visible, HMK will first send the Child out the door of the farmhouse before making them invisible for the rest of the day.
 
 ### Required Data
 
-- [`mushymato.HaveMoreKids/Kids`](./001-model-child_data.md)'s `IsNPCTodayCondition` field is a [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries) that determines whether the child should be visible as a NPC today. A kid will get NPC if this field is not `null` or `"FALSE"`
+- [`mushymato.HaveMoreKids/Kids`](./001-model-child_data.md)'s `IsNPCTodayCondition` field is a [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries) that determines whether the child should be visible as a NPC today. A kid will get a NPC counterpart if this field is not `null` or `"FALSE"`.
 
 - [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s `Home` field defines where the NPC version of child will spawn. If you do not add this, then your kid NPC will appear in the middle of town just like how it works for a normal NPC.
 
@@ -99,6 +107,7 @@ This feature is very closely related to having a Child become an NPC, except it 
 
 There are 2 methods of activating adoption:
 - Set [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md)'s `CanAdoptFromAdoptionRegistry` field to a GSQ that evaluates to true. This will add the kid as a custom adoptable kid.
+- Use [`mushymato.HaveMoreKids_SetNewChildEvent`](./002-extensions-triggers_actions.md) with special value `Player` as the "spouse".
 
 ## Custom Birth Events
 
