@@ -10,7 +10,11 @@
           "BirthOrAdoptMessage": "Leo came to the farm!",
           "AdoptedFromNPC": "Leo",
           // Add Leo to the adoption registry in the hospital, this is a GSQ
-          "CanAdoptFromAdoptionRegistry": "TRUE"
+          "CanAdoptFromAdoptionRegistry": "TRUE",
+          // On thursdays, let the NPC Leo appear
+          "IsNPCTodayCondition": "DAY_OF_WEEK Thurs",
+          // optional: use alternate dialogue sheet name for the child version
+          "DialogueSheetName": "{{ModId}}_KidLeoDialogue"
         }
       },
     },
@@ -24,7 +28,6 @@
       "Entries": {
         // control 
         "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Thurs",
-        // optional: use alternate dialogue sheet name for the child version
         "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidLeoDialogue",
       }
     },

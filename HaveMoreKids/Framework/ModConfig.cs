@@ -36,7 +36,7 @@ internal class ModConfigValues
     public int DaysChild { get; set; } = 84 - 55;
     public int MaxChildren { get; set; } = 4;
     public bool AlwaysAllowGenericChildren { get; set; } = false;
-    public bool ToddlerRoamOnFarm { get; set; } = false;
+    public bool ToddlerRoamOnFarm { get; set; } = true;
     public bool UseSingleBedAsChildBed { get; set; } = false;
     public Dictionary<KidIdent, bool> EnabledKids { get; set; } = [];
 }

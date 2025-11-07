@@ -19,6 +19,8 @@ public class ModEntry : Mod
     internal static ModConfig Config = null!;
 
     internal const string ModId = "mushymato.HaveMoreKids";
+    private static bool hasLittleNPC = false;
+    internal static bool KidNPCEnabled => !hasLittleNPC && Config.DaysChild > -1;
 
     public override void Entry(IModHelper helper)
     {
@@ -29,6 +31,7 @@ public class ModEntry : Mod
         help.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
         Config = helper.ReadConfig<ModConfig>();
         KidHandler.Register();
+        KidPathingManager.Register();
         AssetManager.Register();
         MultiplayerSync.Register();
         AdoptionRegistry.Register();
@@ -54,13 +57,15 @@ public class ModEntry : Mod
         Config.Register(ModManifest);
         GameDelegates.Register(ModManifest);
         SpouseShim.Register(Helper);
+        hasLittleNPC = Helper.ModRegistry.IsLoaded("Candidus42.LittleNPCs");
     }
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
         Config.UnregistedOnNonHost = false;
         Config.ResetMenu();
-        KidHandler.GoingToTheFarm.Clear();
+        CribManager.CribAssignments.Clear();
+        KidPathingManager.ResetAllState();
     }
 
     /// <summary>SMAPI static monitor Log wrapper</summary>

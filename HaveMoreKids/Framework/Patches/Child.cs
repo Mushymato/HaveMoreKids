@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
@@ -26,7 +27,6 @@ internal record TempCAD(CharacterAppearanceData Data)
 internal static partial class Patches
 {
     internal const string Condition_KidId = "KID_ID";
-    internal const string Child_CustomField_DialogueSheet = $"{ModEntry.ModId}/KidDialogueSheet";
 
     internal static Action<NPC> NPC_ChooseAppearance_Call = null!;
     internal static Func<NPC, Stack<Dialogue>> NPC_loadCurrentDialogue_Call = null!; // coulda used reflection for this one but whatever
@@ -208,16 +208,17 @@ internal static partial class Patches
 
     private static void Farmer_getRidOfChildren_Prefix(Farmer __instance)
     {
-        KidHandler.GoingToTheFarm.Remove(__instance.UniqueMultiplayerID);
-        KidHandler.ReturnKidsToHouse(__instance.getChildren());
+        KidPathingManager.GoingToTheFarm.Remove(__instance.UniqueMultiplayerID);
+        KidPathingManager.ManagedNPCKids.RemoveWhere(kv => kv.Key.idOfParent.Value == __instance.UniqueMultiplayerID);
+        KidPathingManager.ReturnKidsToHouse(__instance.getChildren());
     }
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
     {
         string? defaultSheetName = null;
-        if (__instance is Child)
+        if (__instance is Child kid)
         {
-            if (__instance.GetHMKAdoptedFromNPCId() is string npcId)
+            if (kid.GetHMKAdoptedFromNPCId() is string npcId)
             {
                 defaultSheetName = npcId;
             }
@@ -230,6 +231,7 @@ internal static partial class Patches
         {
             defaultSheetName = kidId;
         }
+
         if (defaultSheetName != null)
         {
             __result = GetHMKDialogueSheet(__instance) ?? defaultSheetName;
@@ -239,11 +241,12 @@ internal static partial class Patches
     private static string? GetHMKDialogueSheet(NPC npc)
     {
         if (
-            npc.GetData() is CharacterData data
-            && (data.CustomFields?.TryGetValue(Child_CustomField_DialogueSheet, out string? dialogueSheet) ?? false)
+            npc is Child child
+            && child.GetHMKKidDef() is KidDefinitionData kidDef
+            && !string.IsNullOrEmpty(kidDef.DialogueSheetName)
         )
         {
-            return dialogueSheet;
+            return kidDef.DialogueSheetName;
         }
         return null;
     }
@@ -412,8 +415,10 @@ internal static partial class Patches
         {
             return true;
         }
+
         if (l is Farm)
             __instance.controller = null;
+
         if (!who.IsLocalPlayer)
         {
             return true;
@@ -523,7 +528,7 @@ internal static partial class Patches
         {
             return false;
         }
-        return KidHandler.TenMinuteUpdate(__instance);
+        return KidPathingManager.TenMinuteUpdate(__instance);
     }
 
     /// <summary>

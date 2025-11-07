@@ -5,6 +5,7 @@ using StardewValley.Events;
 using StardewValley.Extensions;
 using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
+using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
@@ -80,10 +81,7 @@ public class HMKNewChildEvent : BaseFarmEvent
         {
             if (spouse == null)
             {
-                if (!AssetManager.TryLoadString("BirthMessage_Solo", out message, childTerm))
-                {
-                    message = Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm);
-                }
+                message = Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm);
             }
             else if (
                 AssetManager.TryGetDialogueForChild(
@@ -103,8 +101,11 @@ public class HMKNewChildEvent : BaseFarmEvent
                     ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
                     : spouse.Gender switch
                     {
-                        Gender.Male => Game1.content.LoadString("Strings\\Events:BirthMessage_PlayerMother", childTerm),
                         Gender.Female => Game1.content.LoadString(
+                            "Strings\\Events:BirthMessage_PlayerMother",
+                            childTerm
+                        ),
+                        Gender.Male => Game1.content.LoadString(
                             "Strings\\Events:BirthMessage_SpouseMother",
                             childTerm,
                             spouse.displayName
@@ -271,6 +272,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             {
                 if (TickUpdate_FinishNaming())
                 {
+                    TriggerActionManager.Raise(GameDelegates.Trigger_NewChild);
                     return true;
                 }
             }

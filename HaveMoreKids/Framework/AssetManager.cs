@@ -22,6 +22,9 @@ public sealed class KidDefinitionData
     public string? AdoptedFromNPC { get; set; } = null;
     public string? BirthOrAdoptMessage { get; set; } = null;
     public string? CanAdoptFromAdoptionRegistry { get; set; } = null;
+    public string? RoamOnFarmCondition { get; set; } = null;
+    public string? IsNPCTodayCondition { get; set; } = null;
+    public string? DialogueSheetName { get; set; } = null;
 }
 
 internal static class AssetManager
@@ -60,7 +63,6 @@ internal static class AssetManager
                     value.Calendar = CalendarBehavior.HiddenAlways;
                     value.SocialTab = SocialTabBehavior.HiddenAlways;
                     value.EndSlideShow = EndSlideShowBehavior.Hidden;
-                    value.FlowerDanceCanDance = false;
                     value.PerfectionScore = false;
 
                     HashSet<CharacterAppearanceData> invalidAppearances = [];
@@ -178,7 +180,8 @@ internal static class AssetManager
         Child? mostRecentChild,
         string keyPrefix,
         int childrenCount,
-        [NotNullWhen(true)] out Dialogue? dialogue
+        [NotNullWhen(true)] out Dialogue? dialogue,
+        int minCount = -1
     )
     {
         string dialogueKey;
@@ -202,7 +205,7 @@ internal static class AssetManager
                 return true;
             }
         }
-        if (childrenCount <= 2)
+        if (childrenCount <= minCount)
         {
             return false;
         }
@@ -343,6 +346,7 @@ internal static class AssetManager
             childCharaData.DisplayName = entry.DisplayName;
             childCharaData.TextureName ??= Asset_DefaultTextureName;
             childCharaData.SpawnIfMissing = true;
+            childCharaData.CanSocialize = "TRUE";
             childCharaData.BirthSeason = entry.BirthSeason;
             childCharaData.BirthDay = entry.BirthDay;
             foreach (CharacterAppearanceData appearanceData in Enumerable.Reverse(childCharaData.Appearance))

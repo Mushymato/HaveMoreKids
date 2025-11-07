@@ -90,16 +90,61 @@ Thus there are 2 entities that are ostensibly the player's kid.
 
 On a given day, HMK manages whether the Child or the NPC is visible, based on GSQ condition set by the content pack.
 
-To help with the illusion, on a day where the NPC mode should be visible, HMK will first send the Child out the door of the farmhouse before making them invisible for the rest of the day.
-
 ### Required Data
 
 - [`mushymato.HaveMoreKids/Kids`](./001-model-child_data.md)'s `IsNPCTodayCondition` field is a [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries) that determines whether the child should be visible as a NPC today. A kid will get a NPC counterpart if this field is not `null` or `"FALSE"`.
 
-- [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s `Home` field defines where the NPC version of child will spawn. If you do not add this, then your kid NPC will appear in the middle of town just like how it works for a normal NPC.
+- [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s `Home` field defines where the NPC version of child will spawn. If you do not add this, then your kid NPC will appear in the middle of town just like how it works for a normal NPC. `Home` is a list, and a NPC may have multiple conditional `Home` entries.
 
 - [`Characters/schedules/<kidId>`](https://stardewvalleywiki.com/Modding:Schedule_data) is the schedule asset for the NPC version of the kid.
     - You must do a `Load` to initialize the schedule asset. Generally this is done by loading a `blank.json`.
+
+Aside from typical NPC schedule features, HMK provides these special features:
+
+### Leaving the Farmhouse
+
+When the Kid NPC's day start location is adjacent to the farm (e.g. BusStop, Forest), the Child version will be visible in the farmhouse when you wake up, then leave the house through front door as soon as possible before becoming invisible. Otherwise, the Child will be invisible from day start.
+
+Day start location can be controlled in one of 2 ways:
+1. [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s current `Home` entry.
+2. A 0 schedule (schedule with `time` value less than 0600).
+
+### Returning to the Farmhouse
+
+There is a special "animation" key `HMK_Home` that is not actually an animation key and instead a hint for HMK to send the kid back to the farmhouse for the rest of the day. This is done by:
+1. Overriding the schedule point to instead path to the location indicated by the `Home` field, if the target tile was `0 0`, then also include the tile from the `Home` entry.
+2. Once the Kid NPC has reached the `Home` tile, turn the Kid NPC invisible and the Child visible.
+
+Only the first `HMK_Home` marked schedule point does anything.
+
+### Schedule Examples
+
+For example let's say the Kid has this `Home` such that the `Home` tile is X:19 Y:14 in BusStop:
+```js
+{
+  "Id": "Default",
+  "Condition": null,
+  "Location": "BusStop",
+  "Tile": {
+    "X": 19,
+    "Y": 14
+  },
+  "Direction": "down"
+}
+```
+And loaded this schedule string for the day: `0700 Town 23 52 2/1010 Town 0 0 HMK_Home`, i.e. they go from home (BusStop) to Town and then back to home.
+
+The behavior will be:
+1. The Child will visually leave the farmohouse in the morning, since the `Home` tile is in a map adjacent to the `Farm`.
+2. HMK will transform the schedule into equivalent of `0700 Town 23 52 2/1010 BusStop 19 14`.
+3. When the Kid NPC completes the `1010 BusStop 19 14` schedule point, they will become invisible while the Child reappears in the farmhouse.
+
+Now if schedule string is a 0 schedule, for example `0000 Mountain 43 23 2/0700 Town 23 52 2/1010 Town 0 0 HMK_Home`:
+1. The Child will be invisible from the start of the day, because `Mountain` does not connect to `Farm` (unless another mod changes this).
+2. HMK will transform the schedule into equivalent of `0000 Mountain 43 23 2/0700 Town 23 52 2/1010 BusStop 19 14`, because the `Home` tile is unchanged.
+3. When the Kid NPC completes the `1010 BusStop 19 14` schedule point, they will become invisible while the Child reappears in the farmhouse.
+
+_Note: Although the location name of `Town` in `1010 Town 0 0 HMK_Home` is always overwritten, it's a good idea to put a real reachable location to avoid spacecore scheduler warnings_
 
 ### Adopt NPC as Child
 

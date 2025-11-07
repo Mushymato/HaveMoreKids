@@ -22,13 +22,17 @@
       "Entries": {
         "{{ModId}}_muffin": {
           "Parent": "Sterling",
-          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Muffin?"
+          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Muffin?",
+          // Stay home when it is festival, so that default child add to festival logic can be used
+          "IsNPCTodayCondition": "!IS_FESTIVAL_DAY",
         },
         "{{ModId}}_cookie": {
           "Parent": "Sterling",
           // guarentees that Cookie will be born after Muffin
           "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_muffin",
-          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Cookie?"
+          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Cookie?",
+          // Stay home when it is festival, so that default child add to festival logic can be used
+          "IsNPCTodayCondition": "!IS_FESTIVAL_DAY",
         }
       }
     },

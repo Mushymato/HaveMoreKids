@@ -43,7 +43,7 @@
               "Id": "Toddler_Costume",
               "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/costume",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}/costume",
-              "Condition": "IS_EVENT festival_fall27",
+              "Condition": "IS_FESTIVAL_DAY,IS_EVENT",
               "Precedence": -1000,
             },
           ]

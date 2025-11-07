@@ -11,7 +11,7 @@ These fields are used by kids:
 | `IsDarkSkinned` | bool | Affects picking the kid, will attempt to match the dark skin genetics if possible. |
 | `Appearance` | List\<AppearanceData\> | This works just like normal NPC appearances, but newborn/baby/crawler require special `HMK_BABY*` prefix. |
 
-Some fields are set internally by HMK and cannot be changed by the content pack:
+Some fields are set internally by HMK and cannot be changed by content packs:
 
 | Field | Value |
 | ----- | ----- |

@@ -19,8 +19,6 @@
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
-          // Stay home when it is festival, so that default child add to festival logic can be used
-          "CanSocialize": "!IS_FESTIVAL_DAY",
           "IsDarkSkinned": false,
           "Appearance": [
             // BABY APPEARANCE

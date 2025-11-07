@@ -10,23 +10,13 @@
           "BirthOrAdoptMessage": "Jas has moved in to the farm!",
           "AdoptedFromNPC": "Jas",
           // Add Jas to the adoption registry in the hospital, this is a GSQ
-          "CanAdoptFromAdoptionRegistry": "TRUE"
+          "CanAdoptFromAdoptionRegistry": "TRUE",
+          // On tuesdays, let the NPC Jas appear
+          "IsNPCTodayCondition": "DAY_OF_WEEK Tuesday",
+          // optional: use alternate dialogue sheet name for the child version
+          "DialogueSheetName": "{{ModId}}_KidJasDialogue"
         }
       },
-    },
-    {
-      "Action": "EditData",
-      "Target": "Data/Characters",
-      "TargetField": [
-        "Jas",
-        "CustomFields"
-      ],
-      "Entries": {
-        // control 
-        "mushymato.HaveMoreKids/IsNPCToday": "DAY_OF_WEEK Tuesday",
-        // optional: use alternate dialogue sheet name for the child version of Jas
-        "mushymato.HaveMoreKids/KidDialogueSheet": "{{ModId}}_KidJasDialogue"
-      }
     },
     {
       "Action": "Load",

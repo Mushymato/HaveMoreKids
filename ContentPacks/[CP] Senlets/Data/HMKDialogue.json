@@ -10,9 +10,9 @@
         "HMK_HaveBabyQuestion_1": "Wouldn't it be amazing if we somehow had another child, @...?",
         "HMK_HaveBabyQuestion_2": "Wouldn't it be amazing if we somehow had yet another child, @...?",
         // dialogues
-        "HMK_NewChild_3": "Oh @, I can't believe we have 3 children now!",
-        "HMK_NewChild_4": "Baby, baby, baby, baby, baby, baby (Yeah).",
-        "HMK_NewChild_5": "Skrell seems pretty concerned about the amount of kids we have... but look at all of them! they're just so precious."
+        "HMK_NewChild_0_3": "Oh @, I can't believe we have 3 children now!",
+        "HMK_NewChild_0_4": "Baby, baby, baby, baby, baby, baby (Yeah).",
+        "HMK_NewChild_0_5": "Skrell seems pretty concerned about the amount of kids we have... but look at all of them! they're just so precious."
       }
     }
   ]

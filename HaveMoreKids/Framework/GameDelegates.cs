@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.BellsAndWhistles;
 using StardewValley.Characters;
 using StardewValley.Delegates;
 using StardewValley.Extensions;
@@ -170,9 +169,9 @@ internal static class GameDelegates
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
     internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
     internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
+    internal const string Trigger_NewChild = $"{ModEntry.ModId}_NewChild";
     internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
-    internal const string Action_ToggleChildNPC = $"{ModEntry.ModId}_ToggleChildNPC";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
     internal const string TS_Endearment = "HMK_Endearment";
     internal const string TS_EndearmentCap = "HMK_EndearmentCap";
@@ -186,6 +185,8 @@ internal static class GameDelegates
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         GameStateQuery.Register(GSQ_HAS_ADOPTED_NPC, HAS_ADOPTED_NPC);
+        // Trigger
+        TriggerActionManager.RegisterTrigger(Trigger_NewChild);
         // TAction
         TriggerActionManager.RegisterAction(Action_SetNewChildEvent, SetNewChildEvent);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
@@ -212,16 +213,22 @@ internal static class GameDelegates
         }
         bool capitalize = query[0] == TS_EndearmentCap;
         string endearmentSubkey = ":HMK_Endearment";
+        string dialogueAsset = kidId;
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? entry))
         {
             endearmentSubkey =
                 entry.PlayerParent != player.UniqueMultiplayerID ? ":HMK_Endearment_NonParent" : ":HMK_Endearment";
         }
+        if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
+        {
+            dialogueAsset = kidId;
+        }
+
         string? endearment;
         if (
             (
                 endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(AssetManager.Asset_CharactersDialogue, kidId, endearmentSubkey)
+                    string.Concat(AssetManager.Asset_CharactersDialogue, dialogueAsset, endearmentSubkey)
                 )
             )
                 is null
@@ -229,7 +236,7 @@ internal static class GameDelegates
                 endearment = Game1.content.LoadStringReturnNullIfNotFound(
                     string.Concat(
                         AssetManager.Asset_CharactersDialogue,
-                        kidId,
+                        dialogueAsset,
                         endearmentSubkey,
                         "_",
                         player.Gender.ToString()
@@ -241,11 +248,9 @@ internal static class GameDelegates
         {
             endearment = player.Gender switch
             {
-                Gender.Male => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Male")
-                    ?? Game1.content.LoadString("Strings/Characters:Relative_Dad"),
-                Gender.Female => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Female")
-                    ?? Game1.content.LoadString("Strings/Characters:Relative_Mom"),
-                _ => AssetManager.LoadStringReturnNullIfNotFound("Endearment_Undefined") ?? player.displayName,
+                Gender.Male => Game1.content.LoadString("Strings/Characters:Relative_Dad"),
+                Gender.Female => Game1.content.LoadString("Strings/Characters:Relative_Mom"),
+                _ => player.displayName,
             };
         }
         if (endearment is null)
@@ -256,7 +261,7 @@ internal static class GameDelegates
         replacement = endearment;
         if (capitalize)
         {
-            replacement = Lexicon.capitalize(replacement);
+            replacement = Utility.capitalizeFirstLetter(replacement);
         }
         return true;
     }
@@ -267,11 +272,14 @@ internal static class GameDelegates
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
-        if (!KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? kidEntry))
+        if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? kidEntry))
         {
-            return TokenParser.LogTokenError(query, $"Kid '{kidId}' not found", out replacement);
+            replacement = kidEntry.DisplayName;
         }
-        replacement = kidEntry.DisplayName;
+        else
+        {
+            replacement = "";
+        }
         return true;
     }
 
@@ -361,7 +369,7 @@ internal static class GameDelegates
             switch (age)
             {
                 case 4:
-                    if (ModEntry.Config.DaysChild > -1)
+                    if (ModEntry.KidNPCEnabled)
                     {
                         kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
                         return true;

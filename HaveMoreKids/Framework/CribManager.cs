@@ -54,7 +54,6 @@ internal record CribAssign(Child Baby, Furniture? Furni)
 
     internal void UnplaceChild()
     {
-        ModEntry.Log($"UnplaceChild '{Baby.Name}'");
         Furni?.modData.Remove(PlacedChild);
         Baby.position.fieldChangeEvent -= OnPositionChange;
     }
@@ -160,7 +159,6 @@ internal static class CribManager
             return false;
         }
         // position the child
-
         if (cribAssign.Furni == null)
             return true;
 

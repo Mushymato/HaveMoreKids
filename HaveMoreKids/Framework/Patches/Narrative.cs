@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Extensions;
 
 namespace HaveMoreKids.Framework;
 
@@ -70,12 +71,22 @@ internal static partial class Patches
         {
             return;
         }
+        string dialogueKeyPrefix = $"HMK_NewChild_{5 - __state}";
         int childrenCount = Game1.player.getChildrenCount();
         Child? mostRecentChild = childrenCount > 0 ? Game1.player.getChildren().Last() : null;
-        if (AssetManager.TryGetDialogueForChild(__instance, mostRecentChild, "HMK_NewChild", childrenCount, out _))
+        if (
+            AssetManager.TryGetDialogueForChild(
+                __instance,
+                mostRecentChild,
+                dialogueKeyPrefix,
+                childrenCount,
+                out _,
+                minCount: 2
+            )
+        )
         {
             MarriageDialogueReference marriageDialogueReference =
-                new("MarriageDialogue", "HMK_NewChild", false, mostRecentChild?.displayName ?? "");
+                new("MarriageDialogue", dialogueKeyPrefix, false, mostRecentChild?.displayName ?? "");
             __instance.currentMarriageDialogue.Clear();
             __instance.shouldSayMarriageDialogue.Value = true;
             __instance.currentMarriageDialogue.Add(marriageDialogueReference);
@@ -84,11 +95,26 @@ internal static partial class Patches
 
     private static void EventDefaultCommands_LoadActors_Postfix(Event @event, string[] args, EventContext context)
     {
+        @event.actors.RemoveWhere(actor => actor is Child && actor.IsInvisible);
         foreach (NPC actor in @event.actors)
         {
-            if (actor is Child kid)
+            string? actorName = null;
+            if (actor is Child kid && kid.KidDisplayName(allowNull: false) is string displayName)
             {
-                ModEntry.Log($"{kid.Name}: {kid.TilePoint}");
+                kid.displayName = displayName;
+                actorName = kid.Name;
+            }
+            else if (actor.GetHMKChildNPCKidId() is string kidId)
+            {
+                actorName = kidId;
+            }
+            if (actorName != null)
+            {
+                ModEntry.Log($"Push dialogue for HMK {actor.Name} ({actorName})");
+                if (@event.TryGetFestivalDialogueForYear(actor, actorName, out var dialogue))
+                {
+                    actor.setNewDialogue(dialogue);
+                }
             }
         }
     }

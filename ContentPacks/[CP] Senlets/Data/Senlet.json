@@ -61,9 +61,6 @@
               "Sprite": "Characters/{{ModId}}_The_Baby"
             }
           ],
-          "CustomFields": {
-            "mushymato.HaveMoreKids/GoOutsideCondition": "WEATHER Here Rain Storm GreenRain"
-          }
         }
       }
     },
@@ -73,7 +70,8 @@
       "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
-          "Parent": "SenS"
+          "Parent": "SenS",
+          "RoamOnFarmCondition": "WEATHER Here Rain Storm GreenRain"
         }
       },
     },
