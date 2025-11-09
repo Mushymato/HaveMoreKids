@@ -464,16 +464,13 @@ internal sealed class ModConfig : ModConfigValues
             return;
         GMCM.Unregister(Mod);
         CheckDefaultEnabled();
-        if (!Context.IsWorldReady)
+        if (UnregistedOnNonHost)
         {
-            if (UnregistedOnNonHost)
-            {
-                SetupMenuFarmhand();
-            }
-            else
-            {
-                SetupMenu();
-            }
+            SetupMenuFarmhand();
+        }
+        else
+        {
+            SetupMenu();
         }
     }
 }

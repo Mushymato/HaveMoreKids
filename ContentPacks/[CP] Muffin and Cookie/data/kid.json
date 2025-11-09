@@ -150,6 +150,11 @@
         "Resort_Wander": "{{i18n:{{L@Kid}}.Dialogue.Resort_Wander}}",
         "Resort": "{{i18n:{{L@Kid}}.Dialogue.Resort}}",
         "GreenRain": "{{i18n:{{L@Kid}}.Dialogue.GreenRain}}",
+        // Child (FarmHouse)
+        "FarmHouse": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand2}}}}",
+        "summerFarmHouse": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand2}}}}",
+        "fallFarmHouse": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand2}}}}",
+        "winterFarmHouse": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand2}}}}",
         // Seasonals
         "spring_Mon": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
         "spring_Tue": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",

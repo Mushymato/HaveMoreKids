@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.GameData.Characters;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Locations;
 using StardewValley.Menus;
@@ -41,32 +42,68 @@ internal static partial class Patches
             prefix: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetEventsForDay_Prefix)),
             finalizer: new HarmonyMethod(typeof(Patches), nameof(Billboard_GetEventsForDay_Finalizer))
         );
-        // show hearts and gifts this week for Age 3
-        harmony.Patch(
-            original: AccessTools.DeclaredMethod(typeof(SocialPage), nameof(SocialPage.drawNPCSlot)),
-            prefix: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Prefix)),
-            finalizer: new HarmonyMethod(typeof(Patches), nameof(SocialPage_drawNPCSlot_Finalizer))
-        );
         // When child is in a crib do special drawing logic (sigh)
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Furniture), nameof(Furniture.draw)),
             prefix: new HarmonyMethod(typeof(Patches), nameof(Furniture_draw_Prefix)) { priority = Priority.First },
             postfix: new HarmonyMethod(typeof(Patches), nameof(Furniture_draw_Postfix)) { priority = Priority.Last }
         );
+        // Make social child visible and clickable
         // Hide the Child friendship entry for a adoptedfromnpc child
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(SocialPage), nameof(SocialPage.FindSocialCharacters)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(SocialPage_FindSocialCharacters_Postfix))
         );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(ProfileMenu), "_SetCharacter"),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(SocialPage__SetCharacter_Postfix))
+        );
     }
+
+    private static void SocialPage__SetCharacter_Postfix(
+        SocialPage.SocialEntry entry,
+        ref AnimatedSprite ____animatedSprite
+    )
+    {
+        if (entry.Character is Child kid && !entry.IsChild)
+        {
+            CharacterData data = kid.GetData();
+            ____animatedSprite = kid.Sprite.Clone();
+            ____animatedSprite.tempSpriteHeight = -1;
+            ____animatedSprite.SpriteWidth = data?.Size.X ?? ____animatedSprite.SpriteWidth;
+            ____animatedSprite.SpriteHeight = data?.Size.Y ?? ____animatedSprite.SpriteHeight;
+        }
+    }
+
+    private static readonly FieldInfo IsChildField = AccessTools.DeclaredField(
+        typeof(SocialPage.SocialEntry),
+        nameof(SocialPage.SocialEntry.IsChild)
+    );
+
+    private static readonly FieldInfo FriendshipField = AccessTools.DeclaredField(
+        typeof(SocialPage.SocialEntry),
+        nameof(SocialPage.SocialEntry.Friendship)
+    );
 
     private static void SocialPage_FindSocialCharacters_Postfix(ref List<SocialPage.SocialEntry> __result)
     {
         foreach (SocialPage.SocialEntry entry in Enumerable.Reverse(__result))
         {
-            if (entry.IsChild && entry.Character.GetHMKAdoptedFromNPCId() is not null)
+            if (entry.Character is Child kid)
             {
-                __result.Remove(entry);
+                if (kid.GetHMKAdoptedFromNPCId() is not null)
+                {
+                    __result.Remove(entry);
+                }
+                else if (
+                    kid.Age >= 2
+                    && kid.CanReceiveGifts()
+                    && Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship)
+                )
+                {
+                    IsChildField.SetValue(entry, false);
+                    FriendshipField.SetValue(entry, friendship);
+                }
             }
         }
     }
@@ -161,29 +198,6 @@ internal static partial class Patches
     private static void Billboard_GetEventsForDay_Finalizer()
     {
         In_Billboard_GetEventsForDay = false;
-    }
-
-    private static readonly FieldInfo IsChildField = AccessTools.DeclaredField(
-        typeof(SocialPage.SocialEntry),
-        nameof(SocialPage.SocialEntry.IsChild)
-    );
-
-    private static void SocialPage_drawNPCSlot_Prefix(SocialPage __instance, int i)
-    {
-        SocialPage.SocialEntry socialEntry = __instance.GetSocialEntry(i);
-        if (socialEntry.IsChild && socialEntry.Character is Child child && child.CanReceiveGifts())
-        {
-            IsChildField.SetValue(socialEntry, false);
-        }
-    }
-
-    private static void SocialPage_drawNPCSlot_Finalizer(SocialPage __instance, int i)
-    {
-        SocialPage.SocialEntry socialEntry = __instance.GetSocialEntry(i);
-        if (socialEntry.Character is Child)
-        {
-            IsChildField.SetValue(socialEntry, true);
-        }
     }
 
     private static void Billboard_GetBirthdays_Postfix(ref Dictionary<int, List<NPC>> __result)

@@ -209,6 +209,8 @@ internal static class KidPathingManager
                 NPCKidCtx ctx = new(kid, kidNPC, goOutsideTime, endSPD);
                 if (isFarmAdjacent)
                 {
+                    NPCKidCtx.SetKidVisible(kid);
+                    NPCKidCtx.SetNPCInvisible(kidNPC);
                     if (endSPD != null)
                     {
                         ModEntry.Log(

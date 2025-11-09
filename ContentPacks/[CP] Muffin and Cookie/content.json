@@ -34,16 +34,24 @@
     },
     // dialogue random
     {
-      "Name": "KidDialogueRand",
-      "Value": "{{Random: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25}}"
+      "Name": "KidDialogueRandRange",
+      "Value": "{{Range: 1,25}}"
     },
     {
-      "Name": "KidDialogueRand",
-      "Value": "{{Random: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36}}",
+      "Name": "KidDialogueRandRange",
+      "Value": "{{Range: 1,36}}",
       "When": {
         "MuffinIsBorn": true,
         "CookieIsBorn": true
       }
+    },
+    {
+      "Name": "KidDialogueRand",
+      "Value": "{{Random: {{KidDialogueRandRange}}}}"
+    },
+    {
+      "Name": "KidDialogueRand2",
+      "Value": "{{Random: {{KidDialogueRandRange}}}}"
     },
     // little red school house
     {
@@ -102,7 +110,7 @@
       "Target": "Characters/Dialogue/Penny",
       "Entries": {
         // add location dialogue for penny
-        "Custom_SchoolHouse": "{{i18n:{{SterlingKidRand}}}}.Xiddav.LittleRedSchoolhouse.Penny}}"
+        "Custom_SchoolHouse": "{{i18n:{{SterlingKidRand}}.Xiddav.LittleRedSchoolhouse.Penny}}"
       },
       "When": {
         "HasMod": "Xiddav.LittleRedSchoolhouse, Xiddav.LittleRedSchoolhouseLazy",

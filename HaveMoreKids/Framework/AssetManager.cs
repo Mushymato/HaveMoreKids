@@ -102,7 +102,9 @@ internal static class AssetManager
                         value.Appearance.RemoveAll(invalidAppearances.Contains);
                     }
                     if (isValidKidEntry != 0b11)
+                    {
                         invalidKidData.Add(new(key, "must have an unconditional Appearance"));
+                    }
                 }
                 if (invalidKidData.Any())
                 {
@@ -398,27 +400,18 @@ internal static class AssetManager
         }
     }
 
-    private static object ForwardFrom_ChildIdAsset(string assetName)
-    {
-        if (Game1.content.DoesAssetExist<Dictionary<string, string>>(assetName))
-        {
-            return Game1.content.Load<Dictionary<string, string>>(assetName).DeepClone();
-        }
-        return new Dictionary<string, string>();
-    }
-
     private static void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
     {
-        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
-        {
-            childData = null;
-            ModEntry.help.GameContent.InvalidateCache(Asset_KidDefinitions);
-            ModEntry.Config.ResetMenu();
-        }
         if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_KidDefinitions)))
         {
             kidDefsByKidId = null;
             kidDefsByParentId = null;
+            ModEntry.help.GameContent.InvalidateCache(Asset_ChildData);
+            ModEntry.Config.ResetMenu();
+        }
+        if (e.NamesWithoutLocale.Any(name => name.IsEquivalentTo(Asset_ChildData)))
+        {
+            childData = null;
             ModEntry.Config.ResetMenu();
         }
     }

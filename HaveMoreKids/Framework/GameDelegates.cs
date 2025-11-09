@@ -382,7 +382,7 @@ internal static class GameDelegates
     {
         if (
             !ArgUtility.TryGetOptional(query, 1, out string spouseName, out string error, name: "string spouseName")
-            || !ArgUtility.TryGetOptional(query, 1, out string kidId, out error, name: "string kidId")
+            || !ArgUtility.TryGetOptional(query, 2, out string kidId, out error, name: "string kidId")
         )
         {
             ModEntry.Log(error, LogLevel.Error);
