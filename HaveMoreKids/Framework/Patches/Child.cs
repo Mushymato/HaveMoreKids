@@ -321,13 +321,14 @@ internal static partial class Patches
 
     private static void NPC_getTextureName_Postfix(NPC __instance, ref string __result)
     {
-        if (In_NPC_ChooseAppearance_Call && __instance.GetHMKAdoptedFromNPCId() is string npcId)
+        string? npcId = __instance.GetHMKAdoptedFromNPCId();
+        if (In_NPC_ChooseAppearance_Call && npcId != null)
         {
             __result = __instance.GetData()?.TextureName ?? npcId;
         }
         else if (__instance is Child)
         {
-            if (In_Billboard_GetEventsForDay && __instance.GetHMKAdoptedFromNPCId() is null)
+            if (In_Billboard_GetEventsForDay && npcId == null)
             {
                 __result = null!;
             }
@@ -526,7 +527,7 @@ internal static partial class Patches
     {
         if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3)
         {
-            return false;
+            return true;
         }
         return KidPathingManager.TenMinuteUpdate(__instance);
     }

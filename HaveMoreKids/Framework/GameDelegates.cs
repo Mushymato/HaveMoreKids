@@ -169,6 +169,7 @@ internal static class GameDelegates
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
     internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
     internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
+    internal const string GSQ_WILL_HAVE_CHILD = $"{ModEntry.ModId}_WILL_HAVE_CHILD";
     internal const string Trigger_NewChild = $"{ModEntry.ModId}_NewChild";
     internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
@@ -176,8 +177,10 @@ internal static class GameDelegates
     internal const string TS_Endearment = "HMK_Endearment";
     internal const string TS_EndearmentCap = "HMK_EndearmentCap";
     internal const string TS_KidName = "HMK_KidName";
+    internal const string TS_RandomSiblingName = "HMK_RandomSiblingName";
     internal const string CPT_KidDisplayName = "KidDisplayName";
     internal const string CPT_KidNPCId = "KidNPCId";
+    internal const string PLAYER_PARENT = "Player";
 
     internal static void Register(IManifest mod)
     {
@@ -185,6 +188,7 @@ internal static class GameDelegates
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         GameStateQuery.Register(GSQ_HAS_ADOPTED_NPC, HAS_ADOPTED_NPC);
+        GameStateQuery.Register(GSQ_WILL_HAVE_CHILD, WILL_HAVE_CHILD);
         // Trigger
         TriggerActionManager.RegisterTrigger(Trigger_NewChild);
         // TAction
@@ -194,6 +198,7 @@ internal static class GameDelegates
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
         TokenParser.RegisterParser(TS_EndearmentCap, TSEndearment);
         TokenParser.RegisterParser(TS_KidName, TSKidName);
+        TokenParser.RegisterParser(TS_RandomSiblingName, TSRandomSiblingName);
         // CP Tokens
         if (
             ModEntry.help.ModRegistry.GetApi<Integration.IContentPatcherAPI>("Pathoschild.ContentPatcher")
@@ -283,6 +288,28 @@ internal static class GameDelegates
         return true;
     }
 
+    private static bool TSRandomSiblingName(string[] query, out string replacement, Random random, Farmer player)
+    {
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        {
+            return TokenParser.LogTokenError(query, error, out replacement);
+        }
+        replacement = "";
+        if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? thisKid))
+        {
+            List<string> siblings = [];
+            foreach ((string key, KidEntry kidEntry) in KidHandler.KidEntries)
+            {
+                if (key == kidId || thisKid.PlayerParent != thisKid.PlayerParent)
+                    continue;
+                siblings.Add(kidEntry.DisplayName);
+            }
+            if (siblings.Count > 0)
+                replacement = random.ChooseFrom(siblings);
+        }
+        return true;
+    }
+
     private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true, bool searchForAdoptedNPC = false)
     {
         List<Child> children = player.getChildren();
@@ -310,7 +337,7 @@ internal static class GameDelegates
 
     private static bool HAS_CHILD(string[] query, GameStateQueryContext context)
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error))
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "string kidId"))
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;
@@ -320,12 +347,50 @@ internal static class GameDelegates
 
     private static bool HAS_ADOPTED_NPC(string[] query, GameStateQueryContext context)
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error))
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "string kidId"))
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;
         }
         return FindChild(context.Player, kidId, allowIdx: false, searchForAdoptedNPC: true) != null;
+    }
+
+    private static bool WILL_HAVE_CHILD(string[] query, GameStateQueryContext context)
+    {
+        if (
+            !ArgUtility.TryGetOptional(query, 1, out string spouseName, out string error, name: "string spouseName")
+            || !ArgUtility.TryGetOptional(query, 1, out string kidId, out error, name: "string kidId")
+        )
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+
+        bool anySpouse = spouseName == null || spouseName.EqualsIgnoreCase("Any");
+        uint playerNewChildStat = Game1.player.stats.Get(Stats_daysUntilNewChild);
+        if (
+            playerNewChildStat > 0
+            && (anySpouse || spouseName.EqualsIgnoreCase(PLAYER_PARENT))
+            && (kidId == null || Game1.player.NextKidId() == kidId)
+        )
+        {
+            return true;
+        }
+
+        foreach (NPC spouse in SpouseShim.GetSpouses(Game1.player))
+        {
+            if (!anySpouse && spouse.Name != spouseName)
+                continue;
+            if (!SpouseShim.TryGetNPCFriendship(Game1.player, spouse, out Friendship? spouseFriendship))
+            {
+                continue;
+            }
+            if (spouseFriendship.DaysUntilBirthing >= 0)
+            {
+                return kidId == null || spouse.NextKidId() == kidId;
+            }
+        }
+        return false;
     }
 
     private static bool CHILD_AGE(string[] query, GameStateQueryContext context)
@@ -416,13 +481,12 @@ internal static class GameDelegates
             || !ArgUtility.TryGetOptional(args, 2, out string? kidId, out error, name: "string? kidId")
             || !ArgUtility.TryGetOptional(args, 3, out string? spouseName, out error, name: "string? spouseName")
             || !ArgUtility.TryGetOptional(args, 4, out string? message, out error, name: "string? message")
-            || !ArgUtility.TryGetOptionalEnum(args, 5, out Gender gender, out error, name: "string? gender")
         )
         {
             return false;
         }
 
-        return DoSetNewChildEvent(out error, daysUntilNewChild, kidId, spouseName, message, gender);
+        return DoSetNewChildEvent(out error, daysUntilNewChild, kidId, spouseName, message);
     }
 
     internal static bool DoSetNewChildEvent(
@@ -431,7 +495,7 @@ internal static class GameDelegates
         string? kidId,
         string? spouseName,
         string? message,
-        Gender gender
+        bool skipHomeCheck = false
     )
     {
         if (daysUntilNewChild < 0)
@@ -440,12 +504,13 @@ internal static class GameDelegates
             return false;
         }
 
-        if (!HomeIsValidForPregnancy(Utility.getHomeOfFarmer(Game1.player), out error))
+        if (!skipHomeCheck && !HomeIsValidForPregnancy(Utility.getHomeOfFarmer(Game1.player), out error))
         {
             return false;
         }
+        error = "";
 
-        if (spouseName.EqualsIgnoreCase("Player"))
+        if (spouseName.EqualsIgnoreCase(PLAYER_PARENT))
         {
             // solo adopt path
             // this is +1 because stats get unset at 0

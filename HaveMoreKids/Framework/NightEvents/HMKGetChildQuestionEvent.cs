@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Events;
+using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
@@ -110,10 +111,7 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
             if (nextBirthingDateField.GetValue(friendship) is Netcode.NetRef<WorldDate> nextBirthingDate)
             {
                 nextBirthingDatePS.Value = nextBirthingDate;
-                if (ModEntry.Config.DaysPregnant != 14)
-                {
-                    nextBirthingDate.fieldChangeVisibleEvent += OnFieldChangeVisible;
-                }
+                nextBirthingDate.fieldChangeVisibleEvent += OnFieldChangeVisible;
             }
             Game1.player.team.SendProposal(receiver, ProposalType.Baby);
         }
@@ -121,7 +119,7 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
 
     private void OnFieldChangeVisible(Netcode.NetRef<WorldDate> field, WorldDate oldValue, WorldDate newValue)
     {
-        if (field == nextBirthingDatePS.Value && newValue.TotalDays - oldValue.TotalDays == 14)
+        if (field == nextBirthingDatePS.Value)
         {
             ModEntry.Log($"Modifying player pregnancy days");
             nextBirthingDatePS.Value.fieldChangeVisibleEvent -= OnFieldChangeVisible;

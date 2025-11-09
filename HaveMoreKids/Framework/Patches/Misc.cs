@@ -190,7 +190,8 @@ internal static partial class Patches
     {
         foreach (Child kid in KidHandler.AllKids())
         {
-            ModEntry.Log($"{Game1.currentSeason}: {kid.Birthday_Season}/{kid.Birthday_Day}");
+            if (kid.GetHMKAdoptedFromNPCId() is not null)
+                continue;
             if (kid.Birthday_Season != Game1.currentSeason)
                 continue;
             if (!__result.TryGetValue(kid.Birthday_Day, out List<NPC>? npcs))

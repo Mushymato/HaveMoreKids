@@ -22,6 +22,7 @@ public sealed class KidDefinitionData
     public string? AdoptedFromNPC { get; set; } = null;
     public string? BirthOrAdoptMessage { get; set; } = null;
     public string? CanAdoptFromAdoptionRegistry { get; set; } = null;
+    public int? DaysFromAdoptionRegistry { get; set; } = null;
     public string? RoamOnFarmCondition { get; set; } = null;
     public string? IsNPCTodayCondition { get; set; } = null;
     public string? DialogueSheetName { get; set; } = null;

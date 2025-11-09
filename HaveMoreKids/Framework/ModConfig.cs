@@ -65,7 +65,7 @@ internal sealed class ModConfig : ModConfigValues
         DaysChild = 84 - 55;
         MaxChildren = 4;
         AlwaysAllowGenericChildren = false;
-        ToddlerRoamOnFarm = false;
+        ToddlerRoamOnFarm = true;
         UseSingleBedAsChildBed = false;
         EnabledKids.Clear();
         CheckDefaultEnabled();

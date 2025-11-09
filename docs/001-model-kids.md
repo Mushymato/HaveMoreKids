@@ -1,6 +1,6 @@
 # Data Asset: mushymato.HaveMoreKids/Kids
 
-Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy/adoption. This is also how you can create a child version associated with an existing NPC. The key `mushymato.HaveMoreKids/Kids` is the kid id, and should match an entry in `mushymato.HaveMoreKids/ChildData`.
+Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy/adoption. This is also how you can create a child version associated with an existing NPC. The key of the `mushymato.HaveMoreKids/Kids` asset is the kid id, and should match an entry in `mushymato.HaveMoreKids/ChildData`.
 
 ## Structure
 
@@ -8,7 +8,7 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 | ----- | ---- | ------- | ----- |
 | `Parent` | string | _null_ | This is the NPC parent of the kid. If this is set, this kid may appear via night time pregnancy + new child event as long as you are married to that NPC. |
 | `Shared` | bool | `false` | When `Parent` is null and this field is true, any spouse can have this kid, including single parent adoption. |
-| `AdoptedFromNPC` | string | _null_ | The internal id of the NPC to adopt as a Child. |
+| `AdoptedFromNPC` | string | _null_ | The internal id of the NPC to adopt as a Child. When using this feature, the kid id **MUST** be identical to this value. |
 | `DefaultEnabled` | bool | `true` | Controls whether this kid is enabled by default in config menu, player can enable/disable the kid there. |
 | `Condition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | Controls whether this kid is available from content pack side via GSQ, players cannot affect this check. |
 | `IsNPCTodayCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | Controls whether the kid will become a full NPC. When this is null/FALSE, the feature is completely disabled for this kid, otherwise the GSQ is evaluated each morning to determine whether the child will "go outside" that day. |
@@ -17,6 +17,7 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 | `TwinMessage` | string | _null_ | A special message to show when a twin is born. |
 | `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid, accepts tokenized strings. Will be spoken by the parent NPC if kid is already picked ahead of night event via adoption registry or action. |
 | `CanAdoptFromAdoptionRegistry` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true, this child can be adopted from the adoption registry at Harvey's Clinic. |
+| `DaysFromAdoptionRegistry` | int | _null_ | Number of days before child arrives, when adopted via adoption registry. If this is not set, the player configured day is used. |
 | `RoamOnFarmCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true and the config `Toddlers Roam on Farm` is enabled, the kid will go out to the farm that day. Checked once at 0610 each day. |
 | `DialogueSheetName` | string | _null_ | If set, this will be the dialogue asset name used for the Child. The final asset name will be `Characters/Dialogue/<DialogueSheetName OR KidId>`. |
 
@@ -42,6 +43,7 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
       "TwinMessage": "<special twin message to show>",
       "BirthOrAdoptMessage": "<special birth or adoption message>",
       "CanAdoptFromAdoptionRegistry": "<game state query>",
+      "DaysFromAdoptionRegistry": <number of days>,
       "RoamOnFarmCondition": "<game state query>",
       "DialogueSheetName": "<alternate dialogue sheet name>",
     }

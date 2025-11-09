@@ -36,9 +36,7 @@ internal static class KidHandler
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
     private const string FL_ModData_OtherParent = "aedenthorn.FreeLove/OtherParent";
-    private const string Child_ModData_RoamOnFarm = $"{ModEntry.ModId}/RoamOnFarm";
     internal const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
-    private const string Character_CustomField_IsNPCToday = $"{ModEntry.ModId}/IsNPCToday";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
 
     internal const string NPCChild_Prefix = $"{ModEntry.ModId}@AdoptedFromNPC@";
@@ -136,9 +134,9 @@ internal static class KidHandler
         return null;
     }
 
-    internal static string? NextKidId(this Character farmer)
+    internal static string? NextKidId(this Character character)
     {
-        if (farmer.modData.TryGetValue(Character_ModData_NextKidId, out string nextKidId))
+        if (character.modData.TryGetValue(Character_ModData_NextKidId, out string nextKidId))
         {
             return nextKidId;
         }

@@ -70,7 +70,14 @@ public class HMKNewChildEvent : BaseFarmEvent
             if (kidDef.BirthOrAdoptMessage is not null)
             {
                 message = string.Format(TokenParser.ParseText(kidDef.BirthOrAdoptMessage), childTerm);
-                if (spouse != null)
+                if (
+                    kidDef.AdoptedFromNPC != null
+                    && KidHandler.GetNonChildNPCByName(kidDef.AdoptedFromNPC) is NPC adoptFrom
+                )
+                {
+                    messageDialogue = new Dialogue(adoptFrom, "", message);
+                }
+                else if (spouse != null)
                 {
                     messageDialogue = new Dialogue(spouse, "", message);
                 }
@@ -97,25 +104,26 @@ public class HMKNewChildEvent : BaseFarmEvent
             }
             else
             {
-                message = spouse.isAdoptionSpouse()
-                    ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
-                    : spouse.Gender switch
-                    {
-                        Gender.Female => Game1.content.LoadString(
-                            "Strings\\Events:BirthMessage_PlayerMother",
-                            childTerm
-                        ),
-                        Gender.Male => Game1.content.LoadString(
-                            "Strings\\Events:BirthMessage_SpouseMother",
-                            childTerm,
-                            spouse.displayName
-                        ),
-                        Gender.Undefined => Game1.content.LoadString(
-                            "Strings\\Events:BirthMessage_Adoption",
-                            childTerm
-                        ),
-                        _ => throw new NotImplementedException(),
-                    };
+                message =
+                    (spouse.isAdoptionSpouse() || isSoloAdopt)
+                        ? Game1.content.LoadString("Strings\\Events:BirthMessage_Adoption", childTerm)
+                        : spouse.Gender switch
+                        {
+                            Gender.Male => Game1.content.LoadString(
+                                "Strings\\Events:BirthMessage_PlayerMother",
+                                childTerm
+                            ),
+                            Gender.Female => Game1.content.LoadString(
+                                "Strings\\Events:BirthMessage_SpouseMother",
+                                childTerm,
+                                spouse.displayName
+                            ),
+                            Gender.Undefined => Game1.content.LoadString(
+                                "Strings\\Events:BirthMessage_Adoption",
+                                childTerm
+                            ),
+                            _ => throw new NotImplementedException(),
+                        };
             }
         }
 

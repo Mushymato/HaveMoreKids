@@ -4,7 +4,11 @@ HMK provides these [triggers and actions](https://stardewvalleywiki.com/Modding:
 
 ## Trigger: mushymato.HaveMoreKids_NewChild
 
-Trigger for use with `Data/TriggerActions` at the end of a new child night event that results in a child.
+Trigger for use with `Data/TriggerActions`, raised at the end of a new child night event that results in a child.
+
+## Trigger: mushymato.HaveMoreKids_Adoption
+
+Trigger for use with `Data/TriggerActions`, raised when adoption via adoption registry has just occurred. Does not fire any other means of new child.
 
 ## Action: mushymato.HaveMoreKids_SetNewChildEvent \<daysUntilNewChild\> [kidId] [spouse] [message]
 

@@ -14,7 +14,9 @@
           // On tuesdays, let the NPC Jas appear
           "IsNPCTodayCondition": "DAY_OF_WEEK Tuesday",
           // optional: use alternate dialogue sheet name for the child version
-          "DialogueSheetName": "{{ModId}}_KidJasDialogue"
+          "DialogueSheetName": "{{ModId}}_KidJasDialogue",
+          // optional: make adoption always tonight
+          "DaysFromAdoptionRegistry": 0
         }
       },
     },

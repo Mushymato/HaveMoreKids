@@ -4,50 +4,58 @@ using StardewValley;
 using StardewValley.Delegates;
 using StardewValley.GameData.Characters;
 using StardewValley.TokenizableStrings;
+using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework;
 
 internal static class AdoptionRegistry
 {
     internal const string Action_ShowAdoption = $"{ModEntry.ModId}_ShowAdoption";
+    internal const string Trigger_Adoption = $"{ModEntry.ModId}_Adoption";
 
     internal static void Register()
     {
         GameLocation.RegisterTileAction(Action_ShowAdoption, TileShowAdoption);
+        TriggerActionManager.RegisterTrigger(Trigger_Adoption);
     }
 
     private static bool TileShowAdoption(GameLocation location, string[] args, Farmer farmer, Point point)
     {
-        if (Game1.player.HouseUpgradeLevel <= 1)
+        if (Game1.player.HouseUpgradeLevel < 2)
         {
-            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet"));
+            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_BiggerHouse"));
             return false;
         }
 
-        List<KeyValuePair<string, string>> responses =
-        [
-            new("Adoption_Generic", AssetManager.LoadString("Adoption_Generic", ModEntry.Config.DaysPregnant)),
-        ];
+        List<KeyValuePair<string, string>> responses = [];
+
+        if (CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(Game1.player)))
+        {
+            responses.Add(
+                new("Adoption_Generic", FormAdoptionOptionText("Adoption_Generic", ModEntry.Config.DaysPregnant, ""))
+            );
+        }
+
         GameStateQueryContext ctx = new(location, farmer, null, null, null);
-        foreach ((string kidId, KidDefinitionData def) in AssetManager.KidDefsByKidId)
+        foreach ((string kidId, KidDefinitionData kidDef) in AssetManager.KidDefsByKidId)
         {
             if (
                 KidHandler.KidEntries.ContainsKey(kidId)
-                || def.AdoptedFromNPC != null && KidHandler.KidEntries.Values.Any(entry => entry.KidNPCId == kidId)
+                || kidDef.AdoptedFromNPC != null && KidHandler.KidEntries.Values.Any(entry => entry.KidNPCId == kidId)
             )
             {
                 continue;
             }
             if (
-                def.CanAdoptFromAdoptionRegistry != null
-                && GameStateQuery.CheckConditions(def.CanAdoptFromAdoptionRegistry, ctx)
+                kidDef.CanAdoptFromAdoptionRegistry != null
+                && GameStateQuery.CheckConditions(kidDef.CanAdoptFromAdoptionRegistry, ctx)
                 && !Game1.getAllFarmers().Any(player => player.NextKidId() is string nextKidId && nextKidId == kidId)
             )
             {
                 string? displayName = null;
                 if (
-                    def.AdoptedFromNPC != null
-                    && KidHandler.GetNonChildNPCByName(def.AdoptedFromNPC) is NPC npc
+                    kidDef.AdoptedFromNPC != null
+                    && KidHandler.GetNonChildNPCByName(kidDef.AdoptedFromNPC) is NPC npc
                     && npc.GetData() is CharacterData npcData
                 )
                 {
@@ -62,20 +70,37 @@ internal static class AdoptionRegistry
                     ModEntry.Log($"No data found for '{kidId}', skipping", LogLevel.Error);
                     continue;
                 }
+                int daysToAdopt = kidDef.DaysFromAdoptionRegistry ?? ModEntry.Config.DaysPregnant;
                 responses.Add(
-                    new(
-                        $"Adoption_{kidId}",
-                        AssetManager.LoadStringReturnNullIfNotFound(
-                            "Adoption_Specific",
-                            displayName,
-                            ModEntry.Config.DaysPregnant
-                        )
-                    )
+                    new($"Adoption_{kidId}", FormAdoptionOptionText("Adoption_Specific", daysToAdopt, displayName))
                 );
             }
         }
+        if (responses.Count == 0)
+        {
+            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_NoCrib"));
+            return false;
+        }
+
         location.ShowPagedResponses(AssetManager.LoadString("Adoption_Prompt"), responses, OnResponse);
         return true;
+    }
+
+    private static string FormAdoptionOptionText(string translationKey, int daysToAdopt, string displayName)
+    {
+        return AssetManager.LoadStringReturnNullIfNotFound(
+            translationKey,
+            AssetManager.LoadString(
+                daysToAdopt switch
+                {
+                    0 => "Adoption_Time_Tonight",
+                    1 => "Adoption_Time_Day",
+                    _ => "Adoption_Time_Days",
+                },
+                daysToAdopt
+            ),
+            displayName
+        );
     }
 
     private static void OnResponse(string obj)
@@ -88,20 +113,29 @@ internal static class AdoptionRegistry
                 out _,
                 ModEntry.Config.DaysPregnant,
                 null,
-                "Player",
-                AssetManager.LoadString("Adoption_Done", ModEntry.Config.DaysPregnant),
-                Gender.Undefined
+                GameDelegates.PLAYER_PARENT,
+                AssetManager.LoadString("Adoption_Done")
             );
-            return;
         }
-        string kidId = obj.AsSpan()[9..].ToString();
-        GameDelegates.DoSetNewChildEvent(
-            out _,
-            ModEntry.Config.DaysPregnant,
-            kidId,
-            "Player",
-            AssetManager.LoadString("Adoption_Done", ModEntry.Config.DaysPregnant),
-            Gender.Undefined
-        );
+        else
+        {
+            string kidId = obj.AsSpan()[9..].ToString();
+            if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
+            {
+                GameDelegates.DoSetNewChildEvent(
+                    out _,
+                    kidDef.DaysFromAdoptionRegistry ?? ModEntry.Config.DaysPregnant,
+                    kidId,
+                    GameDelegates.PLAYER_PARENT,
+                    AssetManager.LoadString("Adoption_Done"),
+                    skipHomeCheck: kidDef.AdoptedFromNPC != null
+                );
+            }
+            else
+            {
+                return;
+            }
+        }
+        TriggerActionManager.Raise(Trigger_Adoption);
     }
 }

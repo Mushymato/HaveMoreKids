@@ -91,6 +91,10 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, SchedulePathDescription? EndSPD
     }
 }
 
+internal record GoingToFarmCtx(Child Kid, Point ExitPoint, int QueueTime);
+
+internal record FarmhouseDoorInfo(Point DoorExit, Point HouseEntrance, List<Point> OpenTiles);
+
 internal static class KidPathingManager
 {
     internal const string Child_ModData_RoamOnFarm = $"{ModEntry.ModId}/RoamOnFarm";
@@ -104,11 +108,11 @@ internal static class KidPathingManager
     }
 
     internal static readonly Dictionary<Child, NPCKidCtx> ManagedNPCKids = [];
-    internal static readonly Dictionary<long, (Child, Point)> GoingToTheFarm = [];
-    internal static readonly ConditionalWeakTable<FarmHouse, Tuple<Point, Point>?> FarmhouseDoors = [];
+    internal static readonly Dictionary<long, GoingToFarmCtx> GoingToTheFarm = [];
+    internal static readonly ConditionalWeakTable<FarmHouse, FarmhouseDoorInfo?> FarmhouseDoors = [];
     internal static HashSet<string>? FarmAdjacent = null;
 
-    private static Tuple<Point, Point>? GetFarmhouseDoor(FarmHouse farmhouse)
+    private static FarmhouseDoorInfo? GetFarmhouseDoor(FarmHouse farmhouse)
     {
         if (farmhouse.GetParentLocation() is not Farm farm)
         {
@@ -124,9 +128,24 @@ internal static class KidPathingManager
             }
             doorExit = new(warp.X, warp.Y - 2);
             houseEntrance = new(warp.TargetX, warp.TargetY);
-            return new(doorExit, houseEntrance);
+            break;
         }
-        return new(doorExit, houseEntrance);
+        // Point trial = new(houseEntrance.X + Random.Shared.Next(-8, 8), houseEntrance.Y + 2 + Random.Shared.Next(0, 16));
+        List<Point> openTiles = [];
+        Point trial = Point.Zero;
+        for (int i = -8; i <= 8; i++)
+        {
+            for (int j = 0; j <= 16; j++)
+            {
+                trial.X = houseEntrance.X + i;
+                trial.Y = houseEntrance.Y + j;
+                if (IsTileStandable(farm, trial))
+                {
+                    openTiles.Add(trial);
+                }
+            }
+        }
+        return new(doorExit, houseEntrance, openTiles);
     }
 
     internal static void AddManagedNPCKid(Child kid, NPC kidNPC, bool goOutside)
@@ -176,16 +195,19 @@ internal static class KidPathingManager
             kidNPC.resetCurrentDialogue();
             kidNPC.Sprite.UpdateSourceRect();
 
-            if (endSPD != null)
+            FarmAdjacent ??= FindLocationsAdjacentToFarm(Game1.getFarm());
+            bool isFarmAdjacent = FarmAdjacent.Contains(kidNPC.currentLocation.NameOrUniqueName);
+
+            if (endSPD != null || isFarmAdjacent)
             {
                 NPCKidCtx ctx = new(kid, kidNPC, endSPD);
-                FarmAdjacent ??= FindLocationsAdjacentToFarm(Game1.getFarm());
-                if (!FarmAdjacent.Contains(kidNPC.currentLocation.NameOrUniqueName))
-                {
+                if (isFarmAdjacent)
                     ctx.SetKidToPathedOutside();
-                }
                 ManagedNPCKids[kid] = ctx;
-                ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) will go outside as NPC today", LogLevel.Info);
+                ModEntry.Log(
+                    $"Kid '{kid.displayName}' ({kid.Name}) will go outside as NPC today (isFarmAdjacent:{isFarmAdjacent}, endSPD:{endSPD != null})",
+                    LogLevel.Info
+                );
             }
             else
             {
@@ -249,11 +271,14 @@ internal static class KidPathingManager
         }
         else
         {
-            // result = Random.Shared.NextBool();
-            result = true;
+            result = !kid.currentLocation.IsRainingHere();
         }
-
         kid.modData[Child_ModData_RoamOnFarm] = result ? "T" : "F";
+
+        if (result)
+        {
+            ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) will play outside on the farm today");
+        }
         return result;
     }
 
@@ -273,6 +298,13 @@ internal static class KidPathingManager
             return false;
         }
 
+        // kid is on the farm
+        if (kid.currentLocation is Farm)
+        {
+            FarmPathFinding(kid);
+            return false;
+        }
+
         // kid not in a proper farmhouse, return early
         if (kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
         {
@@ -285,9 +317,7 @@ internal static class KidPathingManager
             return SendKidToOutside(kid, farmhouse, farm);
         }
 
-        // while the kid is on the farm, do some path find controller things
-        FarmPathFinding(kid);
-        return false;
+        return true;
     }
 
     private static bool SendKidToOutside(Child kid, FarmHouse farmhouse, Farm farm)
@@ -309,63 +339,57 @@ internal static class KidPathingManager
             return false;
         }
 
-        if (FarmhouseDoors.GetValue(farmhouse, GetFarmhouseDoor) is not (Point doorExit, Point houseEntry))
+        if (FarmhouseDoors.GetValue(farmhouse, GetFarmhouseDoor) is not FarmhouseDoorInfo farmhouseDoorInfo)
         {
-            return true;
+            return false;
         }
 
         ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside");
 
-        for (int i = 0; i < 1000; i++)
+        Point trial = Random.Shared.ChooseFrom(farmhouseDoorInfo.OpenTiles);
+        kid.controller = new PathFindController(kid, farmhouse, farmhouseDoorInfo.DoorExit, -1, WarpKidToFarm);
+        if (
+            kid.controller.pathToEndPoint == null
+            || !kid.controller.pathToEndPoint.Any()
+            || !kid.currentLocation.isTileOnMap(kid.controller.pathToEndPoint.Last())
+        )
         {
-            Point trial = new(houseEntry.X + Random.Shared.Next(-8, 8), houseEntry.Y + 2 + Random.Shared.Next(0, 16));
-            if (IsTileStandable(farm, trial))
-            {
-                kid.controller = new PathFindController(kid, farmhouse, doorExit, -1, WarpKidToFarm);
-                if (
-                    kid.controller.pathToEndPoint == null
-                    || !kid.controller.pathToEndPoint.Any()
-                    || !kid.currentLocation.isTileOnMap(kid.controller.pathToEndPoint.Last())
-                )
-                {
-                    kid.controller = null;
-                    return true;
-                }
-                else
-                {
-                    GoingToTheFarm[kid.idOfParent.Value] = new(kid, trial);
-                    return false;
-                }
-            }
+            kid.controller = null;
+            return true;
         }
-
-        return true;
+        else
+        {
+            GoingToTheFarm[kid.idOfParent.Value] = new(kid, trial, Game1.timeOfDay);
+            return false;
+        }
     }
 
     private static bool SendEnrouteKidOutside(Child kid, Farm farm)
     {
-        // if kid ought to be outside already, skip directly to warp
-        if (GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) goingInfo))
+        if (!GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out GoingToFarmCtx? goingInfo))
         {
-            if (goingInfo.Item1 == kid)
-            {
-                if (kid.controller == null)
-                {
-                    // lost controller, try to determine which method we wanted
-                    if (ManagedNPCKids.TryGetValue(kid, out NPCKidCtx? ctx))
-                    {
-                        DelayedAction.functionAfterDelay(() => ctx.RouteEnd_SetKidInvisibleAndNPCVisible(kid, farm), 0);
-                    }
-                    else
-                    {
-                        DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
-                    }
-                    return true;
-                }
-                DelayedAction.functionAfterDelay(() => kid.controller.endBehaviorFunction?.Invoke(kid, farm), 0);
-                return true;
-            }
+            return false;
         }
+        // force one kid at a time
+        if (goingInfo.QueueTime == Game1.timeOfDay || goingInfo.Kid != kid)
+        {
+            return true;
+        }
+        // if kid ought to be outside already, skip directly to warp
+        if (kid.controller == null)
+        {
+            // lost controller, try to determine which method we wanted
+            if (ManagedNPCKids.TryGetValue(kid, out NPCKidCtx? ctx))
+            {
+                DelayedAction.functionAfterDelay(() => ctx.RouteEnd_SetKidInvisibleAndNPCVisible(kid, farm), 0);
+            }
+            else
+            {
+                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
+            }
+            return false;
+        }
+        DelayedAction.functionAfterDelay(() => kid.controller.endBehaviorFunction?.Invoke(kid, farm), 0);
         return false;
     }
 
@@ -415,9 +439,9 @@ internal static class KidPathingManager
             return;
 
         Farm playerFarm = Game1.getFarm();
-        foreach ((Child kid, _) in GoingToTheFarm.Values)
+        foreach (GoingToFarmCtx goingEntry in GoingToTheFarm.Values)
         {
-            SendEnrouteKidOutside(kid, playerFarm);
+            SendEnrouteKidOutside(goingEntry.Kid, playerFarm);
         }
 
         NPCKidCtx ctxNeedOut = kidsThatNeedOut[0];
@@ -426,7 +450,7 @@ internal static class KidPathingManager
             ctxNeedOut.SetKidToPathedOutside();
             return;
         }
-        if (FarmhouseDoors.GetValue(farmhouse, GetFarmhouseDoor) is not (Point doorExit, Point))
+        if (FarmhouseDoors.GetValue(farmhouse, GetFarmhouseDoor) is not FarmhouseDoorInfo farmhouseDoorInfo)
         {
             ctxNeedOut.SetKidToPathedOutside();
             return;
@@ -436,11 +460,11 @@ internal static class KidPathingManager
         ctxNeedOut.Kid.controller = new PathFindController(
             ctxNeedOut.Kid,
             farmhouse,
-            doorExit,
+            farmhouseDoorInfo.DoorExit,
             -1,
             ctxNeedOut.RouteEnd_SetKidInvisibleAndNPCVisible
         );
-        GoingToTheFarm[ctxNeedOut.Kid.idOfParent.Value] = new(ctxNeedOut.Kid, Point.Zero);
+        GoingToTheFarm[ctxNeedOut.Kid.idOfParent.Value] = new(ctxNeedOut.Kid, Point.Zero, Game1.timeOfDay);
     }
 
     private static void WarpKidToHouse(Child kid, bool delay = true)
@@ -470,9 +494,9 @@ internal static class KidPathingManager
 
     private static void WarpKidToFarm(Character c, GameLocation l)
     {
-        if (c is not Child kid || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out (Child, Point) info))
+        if (c is not Child kid || !GoingToTheFarm.TryGetValue(kid.idOfParent.Value, out GoingToFarmCtx? goingEntry))
             return;
-        if (kid != info.Item1 || kid.currentLocation?.GetParentLocation() is not Farm farm)
+        if (kid != goingEntry.Kid || kid.currentLocation?.GetParentLocation() is not Farm farm)
         {
             GoingToTheFarm.Remove(kid.idOfParent.Value);
             return;
@@ -481,7 +505,7 @@ internal static class KidPathingManager
         kid.Halt();
         kid.controller = null;
         GoingToTheFarm.Remove(kid.idOfParent.Value);
-        Game1.warpCharacter(kid, farm, info.Item2.ToVector2());
+        Game1.warpCharacter(kid, farm, goingEntry.ExitPoint.ToVector2());
         kid.toddlerReachedDestination(kid, farm);
     }
 

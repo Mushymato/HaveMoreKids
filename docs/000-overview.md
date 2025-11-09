@@ -146,6 +146,10 @@ Now if schedule string is a 0 schedule, for example `0000 Mountain 43 23 2/0700 
 
 _Note: Although the location name of `Town` in `1010 Town 0 0 HMK_Home` is always overwritten, it's a good idea to put a real reachable location to avoid spacecore scheduler warnings_
 
+### Dialogue Handling
+
+Everyday, you can talk to both the Child version once, and the NPC version once. To avoid duplicate dialogue, you can use [locational dialogue keys](https://stardewvalleywiki.com/Modding:Dialogue#Location_dialogue) targeting the farmhouse (e.g. `"FarmHouse_Mon"`) to assign dialogue for the Child only, since the NPC version will not enter the farmhouse.
+
 ### Adopt NPC as Child
 
 This feature is very closely related to having a Child become an NPC, except it goes the other direction and creates a Child counterpart for a existing normal NPC. The Child will be added to the player's farmhouse as a toddler that share the same sprites as the NPC, skipping the newborn/baby/crawler stages. HMK does not create an entirely new NPC in this case, and simply begins managing the existing vanilla NPC with the same sort of hide/show logic.
