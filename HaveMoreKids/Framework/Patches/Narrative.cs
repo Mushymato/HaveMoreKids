@@ -133,8 +133,8 @@ internal static partial class Patches
                 return;
             }
         }
-        ModEntry.Log($"Fetching child NPC: {name}");
-        if (Game1.getCharacterFromName(name) is NPC childAsNPC)
+        ModEntry.Log($"Fetching child as NPC: {name}");
+        if (NPCLookup.GetNonChildNPC(name) is NPC childAsNPC)
         {
             __result = new NPC(
                 childAsNPC.Sprite.Clone(),

@@ -37,3 +37,7 @@ Does not work for generic kids since they do not have id.
 
 Resolves to the name of a random sibling of this kid. 2 kids are considered siblings if they have the same player parent (NPC parent does not matter).
 Does work for generic kids that are siblings to this custom kid.
+
+## `[HMK_NPCParentName <kid id>]`
+
+Resolves to kid's NPC parent name, if they have one.

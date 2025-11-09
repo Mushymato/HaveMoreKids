@@ -14,7 +14,6 @@ using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.Objects;
-using StardewValley.Pathfinding;
 using StardewValley.TokenizableStrings;
 
 namespace HaveMoreKids.Framework;
@@ -186,7 +185,7 @@ internal static class KidHandler
             && !kidId.EqualsIgnoreCase("Any")
             && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef)
             && kidDef.AdoptedFromNPC == kidId
-            && GetNonChildNPCByName(kidId) is not null
+            && NPCLookup.GetNonChildNPC(kidId) is not null
         )
         {
             ModEntry.Log($"Adopt '{kidId}' as Child");
@@ -320,7 +319,7 @@ internal static class KidHandler
             }
 
             string? npcParentId = kid.KidNPCParent();
-            if (npcParentId != null && Game1.getCharacterFromName(npcParentId) is NPC parent)
+            if (NPCLookup.GetNPCParent(npcParentId) is NPC parent)
             {
                 // FL parent name display support
                 kid.modData[FL_ModData_OtherParent] = parent.displayName;
@@ -364,7 +363,7 @@ internal static class KidHandler
         {
             foreach (KidEntry entry in KidEntries.Values)
             {
-                if (entry.KidNPCId != null && Game1.getCharacterFromName(entry.KidNPCId) is NPC kidNPC)
+                if (NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidNPC)
                 {
                     kidNPC.reloadSprite(onlyAppearance: true);
                     kidNPC.Sprite.UpdateSourceRect();
@@ -435,27 +434,6 @@ internal static class KidHandler
         }
     }
 
-    internal static NPC? GetNonChildNPCByName(string kidNPCId)
-    {
-        NPC? match = null;
-        Utility.ForEachCharacter(
-            npc =>
-            {
-                if (npc.Name == kidNPCId && npc is not Child && npc.IsVillager && !npc.EventActor)
-                {
-                    if (npc.currentLocation?.IsActiveLocation() ?? false)
-                    {
-                        match = npc;
-                        return false;
-                    }
-                }
-                return true;
-            },
-            false
-        );
-        return match;
-    }
-
     /// <summary>Do some kid checks on day started</summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
@@ -482,8 +460,7 @@ internal static class KidHandler
             // check if today is a Child day or a NPC day
             if (
                 KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
-                && entry.KidNPCId != null
-                && GetNonChildNPCByName(entry.KidNPCId) is NPC kidAsNPC
+                && NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidAsNPC
             )
             {
                 string key;
@@ -513,7 +490,7 @@ internal static class KidHandler
                 }
                 else
                 {
-                    key = entry.KidNPCId;
+                    key = entry.KidNPCId!;
                     if (
                         ModEntry.KidNPCEnabled
                         && kid.daysOld.Value >= ModEntry.Config.TotalDaysChild
@@ -572,6 +549,7 @@ internal static class KidHandler
     /// <param name="e"></param>
     private static void OnSaving(object? sender, SavingEventArgs e)
     {
+        NPCLookup.Clear();
         if (!Context.IsMainPlayer)
             return;
         foreach (Child kid in AllKids())

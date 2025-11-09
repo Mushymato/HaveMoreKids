@@ -4,7 +4,6 @@ using HarmonyLib;
 using HaveMoreKids.Integration;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Characters;
 
 namespace HaveMoreKids.Framework;
 

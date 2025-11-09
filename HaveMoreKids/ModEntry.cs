@@ -19,7 +19,7 @@ public class ModEntry : Mod
     internal static ModConfig Config = null!;
 
     internal const string ModId = "mushymato.HaveMoreKids";
-    private static bool hasLittleNPC = false;
+    internal static bool hasLittleNPC = false;
     internal static bool KidNPCEnabled => !hasLittleNPC && Config.DaysChild > -1;
 
     public override void Entry(IModHelper helper)
@@ -64,6 +64,7 @@ public class ModEntry : Mod
     {
         Config.UnregistedOnNonHost = false;
         Config.ResetMenu();
+        NPCLookup.Clear();
         CribManager.CribAssignments.Clear();
         KidPathingManager.ResetAllState();
     }

@@ -55,7 +55,8 @@ internal static class AdoptionRegistry
                 string? displayName = null;
                 if (
                     kidDef.AdoptedFromNPC != null
-                    && KidHandler.GetNonChildNPCByName(kidDef.AdoptedFromNPC) is NPC npc
+                    && kidDef.AdoptedFromNPC == kidId
+                    && NPCLookup.GetNonChildNPC(kidDef.AdoptedFromNPC) is NPC npc
                     && npc.GetData() is CharacterData npcData
                 )
                 {

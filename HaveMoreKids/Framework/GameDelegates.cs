@@ -176,6 +176,7 @@ internal static class GameDelegates
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
     internal const string TS_Endearment = "HMK_Endearment";
     internal const string TS_EndearmentCap = "HMK_EndearmentCap";
+    internal const string TS_NPCParentName = "HMK_NPCParentName";
     internal const string TS_KidName = "HMK_KidName";
     internal const string TS_RandomSiblingName = "HMK_RandomSiblingName";
     internal const string CPT_KidDisplayName = "KidDisplayName";
@@ -198,6 +199,7 @@ internal static class GameDelegates
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
         TokenParser.RegisterParser(TS_EndearmentCap, TSEndearment);
         TokenParser.RegisterParser(TS_KidName, TSKidName);
+        TokenParser.RegisterParser(TS_NPCParentName, TSNPCParentName);
         TokenParser.RegisterParser(TS_RandomSiblingName, TSRandomSiblingName);
         // CP Tokens
         if (
@@ -280,6 +282,26 @@ internal static class GameDelegates
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? kidEntry))
         {
             replacement = kidEntry.DisplayName;
+        }
+        else
+        {
+            replacement = "";
+        }
+        return true;
+    }
+
+    private static bool TSNPCParentName(string[] query, out string replacement, Random random, Farmer player)
+    {
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        {
+            return TokenParser.LogTokenError(query, error, out replacement);
+        }
+        if (
+            KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? kidEntry)
+            && NPCLookup.GetNPCParent(kidEntry.OtherParent) is NPC parent
+        )
+        {
+            replacement = parent.displayName;
         }
         else
         {
@@ -542,7 +564,7 @@ internal static class GameDelegates
             }
             else
             {
-                if ((spouse = Game1.getCharacterFromName(spouseName)) == null)
+                if ((spouse = NPCLookup.GetNonChildNPC(spouseName)) == null)
                 {
                     error = $"{spouseName} is not an NPC";
                     return false;

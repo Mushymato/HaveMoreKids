@@ -10,9 +10,10 @@ using StardewValley.Extensions;
 using StardewValley.Locations;
 using StardewValley.Pathfinding;
 
-internal record NPCKidCtx(Child Kid, NPC KidNPC, SchedulePathDescription? EndSPD)
+internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePathDescription? EndSPD)
 {
-    internal bool ShouldPathOutside => !Kid.IsInvisible && pathingState == PathingState.None;
+    internal bool ShouldPathOutside =>
+        Game1.timeOfDay >= GoOutsideTime && !Kid.IsInvisible && pathingState == PathingState.None;
 
     internal bool ShouldPathHome =>
         hasSeenEndSPD
@@ -152,17 +153,18 @@ internal static class KidPathingManager
     {
         if (goOutside)
         {
-            NPCKidCtx.SetNPCVisible(kidNPC);
-
             kidNPC.reloadData();
             kidNPC.reloadSprite(onlyAppearance: true);
             kidNPC.InvalidateMasterSchedule();
             SchedulePathDescription? endSPD = null;
+            int goOutsideTime = 0600;
             if (kidNPC.TryLoadSchedule())
             {
+                SchedulePathDescription? firstSPD = null;
                 SchedulePathDescription? prevSPD = null;
                 foreach ((int timeOfDay, SchedulePathDescription spd) in kidNPC.Schedule.OrderBy(kv => kv.Key))
                 {
+                    firstSPD ??= spd;
                     if (prevSPD != null && spd.endOfRouteBehavior == Schedule_HMK_Home)
                     {
                         // Recompute this SchedulePathDescription
@@ -189,6 +191,10 @@ internal static class KidPathingManager
                     }
                     prevSPD = spd;
                 }
+                if (firstSPD != null)
+                {
+                    goOutsideTime = Utility.ConvertMinutesToTime(Utility.ConvertTimeToMinutes(firstSPD.time) - 30);
+                }
             }
             kidNPC.performSpecialScheduleChanges();
             kidNPC.resetSeasonalDialogue();
@@ -200,14 +206,36 @@ internal static class KidPathingManager
 
             if (endSPD != null || isFarmAdjacent)
             {
-                NPCKidCtx ctx = new(kid, kidNPC, endSPD);
-                if (!isFarmAdjacent)
+                NPCKidCtx ctx = new(kid, kidNPC, goOutsideTime, endSPD);
+                if (isFarmAdjacent)
+                {
+                    if (endSPD != null)
+                    {
+                        ModEntry.Log(
+                            $"Kid '{kid.displayName}' ({kid.Name}) will leave as NPC today after {goOutsideTime} and will return home around {endSPD.time}",
+                            LogLevel.Info
+                        );
+                    }
+                    else
+                    {
+                        ModEntry.Log(
+                            $"Kid '{kid.displayName}' ({kid.Name}) will leave as NPC today after {goOutsideTime}",
+                            LogLevel.Info
+                        );
+                    }
+                }
+                else
+                {
                     ctx.SetKidToPathedOutside();
+                    if (endSPD != null)
+                    {
+                        ModEntry.Log(
+                            $"Kid '{kid.displayName}' ({kid.Name}) is outside as NPC today and will return home around {endSPD.time}",
+                            LogLevel.Info
+                        );
+                    }
+                }
                 ManagedNPCKids[kid] = ctx;
-                ModEntry.Log(
-                    $"Kid '{kid.displayName}' ({kid.Name}) will go outside as NPC today (isFarmAdjacent:{isFarmAdjacent}, endSPD:{endSPD != null})",
-                    LogLevel.Info
-                );
             }
             else
             {
@@ -420,7 +448,7 @@ internal static class KidPathingManager
             ctx.CheckEndSPD();
             if (ctx.ShouldPathOutside)
             {
-                if (timeOfDay >= 1000 || ctx.Kid.currentLocation.farmers.Count == 0)
+                if (timeOfDay >= 1000)
                 {
                     ctx.SetKidToPathedOutside();
                 }
@@ -456,7 +484,7 @@ internal static class KidPathingManager
             return;
         }
 
-        ModEntry.Log($"Sending kid '{ctxNeedOut.Kid} ({ctxNeedOut.KidNPC.Name})' out the farmhouse door");
+        ModEntry.Log($"Sending kid '{ctxNeedOut.Kid.Name} ({ctxNeedOut.KidNPC.Name})' out the farmhouse door");
         ctxNeedOut.Kid.controller = new PathFindController(
             ctxNeedOut.Kid,
             farmhouse,

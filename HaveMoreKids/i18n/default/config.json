@@ -10,9 +10,9 @@
   "config.DaysPregnant.name": "Pregnancy Days",
   "config.DaysPregnant.description": "Time until the child arrives after answering the pregnancy question. Vanilla days is 14, must be changed prior to answering the pregnancy question. This feature does not work for player couples.",
   "config.MaxChildren.name": "Max Children",
-  "config.MaxChildren.description": "Max number of children you can have, counting children from divorce.",
+  "config.MaxChildren.description": "Max number of children you can have (i.e. max number of children that will live in your farmhouse).",
   "config.AlwaysAllowGenericChildren.name": "Always Allow Generic Children",
-  "config.AlwaysAllowGenericChildren.description": "By default if a spouse's has any custom kids, then you can only have that many children with that spouse. This setting allows them to also have generic kids, up to the count specified by 'Max Children'.",
+  "config.AlwaysAllowGenericChildren.description": "By default if a spouse has any custom kids, then you can only have that many children with that spouse. This setting allows them to also have generic kids, up to the count specified by 'Max Children'.",
   "config.DaysBaby.name": "Days until Baby",
   "config.DaysBaby.description": "Number of days until the newborn becomes a baby. Vanilla days is 13.",
   "config.DaysCrawler.name": "Days until Crawler",
@@ -20,7 +20,8 @@
   "config.DaysToddler.name": "Days until Toddler",
   "config.DaysToddler.description": "Number of days until the crawler becomes a toddler. Vanilla days is 13.",
   "config.DaysChild.name": "Days until Child NPC",
-  "config.DaysChild.description": "Number of days until the toddler becomes a full NPC. This is a modded feature added by Have More Kids, requires support from content packs, and setting this value to -1 disables it.",
+  "config.DaysChild.description": "Number of days until the toddler becomes a full NPC. This is a modded feature added by Have More Kids, only works for custom kids setup for usage, and setting this value to -1 disables it.",
+  "config.DaysChild.disabled": "Because you have LittleNPC installed, the Child NPC features of Have More Kids is disabled.",
   "config.ToddlerRoamOnFarm.name": "Toddlers Roam on the Farm",
   "config.ToddlerRoamOnFarm.description": "Allow toddlers to roam around on the farm. They will randomly decide to go outside in the morning, and teleport back home by 1900",
   "config.UseSingleBedAsChildBed.name": "Use Single Bed as Child Bed",
@@ -29,5 +30,6 @@
   "config.page.spousekids.name": "{{Name}}'s Kids",
   "config.page.sharedKids.name": "Shared Kids",
   "config.page.nokids.description": "You do not have any spouse specific kid content packs installed, but generic features of this mod will still apply.",
-  "config.page.nonhost.description": "Because you are not the host player, you cannot change certain settings for this mod."
+  "config.page.nonhost.description": "Because you are not the host player, you cannot change certain settings for this mod.",
+  "config.page.kids.description": "Name: {{displayName}}\nHas dialogue? {{talks}}\nIs Child NPC? {{isKidNPC}}"
 }

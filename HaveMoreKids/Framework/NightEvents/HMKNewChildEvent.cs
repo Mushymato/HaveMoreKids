@@ -70,10 +70,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             if (kidDef.BirthOrAdoptMessage is not null)
             {
                 message = string.Format(TokenParser.ParseText(kidDef.BirthOrAdoptMessage), childTerm);
-                if (
-                    kidDef.AdoptedFromNPC != null
-                    && KidHandler.GetNonChildNPCByName(kidDef.AdoptedFromNPC) is NPC adoptFrom
-                )
+                if (NPCLookup.GetNonChildNPC(kidDef.AdoptedFromNPC) is NPC adoptFrom)
                 {
                     messageDialogue = new Dialogue(adoptFrom, "", message);
                 }
@@ -261,7 +258,7 @@ public class HMKNewChildEvent : BaseFarmEvent
                     );
                     messageDialogue.onFinish += isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
                     messageDialogue.speaker.setNewDialogue(messageDialogue);
-                    Game1.drawDialogue(spouse);
+                    Game1.drawDialogue(messageDialogue.speaker);
                 }
                 else
                 {

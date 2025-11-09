@@ -249,16 +249,24 @@ internal sealed class ModConfig : ModConfigValues
             min: 0,
             max: 56
         );
-        GMCM.AddNumberOption(
-            Mod,
-            () => DaysChild,
-            (value) => DaysChild = value,
-            I18n.Config_DaysChild_Name,
-            I18n.Config_DaysChild_Description,
-            min: -1,
-            max: 56,
-            formatValue: NegativeOneIsDisabled
-        );
+
+        if (ModEntry.hasLittleNPC)
+        {
+            GMCM.AddParagraph(Mod, I18n.Config_DaysChild_Disabled);
+        }
+        else
+        {
+            GMCM.AddNumberOption(
+                Mod,
+                () => DaysChild,
+                (value) => DaysChild = value,
+                I18n.Config_DaysChild_Name,
+                I18n.Config_DaysChild_Description,
+                min: -1,
+                max: 56,
+                formatValue: NegativeOneIsDisabled
+            );
+        }
 
         GMCM.AddNumberOption(
             Mod,
@@ -360,6 +368,17 @@ internal sealed class ModConfig : ModConfigValues
         foreach (string kidId in kidIds)
         {
             KidIdent kidKey = new(key, kidId);
+            bool hasDialogue = false;
+            bool isKidNPC = false;
+            if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
+            {
+                hasDialogue = Game1.content.DoesAssetExist<Dictionary<string, string>>(
+                    $"{AssetManager.Asset_CharactersDialogue}/{kidDef.DialogueSheetName ?? kidId}"
+                );
+                isKidNPC =
+                    !string.IsNullOrEmpty(kidDef.IsNPCTodayCondition)
+                    && !GameStateQuery.IsImmutablyFalse(kidDef.IsNPCTodayCondition);
+            }
             if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? data))
             {
                 if (
@@ -375,11 +394,22 @@ internal sealed class ModConfig : ModConfigValues
                         height: () => 0
                     );
                 }
+                string name = TokenParser.ParseText(data.DisplayName) ?? kidId;
                 GMCM.AddBoolOption(
                     Mod,
                     () => EnabledKids[kidKey],
                     (value) => EnabledKids[kidKey] = value,
-                    () => TokenParser.ParseText(data.DisplayName) ?? kidId
+                    () => name,
+                    () =>
+                        I18n.Config_Page_Kids_Description(
+                            displayName: name,
+                            hasDialogue
+                                ? Game1.content.LoadString("Strings\\Lexicon:QuestionDialogue_Yes")
+                                : Game1.content.LoadString("Strings\\Lexicon:QuestionDialogue_No"),
+                            isKidNPC
+                                ? Game1.content.LoadString("Strings\\Lexicon:QuestionDialogue_Yes")
+                                : Game1.content.LoadString("Strings\\Lexicon:QuestionDialogue_No")
+                        )
                 );
             }
         }

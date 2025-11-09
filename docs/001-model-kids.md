@@ -15,7 +15,7 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 | `Twin` | string | _null_ | The kid id of the twin who will be born during the same new child night event, as long as there's enough cribs. |
 | `TwinCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | A condition on whether the twin should be born. |
 | `TwinMessage` | string | _null_ | A special message to show when a twin is born. |
-| `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid, accepts tokenized strings. Will be spoken by the parent NPC if kid is already picked ahead of night event via adoption registry or action. |
+| `BirthOrAdoptMessage` | string | _null_ | A special message to show for birth/adoption of this kid, accepts tokenized strings. Will be spoken by the parent NPC if kid is already picked ahead of night event via adoption registry or action. Will be spoken by the NPC if `AdoptedFromNPC` is set. |
 | `CanAdoptFromAdoptionRegistry` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true, this child can be adopted from the adoption registry at Harvey's Clinic. |
 | `DaysFromAdoptionRegistry` | int | _null_ | Number of days before child arrives, when adopted via adoption registry. If this is not set, the player configured day is used. |
 | `RoamOnFarmCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true and the config `Toddlers Roam on Farm` is enabled, the kid will go out to the farm that day. Checked once at 0610 each day. |

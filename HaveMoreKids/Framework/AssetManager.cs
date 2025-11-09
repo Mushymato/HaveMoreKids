@@ -5,6 +5,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.GameData.Shops;
 
@@ -121,8 +122,28 @@ internal static class AssetManager
     }
 
     private static Dictionary<string, KidDefinitionData>? kidDefsByKidId = null;
-    internal static Dictionary<string, KidDefinitionData> KidDefsByKidId =>
-        kidDefsByKidId ??= Game1.content.Load<Dictionary<string, KidDefinitionData>>(Asset_KidDefinitions);
+    internal static Dictionary<string, KidDefinitionData> KidDefsByKidId
+    {
+        get
+        {
+            kidDefsByKidId ??= Game1.content.Load<Dictionary<string, KidDefinitionData>>(Asset_KidDefinitions);
+            HashSet<string> invalidKids = [];
+            foreach ((string kidId, KidDefinitionData whose) in kidDefsByKidId)
+            {
+                if (whose.AdoptedFromNPC != null && whose.AdoptedFromNPC != kidId)
+                {
+                    ModEntry.Log(
+                        $"{Asset_KidDefinitions} entry must have key='{whose.AdoptedFromNPC}' when AdoptedFromNPC='{whose.AdoptedFromNPC}', got key='{kidId}'",
+                        LogLevel.Error
+                    );
+                    invalidKids.Add(kidId);
+                }
+            }
+            kidDefsByKidId.RemoveWhere(kv => invalidKids.Contains(kv.Key));
+            return kidDefsByKidId;
+        }
+    }
+
     private static Dictionary<string, Dictionary<string, KidDefinitionData>>? kidDefsByParentId = null;
     internal static Dictionary<string, Dictionary<string, KidDefinitionData>> KidDefsByParentId
     {
@@ -198,13 +219,10 @@ internal static class AssetManager
             }
         }
         // case 2 child count
-        for (int i = childrenCount; i > 0; i--)
+        dialogueKey = string.Concat(keyPrefix, "_", childrenCount);
+        if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
         {
-            dialogueKey = string.Concat(keyPrefix, "_", i);
-            if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
-            {
-                return true;
-            }
+            return true;
         }
         if (childrenCount <= minCount)
         {
