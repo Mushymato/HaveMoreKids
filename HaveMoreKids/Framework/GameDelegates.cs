@@ -298,11 +298,12 @@ internal static class GameDelegates
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? thisKid))
         {
             List<string> siblings = [];
-            foreach ((string key, KidEntry kidEntry) in KidHandler.KidEntries)
+            foreach (Child kid in KidHandler.AllKids())
             {
-                if (key == kidId || thisKid.PlayerParent != thisKid.PlayerParent)
-                    continue;
-                siblings.Add(kidEntry.DisplayName);
+                if (kid.Name != kidId && thisKid.PlayerParent == kid.idOfParent.Value)
+                {
+                    siblings.Add(kid.displayName);
+                }
             }
             if (siblings.Count > 0)
                 replacement = random.ChooseFrom(siblings);

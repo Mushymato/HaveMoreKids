@@ -201,7 +201,7 @@ internal static class KidPathingManager
             if (endSPD != null || isFarmAdjacent)
             {
                 NPCKidCtx ctx = new(kid, kidNPC, endSPD);
-                if (isFarmAdjacent)
+                if (!isFarmAdjacent)
                     ctx.SetKidToPathedOutside();
                 ManagedNPCKids[kid] = ctx;
                 ModEntry.Log(

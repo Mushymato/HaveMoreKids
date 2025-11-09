@@ -47,7 +47,7 @@ internal static partial class Patches
         string? kidId;
         if (__instance.speaker is Child child)
         {
-            kidId = child.Name;
+            kidId = child.GetHMKAdoptedFromNPCId() ?? child.Name;
         }
         else
         {

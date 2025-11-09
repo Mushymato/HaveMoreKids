@@ -31,3 +31,9 @@ Works just like `HMK_Endearment`, but the first letter is capitalized in english
 ## `[HMK_KidName <kid id>]`
 
 Resolves to the player given display name for a kid, or empty string if there's no kid with that id in the world.
+Does not work for generic kids since they do not have id.
+
+## `[HMK_RandomSiblingName <kid id>]`
+
+Resolves to the name of a random sibling of this kid. 2 kids are considered siblings if they have the same player parent (NPC parent does not matter).
+Does work for generic kids that are siblings to this custom kid.
