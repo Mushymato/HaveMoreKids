@@ -3,26 +3,83 @@
   "Format": "2.8.0",
   "DynamicTokens": [
     {
-      "Name": "ARVSiblingCheck",
+      // true once Muffin is born
+      "Name": "MuffinIsBorn",
+      "Value": "ChildNames| contains={{ModId}}_muffin"
+    },
+    {
+      // true once Cookie is born
+      "Name": "CookieIsBorn",
+      "Value": "ChildNames| contains={{ModId}}_cookie"
+    },
+    // SterlingKidRand: one of the kids
+    {
+      "Name": "SterlingKidRand",
+      "Value": "",
+    },
+    {
+      "Name": "SterlingKidRand",
+      "Value": "muffin",
+      "When": {
+        "MuffinIsBorn": true,
+      }
+    },
+    {
+      "Name": "SterlingKidRand",
+      "Value": "{{Random:cookie,muffin}}",
+      "When": {
+        "MuffinIsBorn": true,
+        "CookieIsBorn": true,
+      }
+    },
+    // dialogue random
+    {
+      "Name": "KidDialogueRand",
       "Value": "{{Random: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25}}"
     },
-    // {
-    //   "Name": "ARVSiblingCheck",
-    //   "Value": "{{Random: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36}}",
-    //   "When": {
-    //     "SiblingStatus": "sibling"
-    //   }
-    // },
+    {
+      "Name": "KidDialogueRand",
+      "Value": "{{Random: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36}}",
+      "When": {
+        "MuffinIsBorn": true,
+        "CookieIsBorn": true
+      }
+    },
+    // little red school house
+    {
+      "Name": "LRSH_Active",
+      "Value": false,
+    },
+    {
+      "Name": "LRSH_Active",
+      "Value": true,
+      "When": {
+        "HasMod": "Xiddav.LittleRedSchoolhouse",
+        "HasSeenEvent": "9695002",
+        "DayOfWeek": "Tuesday, Wednesday, Friday",
+        "day |contains=9": false,
+        "day |contains=23": false
+      }
+    },
+    {
+      "Name": "LRSH_Active",
+      "Value": true,
+      "When": {
+        "HasMod": "Xiddav.LittleRedSchoolhouseLazy",
+        "DayOfWeek": "Tuesday, Wednesday, Friday",
+        "day |contains=9": false,
+        "day |contains=23": false
+      }
+    },
   ],
   "Changes": [
-    // First, add the kids
+    // general
     {
       "Action": "EditData",
       "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_muffin": {
           "Parent": "Sterling",
-          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Muffin?",
           // Stay home when it is festival, so that default child add to festival logic can be used
           "IsNPCTodayCondition": "!IS_FESTIVAL_DAY",
         },
@@ -30,12 +87,29 @@
           "Parent": "Sterling",
           // guarentees that Cookie will be born after Muffin
           "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_muffin",
-          "BirthOrAdoptMessage": "@ oh my gosh, can we name the baby Cookie?",
           // Stay home when it is festival, so that default child add to festival logic can be used
           "IsNPCTodayCondition": "!IS_FESTIVAL_DAY",
         }
       }
     },
+    {
+      "Action": "Include",
+      "FromFile": "data/sterling-dialogue.json"
+    },
+    // little red school house
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/Penny",
+      "Entries": {
+        // add location dialogue for penny
+        "Custom_SchoolHouse": "{{i18n:{{SterlingKidRand}}}}.Xiddav.LittleRedSchoolhouse.Penny}}"
+      },
+      "When": {
+        "HasMod": "Xiddav.LittleRedSchoolhouse, Xiddav.LittleRedSchoolhouseLazy",
+        "HasValue:{{SterlingKids}}": true
+      }
+    },
+    // per kid
     {
       "Action": "Include",
       "FromFile": "data/kid.json",

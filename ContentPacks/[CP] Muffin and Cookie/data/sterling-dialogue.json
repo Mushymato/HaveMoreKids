@@ -1,0 +1,73 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    {
+      // these use HMK's marriage dialogue keys and thus do not require condition
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/MarriageDialogueSterling",
+      "Entries": {
+        // Muffin's new child dialogue
+        "HMK_NewChild_0_{{ModId}}_muffin": "{{Sterling.OneKid.Muffin_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_1_{{ModId}}_muffin": "{{Sterling.OneKid.Muffin_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_2_{{ModId}}_muffin": "{{Sterling.OneKid.Muffin_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_3_{{ModId}}_muffin": "{{Sterling.OneKid.Muffin_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_4_{{ModId}}_muffin": "{{Sterling.OneKid.Muffin_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        // Cookie's new child dialogue
+        "HMK_NewChild_0_{{ModId}}_cookie": "{{Sterling.TwoKids_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_1_{{ModId}}_cookie": "{{Sterling.TwoKids_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_2_{{ModId}}_cookie": "{{Sterling.TwoKids_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_3_{{ModId}}_cookie": "{{Sterling.TwoKids_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+        "HMK_NewChild_4_{{ModId}}_cookie": "{{Sterling.TwoKids_{{Random:0,1,2,3,4,5,6,7,8}} }}",
+      }
+    },
+    {
+      // Muffin dialogue
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/MarriageDialogueSterling",
+      "Entries": {
+        "Good_0": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_1": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_2": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_3": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_4": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_5": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_6": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_7": "{{Sterling.Good.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Indoor_Night_0": "{{Sterling.Indoor_Night.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_1": "{{Sterling.Indoor_Night.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_2": "{{Sterling.Indoor_Night.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_3": "{{Sterling.Indoor_Night.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_4": "{{Sterling.Indoor_Night.Muffin_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+      },
+      "When": {
+        "MuffinIsBorn": true,
+        "CookieIsBorn": false
+      }
+    },
+    {
+      // Muffin + Cookie dialogue
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/MarriageDialogueSterling",
+      "Entries": {
+        "Good_0": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_1": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_2": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_3": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_4": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_5": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_6": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Good_7": "{{Sterling.Good.Both_{{Random:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}} }}",
+        "Indoor_Night_0": "{{Sterling.Indoor_Night.{{Random:Muffin,Cookie}}_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_1": "{{Sterling.Indoor_Night.{{Random:Muffin,Cookie}}_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_2": "{{Sterling.Indoor_Night.{{Random:Muffin,Cookie}}_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_3": "{{Sterling.Indoor_Night.{{Random:Muffin,Cookie}}_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "Indoor_Night_4": "{{Sterling.Indoor_Night.{{Random:Muffin,Cookie}}_{{Random:0,1,2,3,4,5,6,7,8,9,10,11}} }}",
+        "spouseRoom_Sterling": "{{i18n:Sterling.spouseRoom_Sterling.{{Random: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}}}}",
+      },
+      "When": {
+        "MuffinIsBorn": true,
+        "CookieIsBorn": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Strings/schedules/{{ModId}}_{{L@Kid}}",
+      "Entries": {
+        "Schoolhouse.000": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.000}}",
+        "Schoolhouse.001": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.001}}",
+        "Schoolhouse.002": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.002}}",
+        "Schoolhouse.003": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.003}}",
+        "Schoolhouse.004": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.004}}",
+        "Schoolhouse.005": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.005}}",
+        "Schoolhouse.006": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.006}}",
+        "Schoolhouse.007": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.007}}",
+        "Schoolhouse.008": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.008}}",
+        "Schoolhouse.009": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.009}}",
+        "Schoolhouse.0010": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.0010}}",
+        "Schoolhouse.0011": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.0011}}",
+        "Schoolhouse.0012": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.0012}}",
+        "Schoolhouse.0013": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.0013}}",
+        "Schoolhouse.0014": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.0014}}",
+        "Schoolhouse.0015": "{{i18n:{{L@Kid}}.Schedule.Schoolhouse.0015}}",
+      },
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/animationdescriptions",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}_sit": "16/16/16",
+        "{{ModId}}_{{L@Kid}}_read": "17/17/17",
+      }
+    },
+  ]
+}

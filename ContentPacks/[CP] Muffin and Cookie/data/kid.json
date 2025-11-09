@@ -1,17 +1,17 @@
 {
   "$schema": "https://smapi.io/schemas/content-patcher.json",
   "Changes": [
-    // This cover data shared between Muffin and Cookie
+    // This covers data shared between Muffin and Cookie
     // load all the textures
     {
       "Action": "Load",
       "Target": "Characters/{{ModId}}_{{L@Kid}}/fall_{{L@Kid}}, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_fallfest, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_flowerdance, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_luau, Characters/{{ModId}}_{{L@Kid}}/spring_{{L@Kid}}, Characters/{{ModId}}_{{L@Kid}}/winter_{{L@Kid}}, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_beach, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_feast, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_icefestival, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_moonlightjellies, Characters/{{ModId}}_{{L@Kid}}/summer_{{L@Kid}}",
-      "FromFile": "assets/Characters/Pale/{{L@Kid}}/{{TargetWithoutPath}}.png",
+      "FromFile": "assets/Characters/{{L@Kid}}/{{TargetWithoutPath}}.png",
     },
     {
       "Action": "Load",
       "Target": "Portraits/{{ModId}}_{{L@Kid}}/fall_{{L@Kid}}, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_fallfest, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_flowerdance, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_luau, Portraits/{{ModId}}_{{L@Kid}}/spring_{{L@Kid}}, Portraits/{{ModId}}_{{L@Kid}}/winter_{{L@Kid}}, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_beach, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_feast, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_icefestival, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_moonlightjellies, Portraits/{{ModId}}_{{L@Kid}}/summer_{{L@Kid}}",
-      "FromFile": "assets/Portraits/Pale/{{L@Kid}}/{{TargetWithoutPath}}.png"
+      "FromFile": "assets/Portraits/{{L@Kid}}/{{TargetWithoutPath}}.png"
     },
     // Child Data
     {
@@ -19,6 +19,7 @@
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Entries": {
         "{{ModId}}_{{L@Kid}}": {
+          "DisplayName": "{{i18n:{{L@Kid}}.DisplayName}}",
           "IsDarkSkinned": false,
           "Appearance": [
             // BABY APPEARANCE
@@ -128,10 +129,231 @@
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}},Characters/schedules/{{ModId}}_{{L@Kid}}",
       "FromFile": "data/blank.json"
     },
+    // Dialogue
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
+      "Entries": {
+        "AcceptBirthdayGift_Positive": "{{i18n:{{L@Kid}}.Dialogue.BirthdayGift_Positive}}",
+        "AcceptBirthdayGift_Negative": "{{i18n:{{L@Kid}}.Dialogue.BirthdayGift_Negative}}",
+        "AcceptGift_(O)StardropTea": "{{i18n:{{L@Kid}}.Dialogue.Gift_StardropTea}}",
+        "AcceptGift_category_vegetable": "{{i18n:{{L@Kid}}.Dialogue.Gift_category_vegetable}}", //what they say when they get a vegetable
+        "AcceptGift_coffee_item": "{{i18n:{{L@Kid}}.Dialogue.Gift_coffee_item}}", //what they say when they get espresso or coffee
+        "AcceptGift_alcohol_item": "{{i18n:{{L@Kid}}.Dialogue.Gift_alcohol_item}}", //what they say when they get an alcoholic beverage (i.e. Beer, Mead, Pale Ale, Piña Colada, Wine)
+        "Resort_Entering": "{{i18n:{{L@Kid}}.Dialogue.Resort_Entering}}",
+        "Resort_Leaving": "{{i18n:{{L@Kid}}.Dialogue.Resort_Leaving}}",
+        "Resort_Chair": "{{i18n:{{L@Kid}}.Dialogue.Resort_Chair}}",
+        "Resort_Bar": "{{i18n:{{L@Kid}}.Dialogue.Resort_Bar}}",
+        "Resort_Shore": "{{i18n:{{L@Kid}}.Dialogue.Resort_Shore}}",
+        "Resort_Towel": "{{i18n:{{L@Kid}}.Dialogue.Resort_Towel}}",
+        "Resort_Umbrella": "{{i18n:{{L@Kid}}.Dialogue.Resort_Umbrella}}",
+        "Resort_Wander": "{{i18n:{{L@Kid}}.Dialogue.Resort_Wander}}",
+        "Resort": "{{i18n:{{L@Kid}}.Dialogue.Resort}}",
+        "GreenRain": "{{i18n:{{L@Kid}}.Dialogue.GreenRain}}",
+        // Seasonals
+        "spring_Mon": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "spring_Tue": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "spring_Wed": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "spring_Thu": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "spring_Fri": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "spring_Sat": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "spring_Sun": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{KidDialogueRand}}}}",
+        "summer_Mon": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "summer_Tue": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "summer_Wed": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "summer_Thu": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "summer_Fri": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "summer_Sat": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "summer_Sun": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{KidDialogueRand}}}}",
+        "fall_Mon": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "fall_Tue": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "fall_Wed": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "fall_Thu": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "fall_Fri": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "fall_Sat": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "fall_Sun": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{KidDialogueRand}}}}",
+        "winter_Mon": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "winter_Tue": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "winter_Wed": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "winter_Thu": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "winter_Fri": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "winter_Sat": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "winter_Sun": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{KidDialogueRand}}}}",
+        "spring_12_1": "{{i18n:{{L@Kid}}.Dialogue.spring_12}}",
+        "spring_13_1": "{{i18n:{{L@Kid}}.Dialogue.spring_13}}",
+        "spring_23_1": "{{i18n:{{L@Kid}}.Dialogue.spring_23}}",
+        "spring_24_1": "{{i18n:{{L@Kid}}.Dialogue.spring_24}}",
+        "spring_28_1": "{{i18n:{{L@Kid}}.Dialogue.spring_28}}",
+        "summer_11_1": "{{i18n:{{L@Kid}}.Dialogue.summer_11}}",
+        "summer_15_1": "{{i18n:{{L@Kid}}.Dialogue.summer_15.{{Random: 1,2}}}}",
+        "spring_12_2": "{{i18n:{{L@Kid}}.Dialogue.spring_12}}",
+        "spring_13_2": "{{i18n:{{L@Kid}}.Dialogue.spring_13}}",
+        "spring_23_2": "{{i18n:{{L@Kid}}.Dialogue.spring_23}}",
+        "spring_24_2": "{{i18n:{{L@Kid}}.Dialogue.spring_24}}",
+        "spring_28_2": "{{i18n:{{L@Kid}}.Dialogue.spring_28}}",
+        "summer_11_2": "{{i18n:{{L@Kid}}.Dialogue.summer_11}}",
+        "summer_15_2": "{{i18n:{{L@Kid}}.Dialogue.summer_15.{{Random: 1,2}}}}",
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/rainy",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.Dialogue.Rain.{{Random:1,2,3,4,5,6,7,8}}}}",
+      }
+    },
+    // Festivals
+    {
+      "Action": "EditData",
+      "Target": "Data/Festivals/spring13, Data/Festivals/spring24, Data/Festivals/summer11, Data/Festivals/summer28, Data/Festivals/fall16, Data/Festivals/winter8, Data/Festivals/winter25",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.Festivals.{{TargetWithoutPath}}_y1}}",
+        "{{ModId}}_{{L@Kid}}_y2": "{{i18n:{{L@Kid}}.Festivals.{{TargetWithoutPath}}_y2}}",
+      }
+    },
+    // Movie
+    {
+      "Action": "EditData",
+      "Target": "Strings/Characters",
+      "Entries": {
+        "MovieInvite_Invited_{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.MovieInvite_Invited}}",
+      },
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/MoviesReactions",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": {
+          "Name": "{{mushymato.HaveMoreKids/KidNPCId:{{ModId}}_{{L@Kid}}}}",
+          "Reactions": [
+            {
+              "Tag": "*",
+              "Response": "love", //This makes it so that they always love movies when their other parent is present at the theatre. Feel free to change this to "like" (if the kid isn't too enthused) or "dislike" (if you've got some family drama)
+              "Whitelist": [
+                "Sterling",
+              ],
+              "SpecialResponses": {
+                "BeforeMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.With_Parent_Before}}" //This is what they say before they watch the movie when the player's spouse or roommate is also in the theatre
+                },
+                "DuringMovie": {
+                  "ResponsePoint": null,
+                  "Script": "/message \"{{i18n:{{L@Kid}}.Movie.With_Parent_Script}}\"", //This is what's displayed when the player's spouse or roommate is also in the theatre. The /message part makes it so that the part in the second set of quotes is shown as a message onscreen (not a dialogue line). You can remove everything in DuringMovie and replace it with null if you want
+                  "Text": null
+                },
+                "AfterMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.With_Parent_After}}" //This is what they say after they watch the movie when the player's spouse or roommate is also in the theatre
+                }
+              },
+              "Id": "reaction_3"
+            },
+            //Sample loved/liked/disliked tags, feel free to change them
+            {
+              "Tag": "family",
+              "Response": "love",
+              "Whitelist": [],
+              "SpecialResponses": null,
+              "Id": "reaction_0"
+            },
+            {
+              "Tag": "horror",
+              "Response": "dislike",
+              "Whitelist": [],
+              "SpecialResponses": null,
+              "Id": "reaction_1"
+            },
+            {
+              "Tag": "*",
+              "Response": "like",
+              "Whitelist": [],
+              "SpecialResponses": null,
+              "Id": "reaction_2"
+            },
+            {
+              "Tag": "love",
+              "Response": "love",
+              "Whitelist": [],
+              "SpecialResponses": {
+                "BeforeMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.love_Before}}" //This is what they say before they watch a loved movie
+                },
+                "DuringMovie": null,
+                "AfterMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.love_After}}" //This is what they say after they watch a loved movie
+                }
+              },
+              "Id": "reaction_5"
+            },
+            {
+              "Tag": "like",
+              "Response": "like",
+              "Whitelist": [],
+              "SpecialResponses": {
+                "BeforeMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.like_Before}}" //This is what they say before they watch a liked movie
+                },
+                "DuringMovie": null,
+                "AfterMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.like_After}}" //This is what they say after they watch a liked movie
+                }
+              },
+              "Id": "reaction_6"
+            },
+            {
+              "Tag": "dislike",
+              "Response": "dislike",
+              "Whitelist": [],
+              "SpecialResponses": {
+                "BeforeMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.dislike_Before}}" //This is what they say before they watch a disliked movie
+                },
+                "DuringMovie": null,
+                "AfterMovie": {
+                  "ResponsePoint": null,
+                  "Script": null,
+                  "Text": "{{i18n:{{L@Kid}}.Movie.dislike_After}}" //This is what they say after they watch a disliked movie
+                }
+              },
+              "Id": "reaction_7"
+            }
+          ]
+        }
+      }
+    },
+    // Include little red schoolhouse items
+    {
+      "Action": "Include",
+      "FromFile": "data/xiddav-lrsh.json",
+      "When": {
+        "HasMod": "Xiddav.LittleRedSchoolhouse, Xiddav.LittleRedSchoolhouseLazy",
+      }
+    },
     // Include non-shared items
     {
       "Action": "Include",
       "FromFile": "data/unique-{{L@Kid}}.json"
+    },
+    // Include non-shared little red schoolhouse items
+    {
+      "Action": "Include",
+      "FromFile": "data/xiddav-lrsh-{{L@Kid}}.json",
+      "When": {
+        "HasMod": "Xiddav.LittleRedSchoolhouse, Xiddav.LittleRedSchoolhouseLazy",
+      }
     }
   ]
 }

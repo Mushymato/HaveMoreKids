@@ -1,0 +1,25 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Characters/schedules/{{ModId}}_{{L@Kid}}",
+      "Entries": {
+        "Tue": "a1000 Custom_SchoolHouse 1 6 1 {{ModId}}_{{L@Kid}}_read \"Strings\\schedules\\{{ModId}}_{{L@Kid}}:Schoolhouse.00{{Random: 1,2,3,4,5,6,7,8,9,10}}\"/1130 Town 30 26 3 square_3_7 \"Strings\\schedules\\{{ModId}}_{{L@Kid}}:Schoolhouse.00{{Random: 1,2,3,4,5,6,7,8,9,10}}\"/a1250 Custom_SchoolHouse 1 6 1 {{ModId}}_{{L@Kid}}_read/1550 Town 113 32 3/1820 Town 0 0 HMK_Home",
+        "Wed": "GOTO Tue",
+        "Fri": "GOTO Tue",
+        "rain": "a1000 Custom_SchoolHouse 1 6 1 {{ModId}}_{{L@Kid}}_read \"Strings\\schedules\\{{ModId}}_{{L@Kid}}:Schoolhouse.00{{Random: 11,12,13,14,15}}\"/1130 Custom_SchoolHouse 1 6 1 {{ModId}}_{{L@Kid}}_sit \"Strings\\schedules\\{{ModId}}_{{L@Kid}}:Schoolhouse.00{{Random: 11,12,13,14,15}}\"/a1250 Custom_SchoolHouse 1 6 1 {{ModId}}_{{L@Kid}}_read/1550 SeedShop 26 14 0/1730 bed",
+      },
+      "When": {
+        "LRSH_Active": true,
+      },
+    },
+    {
+      "Action": "EditData",
+      "Target": "Strings/StringsFromMaps",
+      "Entries": {
+        "Desk.9": "{{i18n:{{L@Kid}}.Xiddav.LittleRedSchoolhouse.Desk |KidName={{mushymato.HaveMoreKids/KidDisplayName:{{ModId}}_{{L@Kid}}}} }}",
+      },
+    },
+  ]
+}

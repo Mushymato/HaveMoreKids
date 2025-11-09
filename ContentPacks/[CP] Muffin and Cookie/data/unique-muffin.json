@@ -8,18 +8,17 @@
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Fields": {
         "{{ModId}}_{{L@Kid}}": {
-          "DisplayName": "{{i18n:ARVMuffin.DisplayName}}",
           "Gender": "Female",
-          // They need a Home entries (to not spawn in middle of Town), just like normal NPCs
+          // Kids need a Home entries (to not spawn in middle of Town), just like normal NPCs
           "Home": [
             {
               "Id": "Default",
               "Location": "BusStop",
               "Tile": {
-                "X": 19,
-                "Y": 14
+                "X": 14,
+                "Y": 22
               },
-              "Direction": "down"
+              "Direction": "right"
             }
           ],
         }
@@ -29,12 +28,12 @@
     {
       "Action": "Load",
       "Target": "Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_royal, Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_super",
-      "FromFile": "assets/Characters/Pale/{{L@Kid}}/{{TargetWithoutPath}}.png"
+      "FromFile": "assets/Characters/{{L@Kid}}/{{TargetWithoutPath}}.png"
     },
     {
       "Action": "Load",
       "Target": "Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_royal, Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_super",
-      "FromFile": "assets/Portraits/Pale/{{L@Kid}}/{{TargetWithoutPath}}.png"
+      "FromFile": "assets/Portraits/{{L@Kid}}/{{TargetWithoutPath}}.png"
     },
     {
       "Action": "EditData",
@@ -65,80 +64,28 @@
       "Action": "EditData",
       "Target": "Data/NPCGiftTastes",
       "Entries": {
-        "{{ModId}}_{{L@Kid}}": "{{i18n:ARVMuffin.GiftTastes.Love}}/(TR)FairyBox 233 122 787 126 127/{{i18n:ARVMuffin.GiftTastes.Like}}/18 86 80 203 350/{{i18n:ARVMuffin.GiftTastes.Dislike}}/coffee_item 153 196/{{i18n:ARVMuffin.GiftTastes.Hate}}/alcohol_item 342/{{i18n:ARVMuffin.GiftTastes.Neutral}}/-75/",
-      }
-    },
-    // Dialogue
-    {
-      "Action": "EditData",
-      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}",
-      "Entries": {
-        "AcceptBirthdayGift_Positive": "{{i18n:ARVMuffin.Dialogue.BirthdayGift_Positive}}",
-        "AcceptBirthdayGift_Negative": "{{i18n:ARVMuffin.Dialogue.BirthdayGift_Negative}}",
-        "AcceptGift_(O)StardropTea": "{{i18n:ARVMuffin.Dialogue.Gift_StardropTea}}",
-        "AcceptGift_category_vegetable": "{{i18n:ARVMuffin.Dialogue.Gift_category_vegetable}}", //what they say when they get a vegetable
-        "AcceptGift_coffee_item": "{{i18n:ARVMuffin.Dialogue.Gift_coffee_item}}", //what they say when they get espresso or coffee
-        "AcceptGift_alcohol_item": "{{i18n:ARVMuffin.Dialogue.Gift_alcohol_item}}", //what they say when they get an alcoholic beverage (i.e. Beer, Mead, Pale Ale, Piña Colada, Wine)
-        "Resort_Entering": "{{i18n:ARVMuffin.Dialogue.Resort_Entering}}",
-        "Resort_Leaving": "{{i18n:ARVMuffin.Dialogue.Resort_Leaving}}",
-        "Resort_Chair": "{{i18n:ARVMuffin.Dialogue.Resort_Chair}}",
-        "Resort_Bar": "{{i18n:ARVMuffin.Dialogue.Resort_Bar}}",
-        "Resort_Shore": "{{i18n:ARVMuffin.Dialogue.Resort_Shore}}",
-        "Resort_Towel": "{{i18n:ARVMuffin.Dialogue.Resort_Towel}}",
-        "Resort_Umbrella": "{{i18n:ARVMuffin.Dialogue.Resort_Umbrella}}",
-        "Resort_Wander": "{{i18n:ARVMuffin.Dialogue.Resort_Wander}}",
-        "Resort": "{{i18n:ARVMuffin.Dialogue.Resort}}",
-        "GreenRain": "{{i18n:ARVMuffin.Dialogue.GreenRain}}",
-        // Seasonals
-        "spring_Mon": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "spring_Tue": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "spring_Wed": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "spring_Thu": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "spring_Fri": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "spring_Sat": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "spring_Sun": "{{i18n:ARV.MuffinDialogue.Spring.{{ARVSiblingCheck}}}}",
-        "summer_Mon": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "summer_Tue": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "summer_Wed": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "summer_Thu": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "summer_Fri": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "summer_Sat": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "summer_Sun": "{{i18n:ARV.MuffinDialogue.Summer.{{ARVSiblingCheck}}}}",
-        "fall_Mon": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "fall_Tue": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "fall_Wed": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "fall_Thu": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "fall_Fri": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "fall_Sat": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "fall_Sun": "{{i18n:ARV.MuffinDialogue.Fall.{{ARVSiblingCheck}}}}",
-        "winter_Mon": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "winter_Tue": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "winter_Wed": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "winter_Thu": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "winter_Fri": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "winter_Sat": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "winter_Sun": "{{i18n:ARV.MuffinDialogue.Winter.{{ARVSiblingCheck}}}}",
-        "spring_12_1": "{{i18n:ARVMuffin.Dialogue.spring_12}}",
-        "spring_13_1": "{{i18n:ARVMuffin.Dialogue.spring_13}}",
-        "spring_23_1": "{{i18n:ARVMuffin.Dialogue.spring_23}}",
-        "spring_24_1": "{{i18n:ARVMuffin.Dialogue.spring_24}}",
-        "spring_28_1": "{{i18n:ARVMuffin.Dialogue.spring_28}}",
-        "summer_11_1": "{{i18n:ARVMuffin.Dialogue.summer_11}}",
-        "summer_15_1": "{{i18n:ARVMuffin.Dialogue.summer_15.{{Random: 1,2}}}}",
-        "spring_12_2": "{{i18n:ARVMuffin.Dialogue.spring_12}}",
-        "spring_13_2": "{{i18n:ARVMuffin.Dialogue.spring_13}}",
-        "spring_23_2": "{{i18n:ARVMuffin.Dialogue.spring_23}}",
-        "spring_24_2": "{{i18n:ARVMuffin.Dialogue.spring_24}}",
-        "spring_28_2": "{{i18n:ARVMuffin.Dialogue.spring_28}}",
-        "summer_11_2": "{{i18n:ARVMuffin.Dialogue.summer_11}}",
-        "summer_15_2": "{{i18n:ARVMuffin.Dialogue.summer_15.{{Random: 1,2}}}}",
+        "{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.GiftTastes.Love}}/(TR)FairyBox 233 122 787 126 127/{{i18n:{{L@Kid}}.GiftTastes.Like}}/18 86 80 203 350/{{i18n:{{L@Kid}}.GiftTastes.Dislike}}/coffee_item 153 196/{{i18n:{{L@Kid}}.GiftTastes.Hate}}/alcohol_item 342/{{i18n:{{L@Kid}}.GiftTastes.Neutral}}/-75/",
       }
     },
     {
       "Action": "EditData",
-      "Target": "Characters/Dialogue/rainy",
+      "Target": "Data/ConcessionTastes",
       "Entries": {
-        "{{ModId}}_{{L@Kid}}": "{{i18n:ARVMuffin.Dialogue.Rain.{{Random:1,2,3,4,5,6,7,8}}}}",
+        "{{ModId}}_{{L@Kid}}": {
+          "Name": "{{mushymato.HaveMoreKids/KidNPCId:{{ModId}}_{{L@Kid}}}}",
+          "LovedTags": [
+            "Sweet", //Fill in some tags and concessions they love. These are from Leah's kid
+            "Popcorn",
+          ],
+          "LikedTags": [
+            "Apple Slices", //Fill in some tags and concessions they like. These are from Leah's kid
+            "JojaCorn",
+          ],
+          "DislikedTags": [
+            "Hummus Snack Pack", //Fill in some tags and concessions they dislike. These are from Leah's kid
+            "Healthy",
+          ]
+        }
       }
     },
     // Schedule
@@ -146,33 +93,25 @@
       "Action": "EditData",
       "Target": "Characters/schedules/{{ModId}}_{{L@Kid}}",
       "Entries": {
-        "rain": "1100 SeedShop 9 26 1/1400 SeedShop 24 15 2 square_3_5_2/1700 bed",
+        "rain": "1100 SeedShop 9 26 1/1400 SeedShop 24 15 2 square_3_5_2/1700 SeedShop 0 0 HMK_Home",
         "GreenRain": "GOTO rain",
-        "winter": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1430 SeedShop 25 19 2 square_3_5_2/1730 bed",
-        "fall": "900 Town 19 22 2 square_5_2/1400 Town 55 23 0/1530 Town 20 62 3/1800 bed",
-        "summer": "800 Town 16 13 2 square_1_5/1200 Beach 22 17 2 square_5_7/1900 bed",
-        "spring": "a900 BusStop 21 16 2 square_5_4/1300 Town 28 67 square_5_5_2/1630 Town 30 56 2/1730 bed",
-        "DesertFestival_1": "900 Desert 43 44 3 \"Strings\\schedules\\{{ModId}}_{{L@Kid}}:DesertFestival.000\"/2520 bed",
-        "skellady.SBVCP_TwilightFestival": "900 Town 19 22 2 square_5_2/1400 Town 55 23 0/a1600 Custom_SBV_SunberryVillage 22 64 2 square_4_2/2530 bed",
-        "winter_15": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1230 SeedShop 25 19 2 square_3_5/a1600 Beach 36 15 2 square_4_4/2500 bed",
-        "winter_16": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1230 SeedShop 25 19 2 square_3_5/a1600 Beach 36 15 2 square_4_4/2500 bed",
-        "winter_17": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1230 SeedShop 25 19 2 square_3_5/a1600 Beach 36 15 2 square_4_4/2500 bed",
+        "winter": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1430 SeedShop 25 19 2 square_3_5_2/1730 Town 0 0 HMK_Home",
+        "fall": "900 Town 19 22 2 square_5_2/1400 Town 55 23 0/1530 Town 20 62 3/1800 Town 0 0 HMK_Home",
+        "summer": "800 Town 16 13 2 square_1_5/1200 Beach 22 17 2 square_5_7/1900 Town 0 0 HMK_Home",
+        "spring": "a900 BusStop 21 16 2 square_5_4/1300 Town 28 67 square_5_5_2/1630 Town 30 56 2/1730 Town 0 0 HMK_Home",
+        "DesertFestival_1": "900 Desert 43 44 3 \"Strings\\schedules\\{{ModId}}_{{L@Kid}}:DesertFestival.000\"/2520 Town 0 0 HMK_Home",
+        "skellady.SBVCP_TwilightFestival": "900 Town 19 22 2 square_5_2/1400 Town 55 23 0/a1600 Custom_SBV_SunberryVillage 22 64 2 square_4_2/2530 Custom_SBV_SunberryVillage 0 0 HMK_Home",
+        "winter_15": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1230 SeedShop 25 19 2 square_3_5/a1600 Beach 36 15 2 square_4_4/2500 Beach 0 0 HMK_Home",
+        "winter_16": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1230 SeedShop 25 19 2 square_3_5/a1600 Beach 36 15 2 square_4_4/2500 Beach 0 0 HMK_Home",
+        "winter_17": "a900 SeedShop 5 19 0/1000 SeedShop 4 23 3/1230 SeedShop 25 19 2 square_3_5/a1600 Beach 36 15 2 square_4_4/2500 Beach 0 0 HMK_Home",
       }
     },
     {
       "Action": "EditData",
       "Target": "Strings/schedules/{{ModId}}_{{L@Kid}}",
       "Entries": {
-        "DesertFestival.000": "{{i18n:ARVMuffin.Schedule.DesertFestival.000}}",
+        "DesertFestival.000": "{{i18n:{{L@Kid}}.Schedule.DesertFestival.000}}",
       },
-    },
-    {
-      "Action": "EditData",
-      "Target": "Data/animationdescriptions",
-      "Entries": {
-        "{{ModId}}_{{L@Kid}}_sit": "16/16/16",
-        "{{ModId}}_{{L@Kid}}_read": "17/17/17",
-      }
     },
   ]
 }

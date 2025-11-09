@@ -1,6 +1,0 @@
-{
-    "$schema": "https://smapi.io/schemas/i18n.json",
-    // This i18n file covers values not in the original ARV kids i18n
-    "ARVMuffin.DisplayName": "Muffin",
-    "ARVCookie.DisplayName": "Cookie",
-}
