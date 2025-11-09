@@ -184,8 +184,7 @@ internal static class KidHandler
             !string.IsNullOrEmpty(kidId)
             && !kidId.EqualsIgnoreCase("Any")
             && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef)
-            && kidDef.AdoptedFromNPC == kidId
-            && NPCLookup.GetNonChildNPC(kidId) is not null
+            && (kidDef.AdoptedFromNPC != kidId || NPCLookup.GetNonChildNPC(kidId) is not null)
         )
         {
             ModEntry.Log($"Adopt '{kidId}' as Child");

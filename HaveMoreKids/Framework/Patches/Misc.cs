@@ -87,6 +87,7 @@ internal static partial class Patches
 
     private static void SocialPage_FindSocialCharacters_Postfix(ref List<SocialPage.SocialEntry> __result)
     {
+        ModEntry.Log("SocialPage_FindSocialCharacters_Postfix");
         foreach (SocialPage.SocialEntry entry in Enumerable.Reverse(__result))
         {
             if (entry.Character is Child kid)

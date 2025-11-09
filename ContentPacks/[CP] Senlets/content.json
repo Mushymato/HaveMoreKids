@@ -6,7 +6,7 @@
   // debug hu 2
   // debug marry SenS
   // debug sleep
-  // debug action mushymato.HaveMoreKids_SetNewChildEvent 0 7thAxis.LitD.CP.Senlet_Chirin
+  // debug action mushymato.HaveMoreKids_SetNewChildEvent 0 7thAxis.LitD.Senlets_Chirin
   // debug sleep
   "Changes": [
     // Load the shared Baby snorb

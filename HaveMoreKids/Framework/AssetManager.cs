@@ -25,7 +25,7 @@ public sealed class KidDefinitionData
     public string? CanAdoptFromAdoptionRegistry { get; set; } = null;
     public int? DaysFromAdoptionRegistry { get; set; } = null;
     public string? RoamOnFarmCondition { get; set; } = null;
-    public string? IsNPCTodayCondition { get; set; } = null;
+    public string? IsNPCTodayCondition { get; set; } = "FALSE";
     public string? DialogueSheetName { get; set; } = null;
 }
 
@@ -386,7 +386,7 @@ internal static class AssetManager
         IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
         foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
         {
-            if (entry.IsAdoptedFromNPC || entry.KidNPCId == null)
+            if (entry.KidNPCId == null)
                 continue;
 
             if (entry.IsAdoptedFromNPC && data.TryGetValue(entry.KidNPCId, out string? giftTastes))

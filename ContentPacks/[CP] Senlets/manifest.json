@@ -14,10 +14,10 @@
     "UniqueID": "Pathoschild.ContentPatcher"
   },
   "Dependencies": [
-    {
-      "UniqueID": "7thAxis.LitD",
-      "IsRequired": true
-    },
+    // {
+    //   "UniqueID": "7thAxis.LitD",
+    //   "IsRequired": true
+    // },
     {
       "UniqueID": "mushymato.HaveMoreKids",
       "IsRequired": true

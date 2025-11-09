@@ -531,7 +531,7 @@ internal static class GameDelegates
         {
             return false;
         }
-        error = "";
+        error = null!;
 
         if (spouseName.EqualsIgnoreCase(PLAYER_PARENT))
         {
