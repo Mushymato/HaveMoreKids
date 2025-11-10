@@ -344,10 +344,10 @@ internal static class GameDelegates
             {
                 if (
                     kid.GetHMKAdoptedFromNPCId() is string kidNPCId
-                    && KidHandler.KidEntries.TryGetValue(kidNPCId, out KidEntry? kidEntry)
+                    && AssetManager.KidDefsByKidId.TryGetValue(kidNPCId, out KidDefinitionData? kidDef)
                 )
                 {
-                    return kidEntry.KidNPCId == kidId;
+                    return kidDef.AdoptedFromNPC == kidId;
                 }
                 return false;
             });
