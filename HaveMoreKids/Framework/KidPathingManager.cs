@@ -430,6 +430,10 @@ internal static class KidPathingManager
         {
             result.Add(warp.TargetName);
         }
+        // hardcoding: ensure that BusStop/Forest/Backwoods are part of the set, to avoid weirdness with weird farms
+        result.Add("BusStop");
+        result.Add("Forest");
+        result.Add("Backwoods");
         ModEntry.LogOnce($"Farm adjacent locations: {string.Join(',', result)}");
         return result;
     }
@@ -497,7 +501,7 @@ internal static class KidPathingManager
         GoingToTheFarm[ctxNeedOut.Kid.idOfParent.Value] = new(ctxNeedOut.Kid, Point.Zero, Game1.timeOfDay);
     }
 
-    private static void WarpKidToHouse(Child kid, bool delay = true)
+    internal static void WarpKidToHouse(Child kid, bool delay = true)
     {
         FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
         if (delay)

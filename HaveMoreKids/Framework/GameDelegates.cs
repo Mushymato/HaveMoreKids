@@ -171,6 +171,8 @@ internal static class GameDelegates
     internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
     internal const string GSQ_WILL_HAVE_CHILD = $"{ModEntry.ModId}_WILL_HAVE_CHILD";
     internal const string Trigger_NewChild = $"{ModEntry.ModId}_NewChild";
+    internal const string Trigger_Adoption = $"{ModEntry.ModId}_Adoption";
+    internal const string Trigger_Doved = $"{ModEntry.ModId}_Doved";
     internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
@@ -192,6 +194,8 @@ internal static class GameDelegates
         GameStateQuery.Register(GSQ_WILL_HAVE_CHILD, WILL_HAVE_CHILD);
         // Trigger
         TriggerActionManager.RegisterTrigger(Trigger_NewChild);
+        TriggerActionManager.RegisterTrigger(Trigger_Adoption);
+        TriggerActionManager.RegisterTrigger(Trigger_Doved);
         // TAction
         TriggerActionManager.RegisterAction(Action_SetNewChildEvent, SetNewChildEvent);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
@@ -333,29 +337,28 @@ internal static class GameDelegates
         return true;
     }
 
-    private static Child? FindChild(Farmer player, string kidId, bool allowIdx = true, bool searchForAdoptedNPC = false)
+    private static Child? FindChild(Farmer player, string kidId)
     {
         List<Child> children = player.getChildren();
-        if (allowIdx && kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
+        if (kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
             return children[index];
-        if (searchForAdoptedNPC)
+        return children.FirstOrDefault(kid => kid.Name == kidId);
+    }
+
+    private static Child? FindAdoptedNPC(Farmer player, string kidId)
+    {
+        List<Child> children = player.getChildren();
+        return children.FirstOrDefault(kid =>
         {
-            return children.FirstOrDefault(kid =>
+            if (
+                kid.GetHMKAdoptedFromNPCId() is string kidNPCId
+                && AssetManager.KidDefsByKidId.TryGetValue(kidNPCId, out KidDefinitionData? kidDef)
+            )
             {
-                if (
-                    kid.GetHMKAdoptedFromNPCId() is string kidNPCId
-                    && AssetManager.KidDefsByKidId.TryGetValue(kidNPCId, out KidDefinitionData? kidDef)
-                )
-                {
-                    return kidDef.AdoptedFromNPC == kidId;
-                }
-                return false;
-            });
-        }
-        else
-        {
-            return children.FirstOrDefault(kid => kid.Name == kidId);
-        }
+                return kidDef.AdoptedFromNPC == kidId;
+            }
+            return false;
+        });
     }
 
     private static bool HAS_CHILD(string[] query, GameStateQueryContext context)
@@ -375,7 +378,7 @@ internal static class GameDelegates
             ModEntry.Log(error, LogLevel.Error);
             return false;
         }
-        return FindChild(context.Player, kidId, allowIdx: false, searchForAdoptedNPC: true) != null;
+        return FindAdoptedNPC(context.Player, kidId) != null;
     }
 
     private static bool WILL_HAVE_CHILD(string[] query, GameStateQueryContext context)

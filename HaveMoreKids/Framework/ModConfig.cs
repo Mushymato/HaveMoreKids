@@ -1,3 +1,4 @@
+using HaveMoreKids.Framework.MapActions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -38,6 +39,7 @@ internal class ModConfigValues
     public bool AlwaysAllowGenericChildren { get; set; } = false;
     public bool ToddlerRoamOnFarm { get; set; } = true;
     public bool UseSingleBedAsChildBed { get; set; } = false;
+    public bool PerKidDarkShrineOfSelfishness { get; set; } = true;
     public Dictionary<KidIdent, bool> EnabledKids { get; set; } = [];
 }
 
@@ -67,6 +69,7 @@ internal sealed class ModConfig : ModConfigValues
         AlwaysAllowGenericChildren = false;
         ToddlerRoamOnFarm = true;
         UseSingleBedAsChildBed = false;
+        PerKidDarkShrineOfSelfishness = false;
         EnabledKids.Clear();
         CheckDefaultEnabled();
     }
@@ -181,6 +184,17 @@ internal sealed class ModConfig : ModConfigValues
             (value) => AlwaysAllowGenericChildren = value,
             I18n.Config_AlwaysAllowGenericChildren_Name,
             I18n.Config_AlwaysAllowGenericChildren_Description
+        );
+        GMCM.AddBoolOption(
+            Mod,
+            () => PerKidDarkShrineOfSelfishness,
+            (value) =>
+            {
+                PerKidDarkShrineOfSelfishness = value;
+                DarkShrine.Register();
+            },
+            I18n.Config_PerKidDarkShrineOfSelfishness_Name,
+            I18n.Config_PerKidDarkShrineOfSelfishness_Description
         );
 
         SetupEnabledKids();
@@ -299,6 +313,17 @@ internal sealed class ModConfig : ModConfigValues
             (value) => UseSingleBedAsChildBed = value,
             I18n.Config_UseSingleBedAsChildBed_Name,
             I18n.Config_UseSingleBedAsChildBed_Description
+        );
+        GMCM.AddBoolOption(
+            Mod,
+            () => PerKidDarkShrineOfSelfishness,
+            (value) =>
+            {
+                PerKidDarkShrineOfSelfishness = value;
+                DarkShrine.Register();
+            },
+            I18n.Config_PerKidDarkShrineOfSelfishness_Name,
+            I18n.Config_PerKidDarkShrineOfSelfishness_Description
         );
         SetupEnabledKids();
     }

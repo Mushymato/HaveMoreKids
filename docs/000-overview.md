@@ -103,7 +103,9 @@ Aside from typical NPC schedule features, HMK provides these special features:
 
 ### Leaving the Farmhouse
 
-When the Kid NPC's day start location is adjacent to the farm (e.g. BusStop, Forest), the Child version will be visible in the farmhouse when you wake up, then leave the house through front door as soon as possible before becoming invisible. Otherwise, the Child will be invisible from day start.
+When the Kid NPC's day start location is adjacent to the Farm (e.g. BusStop, Forest, possibly more depending on mods), the Child version will be visible in the farmhouse when you wake up, then leave the house through front door 30 minutes before the first schedule point of the day. Until the, the Child is visible for players to talk to and the NPC is hidden.
+
+When the Kid NPC's day start location is not adjacent to the Farm, they will be invisilbe as Child and visible as NPC from day start.
 
 Day start location can be controlled in one of 2 ways:
 1. [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s current `Home` entry.

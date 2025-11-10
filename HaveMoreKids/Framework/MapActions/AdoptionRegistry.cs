@@ -6,17 +6,15 @@ using StardewValley.GameData.Characters;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
-namespace HaveMoreKids.Framework;
+namespace HaveMoreKids.Framework.MapActions;
 
 internal static class AdoptionRegistry
 {
     internal const string Action_ShowAdoption = $"{ModEntry.ModId}_ShowAdoption";
-    internal const string Trigger_Adoption = $"{ModEntry.ModId}_Adoption";
 
     internal static void Register()
     {
         GameLocation.RegisterTileAction(Action_ShowAdoption, TileShowAdoption);
-        TriggerActionManager.RegisterTrigger(Trigger_Adoption);
     }
 
     private static bool TileShowAdoption(GameLocation location, string[] args, Farmer farmer, Point point)
@@ -137,6 +135,6 @@ internal static class AdoptionRegistry
                 return;
             }
         }
-        TriggerActionManager.Raise(Trigger_Adoption);
+        TriggerActionManager.Raise(GameDelegates.Trigger_Adoption);
     }
 }

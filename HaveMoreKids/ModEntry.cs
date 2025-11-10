@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using HaveMoreKids.Framework;
+using HaveMoreKids.Framework.MapActions;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -35,6 +36,7 @@ public class ModEntry : Mod
         AssetManager.Register();
         MultiplayerSync.Register();
         AdoptionRegistry.Register();
+        DarkShrine.Register();
         Patches.Apply();
 
         help.ConsoleCommands.Add("hmk-list_npcs", "List all NPC in the world", ConsoleListNPCs);

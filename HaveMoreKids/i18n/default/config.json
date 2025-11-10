@@ -26,6 +26,8 @@
   "config.ToddlerRoamOnFarm.description": "Allow toddlers to roam around on the farm. They will randomly decide to go outside in the morning, and teleport back home by 1900",
   "config.UseSingleBedAsChildBed.name": "Use Single Bed as Child Bed",
   "config.UseSingleBedAsChildBed.description": "Allow children to sleep on single beds instead of special child beds.",
+  "config.PerKidDarkShrineOfSelfishness.name": "Per Kid Dark Shrine of Selfishness",
+  "config.PerKidDarkShrineOfSelfishness.description": "Override Dark Shrine of Selfishness to allow picking a specific kid.",
   "config.page.specificKids.description": "Enable/Disable Specific Kids Below:",
   "config.page.spousekids.name": "{{Name}}'s Kids",
   "config.page.sharedKids.name": "Shared Kids",

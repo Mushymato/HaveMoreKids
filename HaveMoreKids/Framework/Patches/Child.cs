@@ -9,6 +9,7 @@ using StardewValley.Extensions;
 using StardewValley.GameData.Characters;
 using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
+using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework;
 
@@ -211,6 +212,7 @@ internal static partial class Patches
         KidPathingManager.GoingToTheFarm.Remove(__instance.UniqueMultiplayerID);
         KidPathingManager.ManagedNPCKids.RemoveWhere(kv => kv.Key.idOfParent.Value == __instance.UniqueMultiplayerID);
         KidPathingManager.ReturnKidsToHouse(__instance.getChildren());
+        DelayedAction.functionAfterDelay(() => TriggerActionManager.Raise(GameDelegates.Trigger_Doved), 0);
     }
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
