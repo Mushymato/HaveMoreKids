@@ -10,6 +10,10 @@ Trigger for use with `Data/TriggerActions`, raised at the end of a new child nig
 
 Trigger for use with `Data/TriggerActions`, raised when adoption via adoption registry has just occurred. Does not fire any other means of new child.
 
+## Trigger: mushymato.HaveMoreKids_Doved
+
+Trigger for use with `Data/TriggerActions`, raised when the Dark Shrine of Selfishness is used.
+
 ## Action: mushymato.HaveMoreKids_SetNewChildEvent \<daysUntilNewChild\> [kidId] [spouse] [message]
 
 Action that causes guarenteed child birth event to occur this night, or a night in the future, as long as normal can-have-kids checks pass.

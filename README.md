@@ -39,6 +39,7 @@ If you have content pack providing custom kids installed, and the author given t
 - `Use Single Bed As Child Bed`: Allow children to sleep on single beds instead of special child beds furniture.
 - `Max Children`: Max number of children to have, if no custom kids are available for the spouse or shared. When the spouse has custom kids, this setting does nothing.
 - `Toddlers Roam on Farm`: Allow all toddlers to roam around on the farm. They will go outside in the morning, and return home by 1900.
+- `Per Kid Dark Shrine of Selfishness`: Override Dark Shrine of Selfishness to allow picking a specific kid.
 
 ### Content Pack
 
