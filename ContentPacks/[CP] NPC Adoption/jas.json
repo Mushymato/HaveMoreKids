@@ -13,8 +13,10 @@
           "CanAdoptFromAdoptionRegistry": "TRUE",
           // On tuesdays, let the NPC Jas appear
           "IsNPCTodayCondition": "DAY_OF_WEEK Tuesday",
-          // optional: use alternate dialogue sheet name for the child version
-          "DialogueSheetName": "{{ModId}}_KidJasDialogue",
+          // optional: use alternate dialogue sheet for kid Jas
+          "KidDialogueSheetName": "{{ModId}}_Jas_Kid",
+          // optional: use alternate dialogue sheet for NPC Jas after adoption
+          "NPCDialogueSheetName": "{{ModId}}_Jas_NPC",
           // optional: make adoption always tonight
           "DaysFromAdoptionRegistry": 0
         }
@@ -22,12 +24,12 @@
     },
     {
       "Action": "Load",
-      "Target": "Characters/Dialogue/{{ModId}}_KidJasDialogue",
+      "Target": "Characters/Dialogue/{{ModId}}_Jas_Kid",
       "FromFile": "blank.json"
     },
     {
       "Action": "EditData",
-      "Target": "Characters/Dialogue/{{ModId}}_KidJasDialogue",
+      "Target": "Characters/Dialogue/{{ModId}}_Jas_Kid",
       "Entries": {
         "Mon": "Mon",
         "Tue": "Tue",
@@ -36,6 +38,24 @@
         "Fri": "Fri",
         "Sat": "Sat",
         "Sun": "Sun",
+      }
+    },
+    {
+      "Action": "Load",
+      "Target": "Characters/Dialogue/{{ModId}}_Jas_NPC",
+      "FromFile": "blank.json"
+    },
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/{{ModId}}_Jas_NPC",
+      "Entries": {
+        "Mon": "Mon1",
+        "Tue": "Tue2",
+        "Wed": "Wed3",
+        "Thu": "Thu4",
+        "Fri": "Fri5",
+        "Sat": "Sat6",
+        "Sun": "Sun7",
       }
     }
   ]

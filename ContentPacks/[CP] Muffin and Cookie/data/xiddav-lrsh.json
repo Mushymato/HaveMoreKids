@@ -27,8 +27,8 @@
       "Action": "EditData",
       "Target": "Data/animationdescriptions",
       "Entries": {
-        "{{ModId}}_{{L@Kid}}_sit": "16/16/16",
-        "{{ModId}}_{{L@Kid}}_read": "17/17/17",
+        "{{ModId}}_{{L@Kid}}_sit": "20/20/20",
+        "{{ModId}}_{{L@Kid}}_read": "22/22/22",
       }
     },
   ]

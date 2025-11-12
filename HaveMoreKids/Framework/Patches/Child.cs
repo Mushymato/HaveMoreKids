@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
@@ -158,6 +159,62 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.getMasterScheduleRawData)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(NPC_getMasterScheduleRawData_Transpiler))
         );
+        // Alter toddler special animations
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.toddlerReachedDestination)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_toddlerReachedDestination_Postfix))
+        );
+    }
+
+    private static void Child_toddlerReachedDestination_Postfix(Child __instance, Character c, GameLocation l)
+    {
+        if (
+            __instance.Sprite.currentAnimation is not List<FarmerSprite.AnimationFrame> currentAnimation
+            || currentAnimation.Count < 5
+        )
+        {
+            return;
+        }
+        if (__instance.GetHMKKidDef() is not KidDefinitionData kidDef)
+        {
+            return;
+        }
+        int offset;
+        int[]? frameMapping;
+        if (currentAnimation.Count == 5 && currentAnimation[0].frame == 20 && (kidDef.ToddlerAnim20To23?.Length == 4))
+        {
+            offset = 20;
+            frameMapping = kidDef.ToddlerAnim20To23;
+        }
+        else if (
+            currentAnimation.Count == 20
+            && currentAnimation[0].frame == 16
+            && (kidDef.ToddlerAnim16To19?.Length == 5)
+        )
+        {
+            offset = 15;
+            frameMapping = kidDef.ToddlerAnim16To19;
+        }
+        else
+        {
+            return;
+        }
+
+        for (int i = 0; i < __instance.Sprite.currentAnimation.Count; i++)
+        {
+            FarmerSprite.AnimationFrame animFrame = __instance.Sprite.currentAnimation[i];
+            if (animFrame.frame == 0)
+            {
+                animFrame.frame = frameMapping[0];
+                __instance.Sprite.currentAnimation[i] = animFrame;
+            }
+            else
+            {
+                animFrame.frame = frameMapping[animFrame.frame - offset];
+                __instance.Sprite.currentAnimation[i] = animFrame;
+            }
+        }
+        __instance.Sprite.currentFrame = __instance.Sprite.currentAnimation[0].frame;
     }
 
     private static string ModifyScheduleAssetName(NPC npc, string scheduleAssetName)
@@ -217,40 +274,39 @@ internal static partial class Patches
 
     private static void NPC_GetDialogueSheetName_Postfix(NPC __instance, ref string __result)
     {
-        string? defaultSheetName = null;
+        string? overrideSheetName = null;
+        KidDefinitionData? kidDef = __instance.GetHMKKidDef();
+        if (kidDef != null)
+        {
+            overrideSheetName = __instance is Child ? kidDef.KidDialogueSheetName : kidDef.NPCDialogueSheetName;
+        }
+
         if (__instance is Child kid)
         {
-            if (kid.GetHMKAdoptedFromNPCId() is string npcId)
+            // kid is adopted from NPC
+            if (kidDef?.AdoptedFromNPC != null && kid.GetHMKAdoptedFromNPCId() is string npcId)
             {
-                defaultSheetName = npcId;
+                __result = overrideSheetName ?? npcId;
             }
+            // normal HMK kid
             else
             {
-                defaultSheetName = __instance.Name;
+                __result = overrideSheetName ?? __instance.Name;
             }
         }
-        else if (__instance.GetHMKChildNPCKidId() is string kidId)
+        else
         {
-            defaultSheetName = kidId;
+            // NPC is kid
+            if (__instance.GetHMKChildNPCKidId() is string kidId)
+            {
+                __result = overrideSheetName ?? kidId;
+            }
+            // NPC is adopted to kid
+            else if (KidHandler.KidEntries.Any(kv => kv.Value.KidNPCId == __instance.Name))
+            {
+                __result = overrideSheetName ?? __result;
+            }
         }
-
-        if (defaultSheetName != null)
-        {
-            __result = GetHMKDialogueSheet(__instance) ?? defaultSheetName;
-        }
-    }
-
-    private static string? GetHMKDialogueSheet(NPC npc)
-    {
-        if (
-            npc is Child child
-            && child.GetHMKKidDef() is KidDefinitionData kidDef
-            && !string.IsNullOrEmpty(kidDef.DialogueSheetName)
-        )
-        {
-            return kidDef.DialogueSheetName;
-        }
-        return null;
     }
 
     private static IEnumerable<Child> GetChildrenOnFarm(FarmHouse __instance)
@@ -407,20 +463,12 @@ internal static partial class Patches
         }
     }
 
-    private static void NPC_Dialogue_Postfix()
-    {
-        throw new NotImplementedException();
-    }
-
     private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l, ref bool __result)
     {
         if (__instance.Age < 3)
         {
             return true;
         }
-
-        if (l is Farm)
-            __instance.controller = null;
 
         if (!who.IsLocalPlayer)
         {
@@ -432,21 +480,15 @@ internal static partial class Patches
             return !__result;
         }
 
-        int hearts = 0;
-        if (Game1.player.friendshipData.TryGetValue(__instance.Name, out Friendship friendship))
-        {
-            hearts = friendship.Points / 250;
-        }
-        if (!__instance.checkForNewCurrentDialogue(hearts))
-        {
-            __instance.checkForNewCurrentDialogue(hearts, noPreface: true);
-        }
-
         if (__instance.CurrentDialogue.Count > 0)
         {
             Game1.drawDialogue(__instance);
-            who.talkToFriend(__instance); // blocks the vanilla interact
-            __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
+            who.talkToFriend(__instance);
+            if (!__instance.CurrentDialogue.Peek().dontFaceFarmer)
+            {
+                __instance.controller = null;
+                __instance.faceTowardFarmerForPeriod(4000, 3, faceAway: false, who);
+            }
             __result = true;
             return false;
         }
@@ -553,13 +595,12 @@ internal static partial class Patches
                 tmpCADs.Add(new(data));
                 if (data.AppearanceIsBaby())
                 {
-                    data.Precedence = Math.Min(data.Precedence, -100);
                     data.Condition =
                         data.Condition != null ? data.Condition.Replace(Condition_KidId, __instance.Name) : "TRUE";
                 }
                 else
                 {
-                    data.Precedence = Math.Max(data.Precedence, 100);
+                    data.Precedence = 1000;
                     data.Condition = "FALSE";
                 }
             }
@@ -568,7 +609,7 @@ internal static partial class Patches
                 if (data.AppearanceIsBaby())
                 {
                     tmpCADs.Add(new(data));
-                    data.Precedence = Math.Max(data.Precedence, 100);
+                    data.Precedence = 1000;
                     data.Condition = "FALSE";
                 }
                 else if (data.Condition != null)

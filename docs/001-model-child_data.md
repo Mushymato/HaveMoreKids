@@ -33,7 +33,7 @@ Other fields are unused by kids, unless they become an NPC which will have a `Da
 
 In this case, the other fields apply to NPC version, e.g. setting `Home` will change where they spawn.
 
-#### Appearance
+## Appearance
 
 Custom kids in HMK uses the same [appearance system](https://stardewvalleywiki.com/Modding:NPC_data#Appearance_.26_sprite) as regular NPC, with some special quirks for baby sprites.
 
@@ -41,3 +41,26 @@ Custom kids in HMK uses the same [appearance system](https://stardewvalleywiki.c
 - Toddlers and child NPC uses the same set of appearances, but you can limit an appearance to toddler by using conditions. The special token `KID_ID` will be replaced with this kid's HMK id. Thus if the kid should look different as a child NPC, use `mushymato.HaveMoreKids_CHILD_AGE KID_ID 4` with a lower Precedence.
 - If the toddler has lines, they would need a `Portrait` as well.
 - A HMK kid must have a least one unconditional baby appearance and one unconditional toddler appearance, which is defined as an appearance with a valid texture in `Sprite` field, applicable both indoor and outdoors, applies to all seasons, and not an island outfit. For case of seasonal outfits, it's recommended to make one season (such as spring) unconditional, then have the seasonal appearances use a lower `Precedence`.
+
+## Sprite Requirements
+
+### Baby
+
+The baby sprite should match the vanilla baby sprites exactly, no extras allowed.
+
+If you wish to use vanilla baby sprites, you need a default baby entry like this:
+```json
+{
+    "Id": "HMK_BABY",
+    "Sprite": "Characters/Baby"
+},
+```
+Later if you want to change the baby sprite to a custom one, simply change `Sprite` here.
+
+### Toddler
+
+Aside from the 16 down/right/up/left walking sprites, toddlers also have 8 more special frames that are used for 2 sets of special animation as they wander about the farmhouse.
+- Arm Waving: 16 17 18 19
+- Sit Down: 20 21 22 23
+
+These should have actual animation, if you don't

@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using Force.DeepCloner;
 using HaveMoreKids.Framework.MapActions;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -27,7 +29,17 @@ public sealed class KidDefinitionData
     public int? DaysFromAdoptionRegistry { get; set; } = null;
     public string? RoamOnFarmCondition { get; set; } = null;
     public string? IsNPCTodayCondition { get; set; } = "FALSE";
-    public string? DialogueSheetName { get; set; } = null;
+    public string? KidDialogueSheetName { get; set; } = null;
+    public string? NPCDialogueSheetName { get; set; } = null;
+    public Dictionary<string, KidFestivalBehaviour?>? FestivalBehaviour { get; set; } = null;
+    public int[]? ToddlerAnim16To19 { get; set; } = null;
+    public int[]? ToddlerAnim20To23 { get; set; } = null;
+}
+
+public class KidFestivalBehaviour
+{
+    public bool IsStationary { get; set; } = false;
+    public Vector3? Position { get; set; } = null;
 }
 
 internal static class AssetManager

@@ -232,7 +232,7 @@ internal static class GameDelegates
         }
         if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
         {
-            dialogueAsset = kidId;
+            dialogueAsset = kidDef.KidDialogueSheetName ?? kidId;
         }
 
         string? endearment;

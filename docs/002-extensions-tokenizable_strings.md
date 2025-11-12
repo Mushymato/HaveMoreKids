@@ -8,7 +8,7 @@ All of them require a kid id as their first argument, but special logic is appli
 
 Resolves to the endearment this kid should use for the player.
 
-Endearments are set in the kid's dialogue asset (e.g. `Characters/Dialogue/<kidId>`) via special keys that are checked in-order:
+Endearments are set in the kid's dialogue asset (e.g. `Characters/Dialogue/<kidId>` or `Characters/Dialogue/KidDialogueSheetName`) via special keys that are checked in-order:
 
 - `HMK_Endearment`: The most prioritized endearment term, ignores gender.
 - `HMK_Endearment_<gender>`: One of `HMK_Endearment_Male`, `HMK_Endearment_Female`, and `HMK_Endearment_Undefined`, respects player gender.

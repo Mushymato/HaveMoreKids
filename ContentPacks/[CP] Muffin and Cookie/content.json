@@ -32,7 +32,7 @@
         "CookieIsBorn": true,
       }
     },
-    // dialogue random
+    // dialogue random range
     {
       "Name": "KidDialogueRandRange",
       "Value": "{{Range: 1,25}}"
@@ -44,14 +44,6 @@
         "MuffinIsBorn": true,
         "CookieIsBorn": true
       }
-    },
-    {
-      "Name": "KidDialogueRand",
-      "Value": "{{Random: {{KidDialogueRandRange}}}}"
-    },
-    {
-      "Name": "KidDialogueRand2",
-      "Value": "{{Random: {{KidDialogueRandRange}}}}"
     },
     // little red school house
     {
@@ -81,25 +73,22 @@
     },
   ],
   "Changes": [
-    // general
+    // kids
     {
-      "Action": "EditData",
-      "Target": "mushymato.HaveMoreKids/Kids",
-      "Entries": {
-        "{{ModId}}_muffin": {
-          "Parent": "Sterling",
-          // Stay home when it is festival, so that default child add to festival logic can be used
-          "IsNPCTodayCondition": "!IS_FESTIVAL_DAY",
-        },
-        "{{ModId}}_cookie": {
-          "Parent": "Sterling",
-          // guarentees that Cookie will be born after Muffin
-          "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_muffin",
-          // Stay home when it is festival, so that default child add to festival logic can be used
-          "IsNPCTodayCondition": "!IS_FESTIVAL_DAY",
-        }
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "muffin"
       }
     },
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "cookie"
+      }
+    },
+    // sterling dialogue
     {
       "Action": "Include",
       "FromFile": "data/sterling-dialogue.json"
@@ -117,20 +106,5 @@
         "HasValue:{{SterlingKids}}": true
       }
     },
-    // per kid
-    {
-      "Action": "Include",
-      "FromFile": "data/kid.json",
-      "LocalTokens": {
-        "L@Kid": "muffin"
-      }
-    },
-    {
-      "Action": "Include",
-      "FromFile": "data/kid.json",
-      "LocalTokens": {
-        "L@Kid": "cookie"
-      }
-    }
   ]
 }

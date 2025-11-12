@@ -398,7 +398,7 @@ internal sealed class ModConfig : ModConfigValues
             if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
             {
                 hasDialogue = Game1.content.DoesAssetExist<Dictionary<string, string>>(
-                    $"{AssetManager.Asset_CharactersDialogue}/{kidDef.DialogueSheetName ?? kidId}"
+                    $"{AssetManager.Asset_CharactersDialogue}/{kidDef.KidDialogueSheetName ?? kidId}"
                 );
                 isKidNPC =
                     !string.IsNullOrEmpty(kidDef.IsNPCTodayCondition)

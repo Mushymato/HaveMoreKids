@@ -1,0 +1,85 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    // The kids are setup with have 2 dialogue assets
+    // This include makes sure they get different rand numbers
+    {
+      // load blank.json
+      "Action": "Load",
+      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}_{{L@Suffix}}",
+      "FromFile": "data/blank.json"
+    },
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}_{{L@Suffix}}",
+      "Entries": {
+        "AcceptBirthdayGift_Positive": "{{i18n:{{L@Kid}}.Dialogue.BirthdayGift_Positive}}",
+        "AcceptBirthdayGift_Negative": "{{i18n:{{L@Kid}}.Dialogue.BirthdayGift_Negative}}",
+        "AcceptGift_(O)StardropTea": "{{i18n:{{L@Kid}}.Dialogue.Gift_StardropTea}}",
+        "AcceptGift_category_vegetable": "{{i18n:{{L@Kid}}.Dialogue.Gift_category_vegetable}}", //what they say when they get a vegetable
+        "AcceptGift_coffee_item": "{{i18n:{{L@Kid}}.Dialogue.Gift_coffee_item}}", //what they say when they get espresso or coffee
+        "AcceptGift_alcohol_item": "{{i18n:{{L@Kid}}.Dialogue.Gift_alcohol_item}}", //what they say when they get an alcoholic beverage (i.e. Beer, Mead, Pale Ale, Piña Colada, Wine)
+        "Resort_Entering": "{{i18n:{{L@Kid}}.Dialogue.Resort_Entering}}",
+        "Resort_Leaving": "{{i18n:{{L@Kid}}.Dialogue.Resort_Leaving}}",
+        "Resort_Chair": "{{i18n:{{L@Kid}}.Dialogue.Resort_Chair}}",
+        "Resort_Bar": "{{i18n:{{L@Kid}}.Dialogue.Resort_Bar}}",
+        "Resort_Shore": "{{i18n:{{L@Kid}}.Dialogue.Resort_Shore}}",
+        "Resort_Towel": "{{i18n:{{L@Kid}}.Dialogue.Resort_Towel}}",
+        "Resort_Umbrella": "{{i18n:{{L@Kid}}.Dialogue.Resort_Umbrella}}",
+        "Resort_Wander": "{{i18n:{{L@Kid}}.Dialogue.Resort_Wander}}",
+        "Resort": "{{i18n:{{L@Kid}}.Dialogue.Resort}}",
+        "GreenRain": "{{i18n:{{L@Kid}}.Dialogue.GreenRain}}",
+        // Seasonals
+        "spring_Mon": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "spring_Tue": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "spring_Wed": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "spring_Thu": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "spring_Fri": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "spring_Sat": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "spring_Sun": "{{i18n:{{L@Kid}}.Dialogue.Spring.{{L@Rand}}}}",
+        "summer_Mon": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "summer_Tue": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "summer_Wed": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "summer_Thu": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "summer_Fri": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "summer_Sat": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "summer_Sun": "{{i18n:{{L@Kid}}.Dialogue.Summer.{{L@Rand}}}}",
+        "fall_Mon": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "fall_Tue": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "fall_Wed": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "fall_Thu": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "fall_Fri": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "fall_Sat": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "fall_Sun": "{{i18n:{{L@Kid}}.Dialogue.Fall.{{L@Rand}}}}",
+        "winter_Mon": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "winter_Tue": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "winter_Wed": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "winter_Thu": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "winter_Fri": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "winter_Sat": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "winter_Sun": "{{i18n:{{L@Kid}}.Dialogue.Winter.{{L@Rand}}}}",
+        "spring_12_1": "{{i18n:{{L@Kid}}.Dialogue.spring_12}}",
+        "spring_13_1": "{{i18n:{{L@Kid}}.Dialogue.spring_13}}",
+        "spring_23_1": "{{i18n:{{L@Kid}}.Dialogue.spring_23}}",
+        "spring_24_1": "{{i18n:{{L@Kid}}.Dialogue.spring_24}}",
+        "spring_28_1": "{{i18n:{{L@Kid}}.Dialogue.spring_28}}",
+        "summer_11_1": "{{i18n:{{L@Kid}}.Dialogue.summer_11}}",
+        "summer_15_1": "{{i18n:{{L@Kid}}.Dialogue.summer_15.{{Random: 1,2}}}}",
+        "spring_12_2": "{{i18n:{{L@Kid}}.Dialogue.spring_12}}",
+        "spring_13_2": "{{i18n:{{L@Kid}}.Dialogue.spring_13}}",
+        "spring_23_2": "{{i18n:{{L@Kid}}.Dialogue.spring_23}}",
+        "spring_24_2": "{{i18n:{{L@Kid}}.Dialogue.spring_24}}",
+        "spring_28_2": "{{i18n:{{L@Kid}}.Dialogue.spring_28}}",
+        "summer_11_2": "{{i18n:{{L@Kid}}.Dialogue.summer_11}}",
+        "summer_15_2": "{{i18n:{{L@Kid}}.Dialogue.summer_15.{{Random: 1,2}}}}",
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/rainy",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": "{{i18n:{{L@Kid}}.Dialogue.Rain.{{Random:1,2,3,4,5,6,7,8}}}}",
+      }
+    },
+  ]
+}

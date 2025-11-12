@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -113,20 +112,36 @@ internal static class KidHandler
         return null;
     }
 
-    internal static KidDefinitionData? GetHMKKidDef(this Character kidCharacter)
+    internal static KidDefinitionData? GetHMKKidDef(this NPC kidCharacter)
     {
-        if (kidCharacter is not Child kid)
+        string? kidKey;
+        if (kidCharacter is Child kid)
         {
-            return null;
+            // kid is adopted from NPC
+            if (kid.GetHMKAdoptedFromNPCId() is string npcId)
+            {
+                kidKey = npcId;
+            }
+            // normal HMK kid
+            else
+            {
+                kidKey = kidCharacter.Name;
+            }
         }
-        if (AssetManager.KidDefsByKidId.TryGetValue(kid.Name, out KidDefinitionData? kidDef))
+        else
         {
-            return kidDef;
+            // NPC is kid
+            if (kidCharacter.GetHMKChildNPCKidId() is string kidId)
+            {
+                kidKey = kidId;
+            }
+            // NPC is adopted to kid (should be validated elsewhere, unsafe here)
+            else
+            {
+                kidKey = kidCharacter.Name;
+            }
         }
-        else if (
-            kidCharacter.GetHMKAdoptedFromNPCId() is string kidId
-            && AssetManager.KidDefsByKidId.TryGetValue(kidId, out kidDef)
-        )
+        if (AssetManager.KidDefsByKidId.TryGetValue(kidKey, out KidDefinitionData? kidDef))
         {
             return kidDef;
         }
@@ -454,6 +469,8 @@ internal static class KidHandler
             // make sure dialogue gets reloaded
             kid.resetSeasonalDialogue();
             kid.resetCurrentDialogue();
+            int? hearts = null;
+
             // Ensure kid is in a tile that can reach the door
             KidPathingManager.RepositionKidInFarmhouse(kid);
 
@@ -510,8 +527,18 @@ internal static class KidHandler
                 kidFriendship.Proposer = 0L;
                 Game1.player.friendshipData[kid.Name] = kidFriendship;
                 Game1.player.friendshipData[entry.KidNPCId] = kidFriendship;
+                hearts = kidFriendship.Points / 250;
 
                 KidPathingManager.AddManagedNPCKid(kid, kidAsNPC, goOutside);
+            }
+
+            if (hearts == null && Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship))
+            {
+                hearts = friendship.Points / 250;
+            }
+            if (!kid.checkForNewCurrentDialogue(hearts ?? 0))
+            {
+                kid.checkForNewCurrentDialogue(hearts ?? 0, noPreface: true);
             }
         }
         ModEntry.LogDebug("Done day started setup");

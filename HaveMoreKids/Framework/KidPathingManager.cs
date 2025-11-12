@@ -57,6 +57,7 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
         kid.Age = 3;
         kid.IsInvisible = false;
         kid.daysUntilNotInvisible = 0;
+        kid.forceOneTileWide.Value = true;
     }
 
     internal static void SetNPCInvisible(NPC kidNPC)
@@ -115,7 +116,7 @@ internal static class KidPathingManager
         ModEntry.help.Events.GameLoop.DayEnding += OnDayEnding;
         ModEntry.help.Events.GameLoop.TimeChanged += OnTimeChanged;
 
-#if DEBUG
+#if DEBUG_PATHING
         ModEntry.help.Events.Display.RenderedWorld += DebugRenderFarmTopology;
         ModEntry.help.ConsoleCommands.Add("hmk-standable", "Check tile standable", ConsoleStandable);
 #endif
@@ -142,14 +143,33 @@ internal static class KidPathingManager
             yield return new(nextPoint.X, nextPoint.Y + 1);
     }
 
-    private static List<Point> TileStandableBFS(GameLocation location, Point startingTile, int maxDepth)
+    internal static bool IsTileStandable(GameLocation location, Point tile, CollisionMask collisionMask)
+    {
+        return IsTilePassable(location, tile)
+            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == tile.Y)
+            && !location.IsTileBlockedBy(
+                tile.ToVector2(),
+                collisionMask: collisionMask,
+                ignorePassables: CollisionMask.All
+            )
+            && (location is not DecoratableLocation decoLoc || !decoLoc.isTileOnWall(tile.X, tile.Y));
+    }
+
+    internal static List<Point> TileStandableBFS(
+        GameLocation location,
+        Point startingTile,
+        int maxDepth,
+        int maxCount = -1,
+        CollisionMask collisionMask = ~(CollisionMask.Characters | CollisionMask.Farmers)
+    )
     {
         int maxX = location.Map.DisplayWidth / 64;
         int maxY = location.Map.DisplayHeight / 64;
         Dictionary<Point, bool> tileStandableState = [];
-        tileStandableState[startingTile] = IsTileStandable(location, startingTile);
+        tileStandableState[startingTile] = IsTileStandable(location, startingTile, collisionMask);
         Queue<(Point, int)> tileQueue = [];
         tileQueue.Enqueue(new(startingTile, 0));
+        int standableCnt = 1;
         while (tileQueue.Count > 0)
         {
             (Point, int) next = tileQueue.Dequeue();
@@ -163,17 +183,25 @@ internal static class KidPathingManager
             {
                 if (!tileStandableState.ContainsKey(neighbour))
                 {
-                    bool standable = IsTileStandable(location, neighbour);
+                    bool standable = IsTileStandable(location, neighbour, collisionMask);
                     tileStandableState[neighbour] = standable;
                     if (standable)
+                    {
+                        standableCnt++;
                         tileQueue.Enqueue(new(neighbour, depth));
+                        if (maxCount > -1 && standableCnt >= maxCount)
+                        {
+                            goto return_lbl;
+                        }
+                    }
                 }
             }
         }
+        return_lbl:
         return tileStandableState.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
     }
 
-#if DEBUG
+#if DEBUG_PATHING
     private static void DebugRenderFarmTopology(object? sender, RenderedWorldEventArgs e)
     {
         FarmHouse farmTopoRef;
@@ -248,7 +276,7 @@ internal static class KidPathingManager
             doorExit,
             houseEntrance,
             TileStandableBFS(farmHouse, doorExit, 64),
-            TileStandableBFS(farm, houseEntrance, 128)
+            TileStandableBFS(farm, houseEntrance, 64)
         );
     }
 
@@ -391,18 +419,6 @@ internal static class KidPathingManager
         return location.isTilePassable(tile.ToVector2());
     }
 
-    internal static bool IsTileStandable(GameLocation location, Point tile)
-    {
-        return IsTilePassable(location, tile)
-            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == tile.Y)
-            && !location.IsTileBlockedBy(
-                tile.ToVector2(),
-                collisionMask: ~(CollisionMask.Characters | CollisionMask.Farmers),
-                ignorePassables: CollisionMask.All
-            )
-            && (location is not DecoratableLocation decoLoc || !decoLoc.isTileOnWall(tile.X, tile.Y));
-    }
-
     internal static bool KidShouldRoamOnFarm(this Child kid)
     {
         if (!ModEntry.Config.ToddlerRoamOnFarm || Game1.timeOfDay >= LatestOutTheDoorTime)
@@ -500,8 +516,6 @@ internal static class KidPathingManager
             return false;
         }
 
-        ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside");
-
         List<Point> nearbyPoints = farmTopologyInfo
             .TileReachableOutside.Where(point =>
                 Math.Abs(point.X - farmTopologyInfo.HouseEntrance.X) <= 6
@@ -509,10 +523,16 @@ internal static class KidPathingManager
                 && point.Y - farmTopologyInfo.HouseEntrance.Y <= 12
             )
             .ToList();
+
+        ModEntry.LogDebug($"nearbyPoints {string.Join(',', nearbyPoints)}");
+
         Point outsidePoint =
-            nearbyPoints.Count > 0
-                ? Random.Shared.ChooseFrom(farmTopologyInfo.TileReachableOutside)
-                : farmTopologyInfo.HouseEntrance;
+            nearbyPoints.Count > 0 ? Random.Shared.ChooseFrom(nearbyPoints) : farmTopologyInfo.HouseEntrance;
+
+        ModEntry.LogDebug(
+            $"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside ({outsidePoint})"
+        );
+
         kid.controller = new PathFindController(kid, farmHouse, farmTopologyInfo.DoorExit, -1, WarpKidToFarm);
         if (
             kid.controller.pathToEndPoint == null

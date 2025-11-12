@@ -20,6 +20,9 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
 | `DaysFromAdoptionRegistry` | int | _null_ | Number of days before child arrives, when adopted via adoption registry. If this is not set, the player configured day is used. |
 | `RoamOnFarmCondition` | string ([Game State Query](https://stardewvalleywiki.com/Modding:Game_state_queries)) | _null_ | If true and the config `Toddlers Roam on Farm` is enabled, the kid will go out to the farm that day. Checked once at 0610 each day. |
 | `DialogueSheetName` | string | _null_ | If set, this will be the dialogue asset name used for the Child. The final asset name will be `Characters/Dialogue/<DialogueSheetName OR KidId>`. |
+| `FestivalBehaviour` | Dictionary<string, KidFestivalBehaviour?> | _null_ | The key of this field is the festival event id, e.g. `festival_spring24` for flower dance. KidFestivalBehaviour has 2 fields: `IsStationary: true/false` (whether they move around) and `TilePosition: {X: x, Y: y}` (their starting tile). These determine the behavior of kids when they go to festivals with their NPC parent. If not set then they use default behavior (start at random tile near parent, runs around). This field has no effect if the kid is invisible that day, and no effect on the NPC version of the kid. |
+| `ToddlerAnim16To19` | int[] | _null_ | There are 4 frames 16 to 19 where the toddler waves their arm, plus frame 0 inbetween. This field requires 5 elements and when set it will override those frames in order of `[0, 16, 17, 18, 19]`. |
+| `ToddlerAnim20To23` | int[] | _null_ | There are 4 frames 20 to 23 where the toddler sits down. This field requires 4 elements and when set it will override those frames in order of `[20, 21, 22, 23]`. |
 
 ## Samples (Content Patcher)
 
@@ -45,7 +48,16 @@ Kids metadata in `mushymato.HaveMoreKids/Kids` defines behavior around pregnancy
       "CanAdoptFromAdoptionRegistry": "<game state query>",
       "DaysFromAdoptionRegistry": <number of days>,
       "RoamOnFarmCondition": "<game state query>",
-      "DialogueSheetName": "<alternate dialogue sheet name>",
+      "KidDialogueSheetName": "<alternate dialogue sheet name for child>",
+      "NPCDialogueSheetName": "<alternate dialogue sheet name for NPC>",
+      "FestivalBehaviour": {
+        "<festival event id>": {
+          "IsStationary": <true if kid should stay still, false to roam>,
+          "Position": "<X>, <Y>, <facingDirection number>"
+        }
+      },
+      "ToddlerAnim16To19": [<f0>, <f16>, <f17>, <f18>, <f19>],
+      "ToddlerAnim20To23": [<f20>, <f21>, <f22>, <f23>],
     }
   },
 },

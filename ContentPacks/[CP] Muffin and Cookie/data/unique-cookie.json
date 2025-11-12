@@ -5,6 +5,16 @@
     // Since this is being included through kid.json, {{L@Kid}}='cookie'
     {
       "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/Kids",
+      "Fields": {
+        "{{ModId}}_{{L@Kid}}": {
+          // guarentees that Cookie will be born after Muffin
+          "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_muffin"
+        }
+      }
+    },
+    {
+      "Action": "EditData",
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Fields": {
         "{{ModId}}_{{L@Kid}}": {

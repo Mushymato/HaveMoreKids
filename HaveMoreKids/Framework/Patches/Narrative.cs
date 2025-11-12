@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using HarmonyLib;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Extensions;
@@ -94,7 +95,11 @@ internal static partial class Patches
 
     private static void EventDefaultCommands_LoadActors_Postfix(Event @event, string[] args, EventContext context)
     {
+        if (!@event.isFestival)
+            return;
         @event.actors.RemoveWhere(actor => actor is Child && actor.IsInvisible);
+        int stationaryKidsCount = 0;
+        List<Point>? kidCanStand = null;
         foreach (NPC actor in @event.actors)
         {
             string? actorName = null;
@@ -102,6 +107,45 @@ internal static partial class Patches
             {
                 kid.displayName = displayName;
                 actorName = kid.Name;
+                if (
+                    AssetManager.KidDefsByKidId.TryGetValue(kid.Name, out KidDefinitionData? kidDef)
+                    && (kidDef.FestivalBehaviour?.TryGetValue(@event.id, out KidFestivalBehaviour? behaviour) ?? false)
+                    && behaviour != null
+                )
+                {
+                    if (behaviour.IsStationary)
+                    {
+                        kid.IsWalkingInSquare = false;
+                        kid.Halt();
+                    }
+                    if (behaviour.Position is Vector3 pos)
+                    {
+                        kid.setTilePosition((int)pos.X, (int)pos.Y);
+                        kid.faceDirection((int)pos.Z);
+                    }
+                    else if (behaviour.IsStationary)
+                    {
+                        // avoid collisions as much as possible
+                        if (stationaryKidsCount > 0)
+                        {
+                            kidCanStand ??= KidPathingManager.TileStandableBFS(
+                                context.Location,
+                                kid.TilePoint,
+                                5,
+                                Game1.player.getChildrenCount(),
+                                collisionMask: CollisionMask.All
+                            );
+                            if (kidCanStand.Count > stationaryKidsCount)
+                            {
+                                kid.setTilePosition(
+                                    kidCanStand[stationaryKidsCount].X,
+                                    kidCanStand[stationaryKidsCount].Y
+                                );
+                            }
+                        }
+                        stationaryKidsCount++;
+                    }
+                }
             }
             else if (actor.GetHMKChildNPCKidId() is string kidId)
             {
@@ -109,7 +153,6 @@ internal static partial class Patches
             }
             if (actorName != null)
             {
-                ModEntry.Log($"Push dialogue for HMK {actor.Name} ({actorName})");
                 if (@event.TryGetFestivalDialogueForYear(actor, actorName, out var dialogue))
                 {
                     actor.setNewDialogue(dialogue);
