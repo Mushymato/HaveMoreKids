@@ -4,6 +4,7 @@
   "SpouseNaming": "{0} is naming your baby",
   "Crib_Name": "Crib",
   "Crib_Empty": "Grandpa would want you to have another kid.",
+  "Crib_Empty_EnoughKids": "Grandpa would say you have more than enough kids.",
   "BirthMessage_Twin": "Surprise! Twins!",
   "Adoption_Prompt": "Welcome to the adoption registry! You can sign up to adopt a child here, regardless of whether you are married.",
   "Adoption_Generic": "Register for adoption{0}",

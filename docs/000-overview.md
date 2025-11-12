@@ -10,7 +10,7 @@ This page covers the pieces needed to create custom kids.
     - [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md)
     - [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)
 - Extensions
-    - [Game State Queries](./002-extensions-tokenizable_strings.md)
+    - [Game State Queries](./002-extensions-game_state_queries.md)
     - [Triggers and Actions](./002-extensions-triggers_actions.md)
     - [Tokenizable Strings](./002-extensions-tokenizable_strings.md)
     - [Content Patcher Tokens](./002-extensions-content_patcher_tokens.md)
@@ -103,9 +103,11 @@ Aside from typical NPC schedule features, HMK provides these special features:
 
 ### Leaving the Farmhouse
 
-When the Kid NPC's day start location is adjacent to the Farm (e.g. BusStop, Forest, possibly more depending on mods), the Child version will be visible in the farmhouse when you wake up, then leave the house through front door 30 minutes before the first schedule point of the day. Until the, the Child is visible for players to talk to and the NPC is hidden.
+To help create the appearance that your kid is leaving the house, HMK will path the Child from their spot in the farmhouse to the front door under these circumstances:
+1. The Kid NPC's day start location is adjacent to the Farm (e.g. BusStop, Forest, possibly more depending on mods)
+2. The start of the Kid's first schedule point is 1220 or earlier
 
-When the Kid NPC's day start location is not adjacent to the Farm, they will be invisilbe as Child and visible as NPC from day start.
+When these conditions are met, the Child version will be visible in the farmhouse when you wake up, then leave the house through front door 30 minutes before the first schedule point of the day. Until then, the Child is visible for players to talk to and the NPC is hidden. Otherwise, they will be invisible as Child and visible as NPC from the start of the day.
 
 Day start location can be controlled in one of 2 ways:
 1. [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s current `Home` entry.

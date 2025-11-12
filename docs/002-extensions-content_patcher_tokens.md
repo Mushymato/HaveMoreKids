@@ -2,6 +2,8 @@
 
 HMK provides these content patcher tokens, and the implementation also results in a change in behavior for the `ChildNames` token.
 
+**Note:** These content patcher tokens updates slightly later than the equivalent [game state queries](./002-extensions-game_state_queries.md). Thus, if you don't need to use CP tokens then it's better to use the GSQs instead.
+
 ## mushymato.HaveMoreKids/KidDisplayName
 
 Can be used...
@@ -15,6 +17,8 @@ Can be used...
 Can be used...
 1. Without arguments (`{{mushymato.HaveMoreKids/KidNPCId}}`): lists the generated NPC ids for kids.
 2. With 1 argument (`{{mushymato.HaveMoreKids/KidNPCId:<kidId>}}`): return the generated NPC id for this kid, if applicable.
+
+**Note:** If you are adding a child NPC to an event, you can directly use the kid id. HMK will automatically pick the kid NPC version if they exist.
 
 ## ChildNames
 

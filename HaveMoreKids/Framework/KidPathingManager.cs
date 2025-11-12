@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using HaveMoreKids;
 using HaveMoreKids.Framework;
 using Microsoft.Xna.Framework;
@@ -82,7 +84,7 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
         SetKidVisible(Kid);
         SetNPCInvisible(KidNPC);
         pathingState = PathingState.PathedHome;
-        KidHandler.RepositionKidInFarmhouse(Kid);
+        KidPathingManager.RepositionKidInFarmhouse(Kid);
     }
 
     internal void RouteEnd_SetKidInvisibleAndNPCVisible(Character c, GameLocation l)
@@ -94,34 +96,144 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
 
 internal record GoingToFarmCtx(Child Kid, Point ExitPoint, int QueueTime);
 
-internal record FarmhouseDoorInfo(Point DoorExit, Point HouseEntrance, List<Point> OpenTiles);
+internal record FarmTopologyInfo(
+    Point DoorExit,
+    Point HouseEntrance,
+    List<Point> TileReachableInside,
+    List<Point> TileReachableOutside
+);
 
 internal static class KidPathingManager
 {
     internal const string Child_ModData_RoamOnFarm = $"{ModEntry.ModId}/RoamOnFarm";
     internal const string Schedule_HMK_Home = "HMK_Home";
+    private const int LatestOutTheDoorTime = 1200;
 
     internal static void Register()
     {
         // events
         ModEntry.help.Events.GameLoop.DayEnding += OnDayEnding;
         ModEntry.help.Events.GameLoop.TimeChanged += OnTimeChanged;
+
+#if DEBUG
+        ModEntry.help.Events.Display.RenderedWorld += DebugRenderFarmTopology;
+        ModEntry.help.ConsoleCommands.Add("hmk-standable", "Check tile standable", ConsoleStandable);
+#endif
     }
 
     internal static readonly Dictionary<Child, NPCKidCtx> ManagedNPCKids = [];
     internal static readonly Dictionary<long, GoingToFarmCtx> GoingToTheFarm = [];
-    internal static readonly ConditionalWeakTable<FarmHouse, FarmhouseDoorInfo?> FarmhouseDoors = [];
+    private static readonly ConditionalWeakTable<FarmHouse, FarmTopologyInfo?> FarmTopolgyCache = [];
+
+    internal static FarmTopologyInfo? GetFarmTopology(FarmHouse farmHouse) =>
+        FarmTopolgyCache.GetValue(farmHouse, CreateFarmTopology);
+
     internal static HashSet<string>? FarmAdjacent = null;
 
-    private static FarmhouseDoorInfo? GetFarmhouseDoor(FarmHouse farmhouse)
+    private static IEnumerable<Point> SurroundingTiles(Point nextPoint, int maxX, int maxY)
     {
-        if (farmhouse.GetParentLocation() is not Farm farm)
+        if (nextPoint.X > 0)
+            yield return new(nextPoint.X - 1, nextPoint.Y);
+        if (nextPoint.Y > 0)
+            yield return new(nextPoint.X, nextPoint.Y - 1);
+        if (nextPoint.X < maxX - 1)
+            yield return new(nextPoint.X + 1, nextPoint.Y);
+        if (nextPoint.Y < maxY - 1)
+            yield return new(nextPoint.X, nextPoint.Y + 1);
+    }
+
+    private static List<Point> TileStandableBFS(GameLocation location, Point startingTile, int maxDepth)
+    {
+        int maxX = location.Map.DisplayWidth / 64;
+        int maxY = location.Map.DisplayHeight / 64;
+        Dictionary<Point, bool> tileStandableState = [];
+        tileStandableState[startingTile] = IsTileStandable(location, startingTile);
+        Queue<(Point, int)> tileQueue = [];
+        tileQueue.Enqueue(new(startingTile, 0));
+        while (tileQueue.Count > 0)
+        {
+            (Point, int) next = tileQueue.Dequeue();
+            Point nextPoint = next.Item1;
+            int depth = next.Item2 + 1;
+            if (depth > maxDepth)
+            {
+                break;
+            }
+            foreach (Point neighbour in SurroundingTiles(nextPoint, maxX, maxY))
+            {
+                if (!tileStandableState.ContainsKey(neighbour))
+                {
+                    bool standable = IsTileStandable(location, neighbour);
+                    tileStandableState[neighbour] = standable;
+                    if (standable)
+                        tileQueue.Enqueue(new(neighbour, depth));
+                }
+            }
+        }
+        return tileStandableState.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+    }
+
+#if DEBUG
+    private static void DebugRenderFarmTopology(object? sender, RenderedWorldEventArgs e)
+    {
+        FarmHouse farmTopoRef;
+        if (Game1.currentLocation is FarmHouse farmHouse)
+        {
+            farmTopoRef = farmHouse;
+        }
+        else if (Game1.currentLocation is Farm)
+        {
+            farmTopoRef = Utility.getHomeOfFarmer(Game1.player);
+        }
+        else
+        {
+            return;
+        }
+
+        if (GetFarmTopology(farmTopoRef) is not FarmTopologyInfo farmTopologyInfo)
+        {
+            return;
+        }
+
+        foreach (
+            Point pnt in Game1.currentLocation is FarmHouse
+                ? farmTopologyInfo.TileReachableInside
+                : farmTopologyInfo.TileReachableOutside
+        )
+        {
+            Vector2 drawPos = Game1.GlobalToLocal(pnt.ToVector2() * 64);
+            Utility.DrawSquare(
+                e.SpriteBatch,
+                new((int)drawPos.X, (int)drawPos.Y, 64, 64),
+                0,
+                backgroundColor: Color.Blue * 0.3f
+            );
+        }
+    }
+
+    private static void ConsoleStandable(string arg1, string[] arg2)
+    {
+        if (ArgUtility.TryGetPoint(arg2, 0, out Point pnt, out _))
+        {
+            ModEntry.Log($"IsTileStandable {IsTileStandable(Game1.currentLocation, pnt)}");
+        }
+    }
+#endif
+
+    private static FarmTopologyInfo? CreateFarmTopology(FarmHouse farmHouse)
+    {
+        if (
+            farmHouse == null
+            || farmHouse.Map == null
+            || farmHouse.GetParentLocation() is not Farm farm
+            || farm.Map == null
+        )
         {
             return null;
         }
         Point doorExit = new(-1, -1);
         Point houseEntrance = new(-1, -1);
-        foreach (Warp warp in farmhouse.warps)
+        foreach (Warp warp in farmHouse.warps)
         {
             if (warp.TargetName != farm.NameOrUniqueName)
             {
@@ -131,22 +243,27 @@ internal static class KidPathingManager
             houseEntrance = new(warp.TargetX, warp.TargetY);
             break;
         }
-        // Point trial = new(houseEntrance.X + Random.Shared.Next(-8, 8), houseEntrance.Y + 2 + Random.Shared.Next(0, 16));
-        List<Point> openTiles = [];
-        Point trial = Point.Zero;
-        for (int i = -8; i <= 8; i++)
+        ModEntry.LogDebug($"FarmHouse {doorExit} -> Farm {houseEntrance}");
+        return new(
+            doorExit,
+            houseEntrance,
+            TileStandableBFS(farmHouse, doorExit, 64),
+            TileStandableBFS(farm, houseEntrance, 128)
+        );
+    }
+
+    internal static Point GetRandomReachablePointInHouse(FarmHouse farmHouse, Random random)
+    {
+        Point randomTile;
+        if (GetFarmTopology(farmHouse) is FarmTopologyInfo farmTopologyInfo)
         {
-            for (int j = 0; j <= 16; j++)
-            {
-                trial.X = houseEntrance.X + i;
-                trial.Y = houseEntrance.Y + j;
-                if (IsTileStandable(farm, trial))
-                {
-                    openTiles.Add(trial);
-                }
-            }
+            randomTile = random.ChooseFrom(farmTopologyInfo.TileReachableInside);
         }
-        return new(doorExit, houseEntrance, openTiles);
+        else
+        {
+            randomTile = farmHouse.getRandomOpenPointInHouse(random);
+        }
+        return randomTile;
     }
 
     internal static void AddManagedNPCKid(Child kid, NPC kidNPC, bool goOutside)
@@ -204,7 +321,7 @@ internal static class KidPathingManager
             FarmAdjacent ??= FindLocationsAdjacentToFarm(Game1.getFarm());
             bool isFarmAdjacent = FarmAdjacent.Contains(kidNPC.currentLocation.NameOrUniqueName);
 
-            if (endSPD != null || isFarmAdjacent)
+            if ((endSPD != null || isFarmAdjacent) && goOutsideTime < LatestOutTheDoorTime)
             {
                 NPCKidCtx ctx = new(kid, kidNPC, goOutsideTime, endSPD);
                 if (isFarmAdjacent)
@@ -277,14 +394,18 @@ internal static class KidPathingManager
     internal static bool IsTileStandable(GameLocation location, Point tile)
     {
         return IsTilePassable(location, tile)
-            && !location.IsTileBlockedBy(tile.ToVector2(), ignorePassables: CollisionMask.All)
-            && !location.isWaterTile(tile.X, tile.Y)
-            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == warp.Y);
+            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == tile.Y)
+            && !location.IsTileBlockedBy(
+                tile.ToVector2(),
+                collisionMask: ~(CollisionMask.Characters | CollisionMask.Farmers),
+                ignorePassables: CollisionMask.All
+            )
+            && (location is not DecoratableLocation decoLoc || !decoLoc.isTileOnWall(tile.X, tile.Y));
     }
 
     internal static bool KidShouldRoamOnFarm(this Child kid)
     {
-        if (ManagedNPCKids.ContainsKey(kid))
+        if (!ModEntry.Config.ToddlerRoamOnFarm || Game1.timeOfDay >= LatestOutTheDoorTime)
         {
             return false;
         }
@@ -309,6 +430,10 @@ internal static class KidPathingManager
         {
             ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) will play outside on the farm today");
         }
+        else
+        {
+            ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) will stay indoors today");
+        }
         return result;
     }
 
@@ -323,41 +448,42 @@ internal static class KidPathingManager
         if (Game1.timeOfDay >= 1850 && kid.currentLocation is not FarmHouse)
         {
             GoingToTheFarm.Clear();
-            ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to farmhouse");
+            ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to ");
             WarpKidToHouse(kid);
-            return false;
+            return true;
         }
 
         // kid is on the farm
         if (kid.currentLocation is Farm)
         {
-            FarmPathFinding(kid);
-            return false;
+            return KidPathFinding(kid);
         }
 
         // kid not in a proper farmhouse, return early
-        if (kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
+        if (kid.currentLocation is not FarmHouse farmHouse || farmHouse.GetParentLocation() is not Farm farm)
         {
             return false;
         }
 
-        // before 1000, roll and see if the child could go outside
-        if (ModEntry.Config.ToddlerRoamOnFarm && Game1.timeOfDay <= 1000)
+        if (ManagedNPCKids.TryGetValue(kid, out NPCKidCtx? ctx))
         {
-            return SendKidToOutside(kid, farmhouse, farm);
+            // if kid is supposed to go outside as NPC, don't do anything until night
+            return !ctx.ShouldPathOutside;
         }
 
-        return true;
+        bool roamOnFarm = kid.KidShouldRoamOnFarm() && Random.Shared.NextBool();
+        if (roamOnFarm)
+        {
+            return SendKidToOutside(kid, farmHouse, farm);
+        }
+        else
+        {
+            return KidPathFinding(kid);
+        }
     }
 
-    private static bool SendKidToOutside(Child kid, FarmHouse farmhouse, Farm farm)
+    private static bool SendKidToOutside(Child kid, FarmHouse farmHouse, Farm farm)
     {
-        // check if kid should go out
-        if (!kid.KidShouldRoamOnFarm())
-        {
-            return false;
-        }
-
         if (SendEnrouteKidOutside(kid, farm))
         {
             return false;
@@ -369,15 +495,25 @@ internal static class KidPathingManager
             return false;
         }
 
-        if (FarmhouseDoors.GetValue(farmhouse, GetFarmhouseDoor) is not FarmhouseDoorInfo farmhouseDoorInfo)
+        if (GetFarmTopology(farmHouse) is not FarmTopologyInfo farmTopologyInfo)
         {
             return false;
         }
 
         ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} ({kid.TilePoint}) -> go outside");
 
-        Point trial = Random.Shared.ChooseFrom(farmhouseDoorInfo.OpenTiles);
-        kid.controller = new PathFindController(kid, farmhouse, farmhouseDoorInfo.DoorExit, -1, WarpKidToFarm);
+        List<Point> nearbyPoints = farmTopologyInfo
+            .TileReachableOutside.Where(point =>
+                Math.Abs(point.X - farmTopologyInfo.HouseEntrance.X) <= 6
+                && point.Y > farmTopologyInfo.HouseEntrance.Y
+                && point.Y - farmTopologyInfo.HouseEntrance.Y <= 12
+            )
+            .ToList();
+        Point outsidePoint =
+            nearbyPoints.Count > 0
+                ? Random.Shared.ChooseFrom(farmTopologyInfo.TileReachableOutside)
+                : farmTopologyInfo.HouseEntrance;
+        kid.controller = new PathFindController(kid, farmHouse, farmTopologyInfo.DoorExit, -1, WarpKidToFarm);
         if (
             kid.controller.pathToEndPoint == null
             || !kid.controller.pathToEndPoint.Any()
@@ -389,7 +525,7 @@ internal static class KidPathingManager
         }
         else
         {
-            GoingToTheFarm[kid.idOfParent.Value] = new(kid, trial, Game1.timeOfDay);
+            GoingToTheFarm[kid.idOfParent.Value] = new(kid, outsidePoint, Game1.timeOfDay);
             return false;
         }
     }
@@ -448,13 +584,19 @@ internal static class KidPathingManager
         if (!Context.IsMainPlayer)
             return;
 
+        if (timeOfDay == 1840)
+        {
+            // reset farm topology cache 10m before roaming toddlers go home
+            FarmTopolgyCache.Clear();
+        }
+
         List<NPCKidCtx> kidsThatNeedOut = [];
         foreach (NPCKidCtx ctx in ManagedNPCKids.Values)
         {
             ctx.CheckEndSPD();
             if (ctx.ShouldPathOutside)
             {
-                if (timeOfDay >= 1000)
+                if (timeOfDay >= LatestOutTheDoorTime)
                 {
                     ctx.SetKidToPathedOutside();
                 }
@@ -479,12 +621,12 @@ internal static class KidPathingManager
         }
 
         NPCKidCtx ctxNeedOut = kidsThatNeedOut[0];
-        if (ctxNeedOut.Kid.currentLocation is not FarmHouse farmhouse || farmhouse.GetParentLocation() is not Farm farm)
+        if (ctxNeedOut.Kid.currentLocation is not FarmHouse farmHouse || farmHouse.GetParentLocation() is not Farm farm)
         {
             ctxNeedOut.SetKidToPathedOutside();
             return;
         }
-        if (FarmhouseDoors.GetValue(farmhouse, GetFarmhouseDoor) is not FarmhouseDoorInfo farmhouseDoorInfo)
+        if (GetFarmTopology(farmHouse) is not FarmTopologyInfo farmTopologyInfo)
         {
             ctxNeedOut.SetKidToPathedOutside();
             return;
@@ -493,27 +635,50 @@ internal static class KidPathingManager
         ModEntry.Log($"Sending kid '{ctxNeedOut.Kid.Name} ({ctxNeedOut.KidNPC.Name})' out the farmhouse door");
         ctxNeedOut.Kid.controller = new PathFindController(
             ctxNeedOut.Kid,
-            farmhouse,
-            farmhouseDoorInfo.DoorExit,
+            farmHouse,
+            farmTopologyInfo.DoorExit,
             -1,
             ctxNeedOut.RouteEnd_SetKidInvisibleAndNPCVisible
         );
         GoingToTheFarm[ctxNeedOut.Kid.idOfParent.Value] = new(ctxNeedOut.Kid, Point.Zero, Game1.timeOfDay);
     }
 
+    internal static void RepositionKidInFarmhouse(Child kid)
+    {
+        kid.speed = 4;
+        if (kid.currentLocation is FarmHouse farmHouse)
+        {
+            int kidIdx = kid.GetChildIndex();
+            Point randomTile = GetRandomReachablePointInHouse(
+                farmHouse,
+                Utility.CreateDaySaveRandom(farmHouse.OwnerId * 2, kidIdx)
+            );
+            if (!randomTile.Equals(Point.Zero))
+            {
+                kid.setTilePosition(randomTile);
+            }
+            else
+            {
+                randomTile = farmHouse.GetChildBedSpot(kidIdx);
+                if (!randomTile.Equals(Point.Zero))
+                {
+                    kid.setTilePosition(randomTile);
+                }
+            }
+            kid.Sprite.CurrentAnimation = null;
+        }
+    }
+
     internal static void WarpKidToHouse(Child kid, bool delay = true)
     {
         FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
+        Vector2 targetTile = GetRandomReachablePointInHouse(farmHouse, Random.Shared).ToVector2();
         if (delay)
         {
             DelayedAction.functionAfterDelay(
                 () =>
                 {
-                    Game1.warpCharacter(
-                        kid,
-                        farmHouse,
-                        farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2()
-                    );
+                    Game1.warpCharacter(kid, farmHouse, targetTile);
                     kid.controller = null;
                 },
                 0
@@ -521,7 +686,7 @@ internal static class KidPathingManager
         }
         else
         {
-            Game1.warpCharacter(kid, farmHouse, farmHouse.getRandomOpenPointInHouse(Random.Shared, 2).ToVector2());
+            Game1.warpCharacter(kid, farmHouse, targetTile);
             kid.controller = null;
         }
     }
@@ -543,52 +708,81 @@ internal static class KidPathingManager
         kid.toddlerReachedDestination(kid, farm);
     }
 
-    private static void FarmPathFinding(Child kid)
+    private static bool KidPathFinding(Child kid)
     {
         // already in a path find
-        if (kid.controller != null || kid.mutex.IsLocked() || kid.currentLocation is not Farm farm)
+        if (kid.controller != null || kid.mutex.IsLocked())
         {
-            return;
+            return false;
         }
 
-        // 50% chance
-        if (Random.Shared.NextBool())
+        // 25% chance
+        if (Random.Shared.NextBool() && Random.Shared.NextBool())
         {
-            return;
+            return false;
         }
 
         kid.IsWalkingInSquare = false;
         kid.Halt();
 
-        Point? targetTile = null;
-
-        if (!targetTile.HasValue || !IsTileStandable(farm, targetTile.Value))
+        List<Point> tileReachable;
+        if (kid.currentLocation is Farm)
         {
-            for (int i = 0; i < 30; i++)
+            FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
+            if (GetFarmTopology(farmHouse) is FarmTopologyInfo farmTopologyInfo)
             {
-                Point trial = kid.TilePoint + new Point(Random.Shared.Next(-10, 10), Random.Shared.Next(-10, 10));
-                if (IsTileStandable(farm, trial))
-                {
-                    targetTile = trial;
-                    break;
-                }
+                tileReachable = farmTopologyInfo.TileReachableOutside;
             }
-            if (!targetTile.HasValue)
+            else
             {
-                return;
+                return true;
             }
         }
+        else if (kid.currentLocation is FarmHouse farmHouse && farmHouse.OwnerId == kid.idOfParent.Value)
+        {
+            if (GetFarmTopology(farmHouse) is FarmTopologyInfo farmTopologyInfo)
+            {
+                tileReachable = farmTopologyInfo.TileReachableInside;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else
+        {
+            return true;
+        }
 
-        ModEntry.LogDebug($"FarmPathFinding({kid.Name}): {kid.TilePoint} -> {targetTile.Value}");
-        kid.controller = new PathFindController(kid, farm, targetTile.Value, -1, kid.toddlerReachedDestination);
+        if (tileReachable.Count == 0)
+            return false;
+
+        Point currentTile = kid.TilePoint;
+        Point targetTile = Random.Shared.ChooseFrom(
+            tileReachable
+                .Where(tile => Math.Abs(tile.X - currentTile.X) <= 8 && Math.Abs(tile.Y - currentTile.Y) <= 8)
+                .ToList()
+        );
+
+        ModEntry.LogDebug(
+            $"KidPathFinding({kid.Name}, {kid.currentLocation.NameOrUniqueName}): {kid.TilePoint} -> {targetTile}"
+        );
+        kid.controller = new PathFindController(
+            kid,
+            kid.currentLocation,
+            targetTile,
+            -1,
+            kid.toddlerReachedDestination
+        );
         if (
             kid.controller.pathToEndPoint == null
             || !kid.controller.pathToEndPoint.Any()
-            || !farm.isTileOnMap(kid.controller.pathToEndPoint.Last())
+            || !kid.currentLocation.isTileOnMap(kid.controller.pathToEndPoint.Last())
         )
         {
             kid.controller = null;
         }
+        return false;
     }
 
     private static void OnDayEnding(object? sender, DayEndingEventArgs e)
@@ -619,7 +813,7 @@ internal static class KidPathingManager
     internal static void ResetAllState()
     {
         FarmAdjacent = null;
-        FarmhouseDoors.Clear();
+        FarmTopolgyCache.Clear();
         ManagedNPCKids.Clear();
         GoingToTheFarm.Clear();
     }

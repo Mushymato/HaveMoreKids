@@ -454,6 +454,8 @@ internal static class KidHandler
             // make sure dialogue gets reloaded
             kid.resetSeasonalDialogue();
             kid.resetCurrentDialogue();
+            // Ensure kid is in a tile that can reach the door
+            KidPathingManager.RepositionKidInFarmhouse(kid);
 
             GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
             // check if today is a Child day or a NPC day
@@ -473,10 +475,6 @@ internal static class KidHandler
 
                 if (entry.IsAdoptedFromNPC)
                 {
-                    // For some reason, the NPC flavored child don't get dayUpdate so their positions are messed up
-                    // Redo this work ourselves
-                    RepositionKidInFarmhouse(kid);
-
                     key = kid.GetHMKAdoptedFromNPCId() ?? kid.Name;
 
                     kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
@@ -518,29 +516,6 @@ internal static class KidHandler
         }
         ModEntry.LogDebug("Done day started setup");
         KidPathingManager.PathKidNPCToDoor(Game1.timeOfDay);
-    }
-
-    internal static void RepositionKidInFarmhouse(Child kid)
-    {
-        kid.speed = 4;
-        if (kid.currentLocation is FarmHouse farmHouse)
-        {
-            Random r = Utility.CreateDaySaveRandom(farmHouse.OwnerId * 2);
-            Point randomOpenPointInHouse2 = farmHouse.getRandomOpenPointInHouse(r, 1, 200);
-            if (!randomOpenPointInHouse2.Equals(Point.Zero))
-            {
-                kid.setTilePosition(randomOpenPointInHouse2);
-            }
-            else
-            {
-                randomOpenPointInHouse2 = farmHouse.GetChildBedSpot(kid.GetChildIndex());
-                if (!randomOpenPointInHouse2.Equals(Point.Zero))
-                {
-                    kid.setTilePosition(randomOpenPointInHouse2);
-                }
-            }
-            kid.Sprite.CurrentAnimation = null;
-        }
     }
 
     /// <summary>Unset HMK related data on saving</summary>

@@ -66,6 +66,7 @@ public class ModEntry : Mod
     {
         Config.UnregistedOnNonHost = false;
         Config.ResetMenu();
+        KidHandler.KidEntries.Clear();
         NPCLookup.Clear();
         CribManager.CribAssignments.Clear();
         KidPathingManager.ResetAllState();

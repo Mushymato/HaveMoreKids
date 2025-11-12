@@ -20,7 +20,13 @@ You can purchase a furniture crib from Robin's shop. When placed in the farmhous
 
 ### Single Parenthood
 
-Once you have two house upgrades, you can adopt a kid from the adoption registry at Harvey's Clinic even if you aren't married. Content packs may also add custom kids that are only available via adoption here.
+Once you have two house upgrades, you can adopt a kid from the adoption registry at Harvey's Clinic even if you aren't married.
+Content packs may also add custom kids that are only available via adoption here.
+
+### Kids Playing Outside
+
+Once the kids reaches toddler age, they will go out to the farm in the morning and wander around the farm, then return to the house by 1900.
+By default, the kids will only go out when it is not raining, custom kids may have special rules.
 
 ### Specific Custom Kid
 
@@ -37,7 +43,7 @@ If you have content pack providing custom kids installed, and the author given t
 - `Days until Crawler`: Number of days until the baby becomes a crawler. Vanilla days is 14.
 - `Days until Toddler`: Number of days until the crawler becomes a toddler. Vanilla days is 13.
 - `Use Single Bed As Child Bed`: Allow children to sleep on single beds instead of special child beds furniture.
-- `Max Children`: Max number of children to have, if no custom kids are available for the spouse or shared. When the spouse has custom kids, this setting does nothing.
+- `Max Children`: Max number of children you can have (i.e. max number of children that will live in your farmhouse).
 - `Toddlers Roam on Farm`: Allow all toddlers to roam around on the farm. They will go outside in the morning, and return home by 1900.
 - `Per Kid Dark Shrine of Selfishness`: Override Dark Shrine of Selfishness to allow picking a specific kid.
 
@@ -47,7 +53,7 @@ When there are custom kids installed, you can configure them in the subpages nam
 
 There's a config option specifically for the case where spouse has custom kids:
 
-- `Always Allow Generic Children`: Allow you to have non-custom kids even when the spouse has custom kids defined via content pack.
+- `Always Allow Generic Children`: When your spouse has custom kids from content packs, generic children will not appear by default unless you enable this config. Besides this setting, `Max Children` still applies when it comes to determining whether you can have another kid.
 
 ## Compatibility
 

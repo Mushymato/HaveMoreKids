@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Extensions;
 using StardewValley.Locations;
 using StardewValley.Network;
 using StardewValley.Objects;
@@ -153,8 +154,8 @@ internal static class CribManager
             if (bby.currentLocation is not FarmHouse farmHouse)
                 return false;
             // put child at random open tile
-            // todo: this will sometimes be out of bounds, need fixing
-            Point randomTile = farmHouse.getRandomOpenPointInHouse(Random.Shared, 1);
+            Point randomTile;
+            randomTile = KidPathingManager.GetRandomReachablePointInHouse(farmHouse, Random.Shared);
             bby.Position = randomTile.ToVector2() * Game1.tileSize;
             return false;
         }
@@ -236,7 +237,14 @@ internal static class CribManager
                     return true;
             }
         }
-        Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty")));
+        if (who.getChildrenCount() >= ModEntry.Config.MaxChildren)
+        {
+            Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty_EnoughKids")));
+        }
+        else
+        {
+            Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty")));
+        }
         return true;
     }
 }
