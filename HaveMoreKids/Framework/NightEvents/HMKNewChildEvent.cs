@@ -169,9 +169,13 @@ public class HMKNewChildEvent : BaseFarmEvent
             isAdoptedFromNPC
         );
 
-        if (whoseKidForTwin != null)
+        if (whoseKidForTwin != null && whoseKidForTwin.Twin != null)
         {
             newKidId = whoseKidForTwin.Twin;
+            if (AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef))
+            {
+                isAdoptedFromNPC = kidDef.AdoptedFromNPC != null;
+            }
             isTwin = true;
             babyName = null;
             naming = false;

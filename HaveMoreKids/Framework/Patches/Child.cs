@@ -645,8 +645,9 @@ internal static partial class Patches
             __instance.Sprite.SpriteWidth = childData.Size.X;
             __instance.Sprite.SpriteHeight = childData.Size.Y;
             __instance.Sprite.currentFrame = 0;
-            __instance.HideShadow = false;
             __instance.Breather = childData.Breather && childData.BreathChestRect.HasValue;
+            __instance.HideShadow = !childData.Shadow?.Visible ?? false;
+            __instance.forceOneTileWide.Value = true;
         }
         __instance.Sprite.UpdateSourceRect();
 

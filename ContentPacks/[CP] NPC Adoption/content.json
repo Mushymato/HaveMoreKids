@@ -4,7 +4,7 @@
   "Changes": [
     {
       "Action": "Include",
-      "FromFile": "jas.json, leo.json"
+      "FromFile": "jas.json, leo.json, dinosaur.json"
     }
   ]
 }

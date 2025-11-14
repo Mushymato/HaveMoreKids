@@ -37,7 +37,7 @@ public sealed class CPTokenKidNPC
 
     public bool UpdateContext()
     {
-        if (!Context.IsWorldReady)
+        if (!KidHandler.KidEntriesPopulated)
             return false;
         bool changed = KidIds == null || KidIds.Count != KidHandler.KidEntries.Count;
         Dictionary<string, string> newKidIds = [];
@@ -66,7 +66,7 @@ public sealed class CPTokenKidNPC
         return changed;
     }
 
-    public bool IsReady() => Context.IsWorldReady;
+    public bool IsReady() => KidHandler.KidEntriesPopulated;
 
     public IEnumerable<string> GetValues(string? input)
     {
@@ -115,12 +115,15 @@ public sealed class CPTokenKidDisplayName
 
     public bool UpdateContext()
     {
-        if (!Context.IsWorldReady)
+        if (!KidHandler.KidEntriesPopulated)
             return false;
 
-        Dictionary<string, string>? newKids = Game1
-            .player.getChildren()
-            .ToDictionary(kid => kid.Name, kid => kid.displayName);
+        Dictionary<string, string>? newKids = [];
+        foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
+        {
+            if (entry.PlayerParent == Game1.player.UniqueMultiplayerID)
+                newKids[kidId] = entry.DisplayName;
+        }
         bool changed = false;
         if (KidDisplayNames == null || KidDisplayNames.Count != newKids.Count)
         {
@@ -138,7 +141,7 @@ public sealed class CPTokenKidDisplayName
         return changed;
     }
 
-    public bool IsReady() => Context.IsWorldReady;
+    public bool IsReady() => KidHandler.KidEntriesPopulated;
 
     public IEnumerable<string> GetValues(string? input)
     {
@@ -457,29 +460,39 @@ internal static class GameDelegates
         }
         if (FindChild(Game1.player, kidId) is Child kid)
         {
-            switch (age)
-            {
-                case 4:
-                    if (ModEntry.KidNPCEnabled)
-                    {
-                        kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
-                        return true;
-                    }
-                    goto case 3;
-                case 3:
-                    kid.daysOld.Value = ModEntry.Config.TotalDaysToddler;
+            return TrySetChildAge(age, kid);
+        }
+        return false;
+    }
+
+    private static bool TrySetChildAge(int age, Child kid)
+    {
+        switch (age)
+        {
+            case 4:
+                if (ModEntry.KidNPCEnabled)
+                {
+                    kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
+                    kid.Age = 4;
                     return true;
-                case 2:
-                    kid.daysOld.Value = ModEntry.Config.TotalDaysCrawer;
-                    return true;
-                case 1:
-                    kid.daysOld.Value = ModEntry.Config.TotalDaysBaby;
-                    return true;
-                case 0:
-                    kid.daysOld.Value = 0;
-                    kid.Age = 0;
-                    return true;
-            }
+                }
+                goto case 3;
+            case 3:
+                kid.daysOld.Value = ModEntry.Config.TotalDaysToddler;
+                kid.Age = 3;
+                return true;
+            case 2:
+                kid.daysOld.Value = ModEntry.Config.TotalDaysCrawer;
+                kid.Age = 2;
+                return true;
+            case 1:
+                kid.daysOld.Value = ModEntry.Config.TotalDaysBaby;
+                kid.Age = 1;
+                return true;
+            case 0:
+                kid.daysOld.Value = 0;
+                kid.Age = 0;
+                return true;
         }
         return false;
     }

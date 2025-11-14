@@ -57,7 +57,6 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
         kid.Age = 3;
         kid.IsInvisible = false;
         kid.daysUntilNotInvisible = 0;
-        kid.forceOneTileWide.Value = true;
     }
 
     internal static void SetNPCInvisible(NPC kidNPC)
@@ -117,8 +116,7 @@ internal static class KidPathingManager
         ModEntry.help.Events.GameLoop.TimeChanged += OnTimeChanged;
 
 #if DEBUG_PATHING
-        ModEntry.help.Events.Display.RenderedWorld += DebugRenderFarmTopology;
-        ModEntry.help.ConsoleCommands.Add("hmk-standable", "Check tile standable", ConsoleStandable);
+        ModEntry.help.Events.Display.RenderedWorld += DebugPathingNonsense;
 #endif
     }
 
@@ -197,12 +195,12 @@ internal static class KidPathingManager
                 }
             }
         }
-        return_lbl:
+    return_lbl:
         return tileStandableState.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
     }
 
 #if DEBUG_PATHING
-    private static void DebugRenderFarmTopology(object? sender, RenderedWorldEventArgs e)
+    private static void DebugPathingNonsense(object? sender, RenderedWorldEventArgs e)
     {
         FarmHouse farmTopoRef;
         if (Game1.currentLocation is FarmHouse farmHouse)
@@ -237,13 +235,33 @@ internal static class KidPathingManager
                 backgroundColor: Color.Blue * 0.3f
             );
         }
-    }
 
-    private static void ConsoleStandable(string arg1, string[] arg2)
-    {
-        if (ArgUtility.TryGetPoint(arg2, 0, out Point pnt, out _))
+        foreach (Character chara in Game1.currentLocation.characters)
         {
-            ModEntry.Log($"IsTileStandable {IsTileStandable(Game1.currentLocation, pnt)}");
+            if (chara is Child kid && !kid.IsInvisible)
+            {
+                if (kid.controller != null)
+                {
+                    foreach (Point pnt in kid.controller.pathToEndPoint)
+                    {
+                        Vector2 drawPos = Game1.GlobalToLocal(pnt.ToVector2() * 64);
+                        Utility.DrawSquare(
+                            e.SpriteBatch,
+                            new((int)drawPos.X, (int)drawPos.Y, 64, 64),
+                            0,
+                            backgroundColor: Color.Yellow * 0.3f
+                        );
+                    }
+                }
+                Rectangle boundingBox = kid.GetBoundingBox();
+                Vector2 drawPos2 = Game1.GlobalToLocal(new(boundingBox.X, boundingBox.Y));
+                Utility.DrawSquare(
+                    e.SpriteBatch,
+                    new((int)drawPos2.X, (int)drawPos2.Y, boundingBox.Width, boundingBox.Height),
+                    0,
+                    backgroundColor: Color.Red * 0.3f
+                );
+            }
         }
     }
 #endif
@@ -524,8 +542,6 @@ internal static class KidPathingManager
             )
             .ToList();
 
-        ModEntry.LogDebug($"nearbyPoints {string.Join(',', nearbyPoints)}");
-
         Point outsidePoint =
             nearbyPoints.Count > 0 ? Random.Shared.ChooseFrom(nearbyPoints) : farmTopologyInfo.HouseEntrance;
 
@@ -736,11 +752,14 @@ internal static class KidPathingManager
             return false;
         }
 
+#if DEBUG_PATHING
+#else
         // 25% chance
         if (Random.Shared.NextBool() && Random.Shared.NextBool())
         {
             return false;
         }
+#endif
 
         kid.IsWalkingInSquare = false;
         kid.Halt();

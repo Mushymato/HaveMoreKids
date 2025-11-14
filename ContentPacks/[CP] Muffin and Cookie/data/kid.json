@@ -102,7 +102,9 @@
               "Id": "{{L@Kid}}_FlowerDance",
               "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_flowerdance",
               "Sprite": "Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_flowerdance",
-              "Condition": "IS_EVENT festival_spring24",
+              // "Condition": "IS_EVENT festival_spring24",
+              // dialogue indicates they are in flower dance outfit the whole day
+              "Condition": "SEASON_DAY spring 24",
               "Precedence": -1000,
             },
             {

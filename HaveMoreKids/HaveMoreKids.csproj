@@ -8,6 +8,8 @@
     <Nullable>enable</Nullable>
     <LangVersion>default</LangVersion>
     <EnableHarmony>true</EnableHarmony>
+
+    <!-- <DefineConstants>DEBUG_PATHING</DefineConstants> -->
   </PropertyGroup>
 
   <PropertyGroup>
@@ -16,7 +18,7 @@
     <Description>Allow you to have more kids.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:36459</UpdateKeys>
-    <Version>0.12.1</Version>
+    <Version>0.12.2</Version>
     <MinimumApiVersion_Behavior>UpdateFull</MinimumApiVersion_Behavior>
     <MinimumGameVersion_Behavior>UpdateFull</MinimumGameVersion_Behavior>
     <Dependencies_VersionBehavior>UpdateFull</Dependencies_VersionBehavior>

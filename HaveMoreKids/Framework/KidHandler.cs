@@ -240,6 +240,7 @@ internal static class KidHandler
         ModEntry.help.Events.GameLoop.Saved += OnSaved;
     }
 
+    internal static bool KidEntriesPopulated { get; private set; } = false;
     internal static Dictionary<string, KidEntry> KidEntries { get; private set; } = [];
     internal static Dictionary<string, string> KidNPCToKid { get; private set; } = [];
 
@@ -247,6 +248,8 @@ internal static class KidHandler
     {
         KidNPCToKid.Clear();
         KidEntries.Clear();
+        KidEntriesPopulated = false;
+        ModEntry.help.GameContent.InvalidateCache(AssetManager.Asset_DataCharacters);
     }
 
     private static void OnLoadStageChanged(object? sender, LoadStageChangedEventArgs e)
@@ -361,6 +364,7 @@ internal static class KidHandler
 
     private static void KidNPCSetup()
     {
+        KidEntriesPopulated = true;
         KidNPCToKid.Clear();
         ModEntry.Log($"Got {KidEntries.Count} kids.");
         foreach ((string kidId, KidEntry entry) in KidEntries)
@@ -477,7 +481,8 @@ internal static class KidHandler
             GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
             // check if today is a Child day or a NPC day
             if (
-                KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
+                ModEntry.KidNPCEnabled
+                && KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
                 && NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidAsNPC
             )
             {
@@ -505,11 +510,7 @@ internal static class KidHandler
                 else
                 {
                     key = entry.KidNPCId!;
-                    if (
-                        ModEntry.KidNPCEnabled
-                        && kid.daysOld.Value >= ModEntry.Config.TotalDaysChild
-                        && !string.IsNullOrEmpty(goOutsideGSQ)
-                    )
+                    if (kid.daysOld.Value >= ModEntry.Config.TotalDaysChild && !string.IsNullOrEmpty(goOutsideGSQ))
                     {
                         goOutside = GameStateQuery.CheckConditions(goOutsideGSQ, gsqCtx);
                     }
