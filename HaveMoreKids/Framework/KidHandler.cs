@@ -470,9 +470,6 @@ internal static class KidHandler
             kid.displayName = null;
             if (kid.Age <= 2)
                 continue;
-            // make sure dialogue gets reloaded
-            kid.resetSeasonalDialogue();
-            kid.resetCurrentDialogue();
             int? hearts = null;
 
             // Ensure kid is in a tile that can reach the door
@@ -533,17 +530,26 @@ internal static class KidHandler
                 KidPathingManager.AddManagedNPCKid(kid, kidAsNPC, goOutside);
             }
 
-            if (hearts == null && Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship))
-            {
-                hearts = friendship.Points / 250;
-            }
-            if (!kid.checkForNewCurrentDialogue(hearts ?? 0))
-            {
-                kid.checkForNewCurrentDialogue(hearts ?? 0, noPreface: true);
-            }
+            RefreshDialogues(kid, hearts);
         }
         ModEntry.LogDebug("Done day started setup");
         KidPathingManager.PathKidNPCToDoor(Game1.timeOfDay);
+    }
+
+    internal static int? RefreshDialogues(Child kid, int? hearts = null)
+    {
+        // make sure dialogue gets reloaded
+        kid.resetSeasonalDialogue();
+        kid.resetCurrentDialogue();
+        if (hearts == null && Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship))
+        {
+            hearts = friendship.Points / 250;
+        }
+        if (!kid.checkForNewCurrentDialogue(hearts ?? 0))
+        {
+            kid.checkForNewCurrentDialogue(hearts ?? 0, noPreface: true);
+        }
+        return hearts;
     }
 
     /// <summary>Unset HMK related data on saving</summary>
@@ -601,13 +607,12 @@ internal static class KidHandler
         bool isDarkSkinned,
         string babyName,
         out KidDefinitionData? whoseKidForTwin,
-        bool isTwin,
-        bool isAdoptedFromNPC
+        bool isTwin
     )
     {
         // create and add kid
         Child? newKid = null;
-        if (!isAdoptedFromNPC && spouse != null)
+        if (spouse != null && newKidId == null)
         {
             if (PickForSpecificKidId(spouse, babyName) is string specificKidName)
             {
@@ -620,6 +625,7 @@ internal static class KidHandler
 
         whoseKidForTwin = null;
         string spouseNameForKid = spouse?.Name ?? Parent_SOLO_BIRTH;
+        bool startAsToddler = false;
         if (!string.IsNullOrEmpty(newKidId))
         {
             CharacterData? childData = null;
@@ -630,6 +636,12 @@ internal static class KidHandler
                     spouseNameForKid = Parent_NPC_ADOPT;
                     babyName = string.Concat(NPCChild_Prefix, newKidId);
                     newKidId = babyName;
+                    startAsToddler = true;
+                }
+                else if (kidDef.BirthOrAdoptAsToddler && AssetManager.ChildData.TryGetValue(newKidId, out childData))
+                {
+                    babyName = childData.DisplayName;
+                    startAsToddler = true;
                 }
                 else
                 {
@@ -679,7 +691,7 @@ internal static class KidHandler
             newKid = new(babyName, isMale, isDarkSkinned, Game1.player);
         }
 
-        if (isAdoptedFromNPC)
+        if (startAsToddler)
         {
             newKid.daysOld.Value = ModEntry.Config.TotalDaysChild;
             newKid.Age = 3;

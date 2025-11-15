@@ -8,23 +8,13 @@
       "Entries": {
         // debug action mushymato.HaveMoreKids_SetNewChildEvent 0 mushymato.NPCAdoption_PepperRex Player
         "{{ModId}}_PepperRex": {
-          "TwinMessage": "Jas came chasing after Charles the Pepper Rex!",
+          "Condition": "FALSE",
+          "BirthOrAdoptMessage": "Charles the Pepper Rex broke in through the window!",
+          "BirthOrAdoptAsToddler": true,
+          "TwinMessage": "Jas came chasing after Charles!",
           "Twin": "Jas"
         }
       },
-    },
-    {
-      "Action": "EditData",
-      "Target": "Data/TriggerActions",
-      "Entries": {
-        // debug action MarkActionApplied Current mushymato.NPCAdoption_PepperRex_AgeUp false
-        "{{ModId}}_PepperRex_AgeUp": {
-          "Id": "{{ModId}}_PepperRex_AgeUp",
-          "Trigger": "mushymato.HaveMoreKids_NewChild",
-          "Condition": "mushymato.HaveMoreKids_HAS_CHILD {{ModId}}_PepperRex",
-          "Action": "mushymato.HaveMoreKids_SetChildAge {{ModId}}_PepperRex 3"
-        },
-      }
     },
     {
       "Action": "EditData",

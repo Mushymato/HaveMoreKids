@@ -5,12 +5,12 @@
     {
       // true once Muffin is born
       "Name": "MuffinIsBorn",
-      "Value": "ChildNames| contains={{ModId}}_muffin"
+      "Value": "{{ChildNames| contains={{ModId}}_muffin}}"
     },
     {
       // true once Cookie is born
       "Name": "CookieIsBorn",
-      "Value": "ChildNames| contains={{ModId}}_cookie"
+      "Value": "{{ChildNames| contains={{ModId}}_cookie}}"
     },
     // SterlingKidRand: one of the kids
     {

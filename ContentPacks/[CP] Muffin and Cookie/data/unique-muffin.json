@@ -15,7 +15,7 @@
               "Id": "Default",
               "Location": "BusStop",
               "Tile": {
-                "X": 14,
+                "X": 12,
                 "Y": 22
               },
               "Direction": "right"
@@ -47,14 +47,14 @@
           "Id": "{{L@Kid}}_SpiritsEve_Royal",
           "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}_royal",
           "Sprite": "Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_royal",
-          "Condition": "IS_EVENT festival_fall26",
+          "Condition": "SEASON_DAY fall 27",
           "Precedence": -1000,
         },
         "{{L@Kid}}_SpiritsEve_Super": {
           "Id": "{{L@Kid}}_SpiritsEve_Super",
           "Portrait": "Portraits/{{ModId}}_{{L@Kid}}/{{L@Kid}}}_super",
           "Sprite": "Characters/{{ModId}}_{{L@Kid}}/{{L@Kid}}_super",
-          "Condition": "IS_EVENT festival_fall26",
+          "Condition": "SEASON_DAY fall 27",
           "Precedence": -1000,
         },
       }

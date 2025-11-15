@@ -20,6 +20,8 @@
         "Fri": "{{i18n:{{L@Kid}}.Toddler.Dialog.Fri}} {{DayOfWeek}}",
         "Sat": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sat}} {{DayOfWeek}}",
         "Sun": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sun}} {{DayOfWeek}}",
+        // you can use FarmHouse keys for when kid is inside
+        "FarmHouse": "I'm sleepy."
       }
     },
     {

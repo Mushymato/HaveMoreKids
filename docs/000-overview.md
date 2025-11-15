@@ -152,7 +152,18 @@ _Note: Although the location name of `Town` in `1010 Town 0 0 HMK_Home` is alway
 
 ### Dialogue Handling
 
-Everyday, you can talk to both the Child version once, and the NPC version once. To avoid duplicate dialogue, you can use [locational dialogue keys](https://stardewvalleywiki.com/Modding:Dialogue#Location_dialogue) targeting the farmhouse (e.g. `"FarmHouse_Mon"`) to assign dialogue for the Child only, since the NPC version will not enter the farmhouse.
+Kid dialogue gets refreshed more frequently than vanilla NPCs.
+
+For regular kids, or kid NPC on a non NPC day:
+- Child dialogue checked in the morning
+- Child dialogue checked if they go outside to the farm that day
+
+For kid NPC:
+- Child dialogue checked in the morning
+- NPC dialogue checked in the morning
+- Child dialogue checked again when the NPC returns to farmhouse (via use of `HMK_Home`)
+
+To avoid duplicate dialogue, you can use [`$query`](https://stardewvalleywiki.com/Modding:Dialogue#Dialogue_commands) to enable multiple dialogues on 1 key. You can also use [locational dialogue keys](https://stardewvalleywiki.com/Modding:Dialogue#Location_dialogue) targeting the farmhouse (e.g. `"FarmHouse_Mon"`) to assign dialogue for the Child only, since the NPC version will not enter the farmhouse.
 
 ### Adopt NPC as Child
 

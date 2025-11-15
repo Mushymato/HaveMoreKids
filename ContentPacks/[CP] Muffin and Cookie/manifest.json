@@ -21,6 +21,14 @@
     {
       "UniqueID": "Himetarts.ARV.CP",
       "IsRequired": true
+    },
+    {
+      "UniqueID": "Xiddav.LittleRedSchoolhouse",
+      "IsRequired": false
+    },
+    {
+      "UniqueID": "Xiddav.LittleRedSchoolhouseLazy",
+      "IsRequired": false
     }
   ]
 }

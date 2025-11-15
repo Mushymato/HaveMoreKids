@@ -23,7 +23,7 @@ public class HMKNewChildEvent : BaseFarmEvent
 
     private bool getBabyName = false;
 
-    private bool isAdoptedFromNPC = false;
+    private bool skipNaming = false;
 
     private bool naming = false;
 
@@ -79,7 +79,7 @@ public class HMKNewChildEvent : BaseFarmEvent
                     messageDialogue = new Dialogue(spouse, "", message);
                 }
             }
-            isAdoptedFromNPC = kidDef.AdoptedFromNPC != null;
+            skipNaming = kidDef.AdoptedFromNPC != null || kidDef.BirthOrAdoptAsToddler;
         }
         if (message == null)
         {
@@ -165,8 +165,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             isDarkSkinned,
             babyName ?? Dialogue.randomName(),
             out KidDefinitionData? whoseKidForTwin,
-            isTwin,
-            isAdoptedFromNPC
+            isTwin
         );
 
         if (whoseKidForTwin != null && whoseKidForTwin.Twin != null)
@@ -174,7 +173,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             newKidId = whoseKidForTwin.Twin;
             if (AssetManager.KidDefsByKidId.TryGetValue(newKidId, out KidDefinitionData? kidDef))
             {
-                isAdoptedFromNPC = kidDef.AdoptedFromNPC != null;
+                skipNaming = kidDef.AdoptedFromNPC != null || kidDef.BirthOrAdoptAsToddler;
             }
             isTwin = true;
             babyName = null;
@@ -260,14 +259,14 @@ public class HMKNewChildEvent : BaseFarmEvent
                         messageDialogue.speaker,
                         "HMK_BirthMessage"
                     );
-                    messageDialogue.onFinish += isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
+                    messageDialogue.onFinish += skipNaming ? afterMessageNoNaming : afterMessage;
                     messageDialogue.speaker.setNewDialogue(messageDialogue);
                     Game1.drawDialogue(messageDialogue.speaker);
                 }
                 else
                 {
                     Game1.drawObjectDialogue(message);
-                    Game1.afterDialogues = isAdoptedFromNPC ? afterMessageNoNaming : afterMessage;
+                    Game1.afterDialogues = skipNaming ? afterMessageNoNaming : afterMessage;
                 }
             }
         }

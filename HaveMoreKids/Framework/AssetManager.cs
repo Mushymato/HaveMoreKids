@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using Force.DeepCloner;
 using HaveMoreKids.Framework.MapActions;
 using Microsoft.Xna.Framework;
@@ -18,17 +17,18 @@ public sealed class KidDefinitionData
 {
     public string? Parent { get; set; } = null;
     public bool Shared { get; set; } = false;
+    public string? AdoptedFromNPC { get; set; } = null;
+    public bool BirthOrAdoptAsToddler { get; set; } = false;
+    public string? BirthOrAdoptMessage { get; set; } = null;
     public bool DefaultEnabled { get; set; } = true;
     public string? Condition { get; set; } = null;
+    public string? IsNPCTodayCondition { get; set; } = "FALSE";
     public string? Twin { get; set; } = null;
     public string? TwinCondition { get; set; } = null;
     public string? TwinMessage { get; set; } = null;
-    public string? AdoptedFromNPC { get; set; } = null;
-    public string? BirthOrAdoptMessage { get; set; } = null;
     public string? CanAdoptFromAdoptionRegistry { get; set; } = null;
     public int? DaysFromAdoptionRegistry { get; set; } = null;
     public string? RoamOnFarmCondition { get; set; } = null;
-    public string? IsNPCTodayCondition { get; set; } = "FALSE";
     public string? KidDialogueSheetName { get; set; } = null;
     public string? NPCDialogueSheetName { get; set; } = null;
     public Dictionary<string, KidFestivalBehaviour?>? FestivalBehaviour { get; set; } = null;

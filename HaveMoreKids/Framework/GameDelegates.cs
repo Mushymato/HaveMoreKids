@@ -543,6 +543,11 @@ internal static class GameDelegates
             return false;
         }
 
+        if (kidId != null && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
+        {
+            skipHomeCheck = skipHomeCheck || kidDef.AdoptedFromNPC != null || kidDef.BirthOrAdoptAsToddler;
+        }
+
         if (!skipHomeCheck && !HomeIsValidForPregnancy(Utility.getHomeOfFarmer(Game1.player), out error))
         {
             return false;
