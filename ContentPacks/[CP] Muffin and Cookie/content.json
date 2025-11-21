@@ -86,14 +86,16 @@
       "Action": "Include",
       "FromFile": "data/kid.json",
       "LocalTokens": {
-        "L@Kid": "muffin"
+        "L@Kid": "muffin",
+        "L@Endearment": "{{Endearment_Muffin}}"
       }
     },
     {
       "Action": "Include",
       "FromFile": "data/kid.json",
       "LocalTokens": {
-        "L@Kid": "cookie"
+        "L@Kid": "cookie",
+        "L@Endearment": "{{Endearment_Cookie}}"
       }
     },
     // sterling dialogue

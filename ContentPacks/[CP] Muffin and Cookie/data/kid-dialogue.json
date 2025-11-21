@@ -13,6 +13,8 @@
       "Action": "EditData",
       "Target": "Characters/Dialogue/{{ModId}}_{{L@Kid}}_{{L@Suffix}}",
       "Entries": {
+        // Special
+        "HMK_Endearment": "{{L@Endearment}}",
         "AcceptBirthdayGift_Positive": "{{i18n:{{L@Kid}}.Dialogue.BirthdayGift_Positive}}",
         "AcceptBirthdayGift_Negative": "{{i18n:{{L@Kid}}.Dialogue.BirthdayGift_Negative}}",
         "AcceptGift_(O)StardropTea": "{{i18n:{{L@Kid}}.Dialogue.Gift_StardropTea}}",
