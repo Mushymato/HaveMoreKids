@@ -231,35 +231,28 @@ internal static class GameDelegates
         bool playerIsParent = true;
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? entry))
         {
-            playerIsParent = entry.PlayerParent != player.UniqueMultiplayerID;
-            endearmentSubkey = playerIsParent ? ":HMK_Endearment_NonParent" : ":HMK_Endearment";
+            playerIsParent = entry.PlayerParent == player.UniqueMultiplayerID;
+            endearmentSubkey = playerIsParent ? ":HMK_Endearment" : ":HMK_Endearment_NonParent";
         }
         if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
         {
             dialogueAsset = kidDef.KidDialogueSheetName ?? kidId;
         }
 
-        string? endearment;
-        if (
-            (
-                endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(AssetManager.Asset_CharactersDialogue, dialogueAsset, endearmentSubkey)
-                )
+        string? endearment =
+            Game1.content.LoadStringReturnNullIfNotFound(
+                string.Concat(AssetManager.Asset_CharactersDialogue, dialogueAsset, endearmentSubkey)
             )
-                is null
-            && (
-                endearment = Game1.content.LoadStringReturnNullIfNotFound(
-                    string.Concat(
-                        AssetManager.Asset_CharactersDialogue,
-                        dialogueAsset,
-                        endearmentSubkey,
-                        "_",
-                        player.Gender.ToString()
-                    )
+            ?? Game1.content.LoadStringReturnNullIfNotFound(
+                string.Concat(
+                    AssetManager.Asset_CharactersDialogue,
+                    dialogueAsset,
+                    endearmentSubkey,
+                    "_",
+                    player.Gender.ToString()
                 )
-            )
-                is null
-        )
+            );
+        if (string.IsNullOrEmpty(endearment))
         {
             if (playerIsParent)
             {
