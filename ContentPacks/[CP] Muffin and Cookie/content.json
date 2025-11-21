@@ -1,6 +1,14 @@
 {
   "$schema": "https://smapi.io/schemas/content-patcher.json",
   "Format": "2.8.0",
+  "ConfigSchema": {
+    "Endearment_Muffin": {
+      "AllowBlank": true
+    },
+    "Endearment_Cookie": {
+      "AllowBlank": true
+    }
+  },
   "DynamicTokens": [
     {
       // true once Muffin is born

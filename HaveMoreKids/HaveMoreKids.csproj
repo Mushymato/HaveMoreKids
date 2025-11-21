@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$(MSBuildUserExtensionsPath)/sdv.props"
-    Condition="Exists('$(MSBuildUserExtensionsPath)/sdv.props')" />
+  <Import
+    Project="$(MSBuildUserExtensionsPath)/sdv.props"
+    Condition="Exists('$(MSBuildUserExtensionsPath)/sdv.props')"
+  />
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -18,7 +20,7 @@
     <Description>Allow you to have more kids.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:36459</UpdateKeys>
-    <Version>0.12.3</Version>
+    <Version>0.12.4</Version>
     <MinimumApiVersion_Behavior>UpdateFull</MinimumApiVersion_Behavior>
     <MinimumGameVersion_Behavior>UpdateFull</MinimumGameVersion_Behavior>
     <Dependencies_VersionBehavior>UpdateFull</Dependencies_VersionBehavior>
@@ -34,5 +36,4 @@
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.3.2" />
     <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.0" />
   </ItemGroup>
-
 </Project>

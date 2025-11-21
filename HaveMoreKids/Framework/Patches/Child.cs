@@ -238,22 +238,23 @@ internal static partial class Patches
             // IL_0048: ldstr "Mainland"
             // IL_004d: call string [System.Runtime]System.String::Concat(string, string)
             // IL_0052: stloc.0
-            matcher.MatchStartForward(
-                [new(inst => inst.IsLdloc()), new(OpCodes.Ldstr), new(OpCodes.Call), new(inst => inst.IsStloc())]
-            );
+            matcher.MatchStartForward([
+                new(inst => inst.IsLdloc()),
+                new(OpCodes.Ldstr),
+                new(OpCodes.Call),
+                new(inst => inst.IsStloc()),
+            ]);
             CodeInstruction ldLoc = matcher.Instruction.Clone();
             matcher.Advance(3);
             CodeInstruction stLoc = matcher.Instruction.Clone();
             matcher
                 .Advance(2)
-                .Insert(
-                    [
-                        new(OpCodes.Ldarg_0),
-                        ldLoc,
-                        new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyScheduleAssetName))),
-                        stLoc,
-                    ]
-                );
+                .Insert([
+                    new(OpCodes.Ldarg_0),
+                    ldLoc,
+                    new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(Patches), nameof(ModifyScheduleAssetName))),
+                    stLoc,
+                ]);
 
             return matcher.Instructions();
         }
@@ -349,13 +350,11 @@ internal static partial class Patches
             LocalBuilder locLayerDepth = generator.DeclareLocal(typeof(float));
 
             // check for the correct new layer depth
-            matcher.MatchEndForward(
-                [
-                    new(OpCodes.Ldarg_0),
-                    new(OpCodes.Call, AccessTools.DeclaredProperty(typeof(NPC), nameof(NPC.IsInvisible))),
-                    new(OpCodes.Brtrue),
-                ]
-            );
+            matcher.MatchEndForward([
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Call, AccessTools.DeclaredProperty(typeof(NPC), nameof(NPC.IsInvisible))),
+                new(OpCodes.Brtrue),
+            ]);
 
             return matcher.Instructions();
         }
@@ -540,16 +539,14 @@ internal static partial class Patches
             foreach ((sbyte days, MethodInfo callFunc) in patchDays)
             {
                 matcher
-                    .MatchEndForward(
-                        [
-                            new(OpCodes.Ldfld, AccessTools.Field(typeof(Child), nameof(Child.daysOld))),
-                            new(
-                                OpCodes.Callvirt
-                            // AccessTools.PropertyGetter(typeof(Netcode.NetInt), nameof(Netcode.NetInt.Value))
-                            ),
-                            new(OpCodes.Ldc_I4_S, days),
-                        ]
-                    )
+                    .MatchEndForward([
+                        new(OpCodes.Ldfld, AccessTools.Field(typeof(Child), nameof(Child.daysOld))),
+                        new(
+                            OpCodes.Callvirt
+                        // AccessTools.PropertyGetter(typeof(Netcode.NetInt), nameof(Netcode.NetInt.Value))
+                        ),
+                        new(OpCodes.Ldc_I4_S, days),
+                    ])
                     .ThrowIfNotMatch($"Did not find 'daysOld.Value >= {days}'")
                     .Advance(1)
                     .InsertAndAdvance([new(OpCodes.Call, callFunc)]);

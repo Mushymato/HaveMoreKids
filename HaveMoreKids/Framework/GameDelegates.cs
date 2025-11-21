@@ -228,10 +228,11 @@ internal static class GameDelegates
         bool capitalize = query[0] == TS_EndearmentCap;
         string endearmentSubkey = ":HMK_Endearment";
         string dialogueAsset = kidId;
+        bool playerIsParent = true;
         if (KidHandler.KidEntries.TryGetValue(kidId, out KidEntry? entry))
         {
-            endearmentSubkey =
-                entry.PlayerParent != player.UniqueMultiplayerID ? ":HMK_Endearment_NonParent" : ":HMK_Endearment";
+            playerIsParent = entry.PlayerParent != player.UniqueMultiplayerID;
+            endearmentSubkey = playerIsParent ? ":HMK_Endearment_NonParent" : ":HMK_Endearment";
         }
         if (AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
         {
@@ -260,14 +261,21 @@ internal static class GameDelegates
                 is null
         )
         {
-            endearment = player.Gender switch
+            if (playerIsParent)
             {
-                Gender.Male => Game1.content.LoadString("Strings/Characters:Relative_Dad"),
-                Gender.Female => Game1.content.LoadString("Strings/Characters:Relative_Mom"),
-                _ => player.displayName,
-            };
+                endearment = player.Gender switch
+                {
+                    Gender.Male => Game1.content.LoadString("Strings/Characters:Relative_Dad"),
+                    Gender.Female => Game1.content.LoadString("Strings/Characters:Relative_Mom"),
+                    _ => player.displayName,
+                };
+            }
+            else
+            {
+                endearment = player.displayName;
+            }
         }
-        if (endearment is null)
+        if (string.IsNullOrEmpty(endearment))
         {
             replacement = null!;
             return false;

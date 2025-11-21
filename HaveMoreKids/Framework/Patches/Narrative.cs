@@ -85,8 +85,12 @@ internal static partial class Patches
             )
         )
         {
-            MarriageDialogueReference marriageDialogueReference =
-                new("MarriageDialogue", dialogueKeyPrefix, false, mostRecentChild?.displayName ?? "");
+            MarriageDialogueReference marriageDialogueReference = new(
+                "MarriageDialogue",
+                dialogueKeyPrefix,
+                false,
+                mostRecentChild?.displayName ?? ""
+            );
             __instance.currentMarriageDialogue.Clear();
             __instance.shouldSayMarriageDialogue.Value = true;
             __instance.currentMarriageDialogue.Add(marriageDialogueReference);

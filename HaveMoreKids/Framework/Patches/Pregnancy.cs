@@ -217,20 +217,15 @@ internal static partial class Patches
             for (int i = 0; i < expectedCount; i++)
             {
                 matcher
-                    .MatchEndForward(
-                        [
-                            new(
-                                OpCodes.Callvirt,
-                                AccessTools.DeclaredMethod(typeof(Random), nameof(Random.NextDouble))
-                            ),
-                            new(OpCodes.Ldc_R8, 0.05),
-                        ]
-                    )
+                    .MatchEndForward([
+                        new(OpCodes.Callvirt, AccessTools.DeclaredMethod(typeof(Random), nameof(Random.NextDouble))),
+                        new(OpCodes.Ldc_R8, 0.05),
+                    ])
                     .ThrowIfNotMatch("Did not find 'random.NextDouble() < 0.05'")
                     .Advance(1)
-                    .InsertAndAdvance(
-                        [new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance)))]
-                    );
+                    .InsertAndAdvance([
+                        new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance))),
+                    ]);
             }
             ModEntry.LogDebug($"Replaced {expectedCount} 'random.NextDouble() < 0.05'");
             return matcher.Instructions();
