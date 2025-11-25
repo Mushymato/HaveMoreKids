@@ -178,6 +178,7 @@ internal static class GameDelegates
     internal const string Trigger_Doved = $"{ModEntry.ModId}_Doved";
     internal const string Action_SetNewChildEvent = $"{ModEntry.ModId}_SetNewChildEvent";
     internal const string Action_SetChildAge = $"{ModEntry.ModId}_SetChildAge";
+    internal const string Action_DoveChild = $"{ModEntry.ModId}_DoveChild";
     internal const string Stats_daysUntilNewChild = $"{ModEntry.ModId}_daysUntilNewChild";
     internal const string TS_Endearment = "HMK_Endearment";
     internal const string TS_EndearmentCap = "HMK_EndearmentCap";
@@ -202,6 +203,7 @@ internal static class GameDelegates
         // TAction
         TriggerActionManager.RegisterAction(Action_SetNewChildEvent, SetNewChildEvent);
         TriggerActionManager.RegisterAction(Action_SetChildAge, SetChildAge);
+        TriggerActionManager.RegisterAction(Action_DoveChild, DoveChild);
         // Tokenizable String
         TokenParser.RegisterParser(TS_Endearment, TSEndearment);
         TokenParser.RegisterParser(TS_EndearmentCap, TSEndearment);
@@ -466,7 +468,7 @@ internal static class GameDelegates
         return false;
     }
 
-    private static bool TrySetChildAge(int age, Child kid)
+    internal static bool TrySetChildAge(int age, Child kid)
     {
         switch (age)
         {
@@ -620,5 +622,45 @@ internal static class GameDelegates
         }
 
         return true;
+    }
+
+    internal static void RemoveChild(Farmer who, Child child)
+    {
+        if (
+            KidHandler.KidEntries.TryGetValue(child.Name, out KidEntry? entry)
+            && !entry.IsAdoptedFromNPC
+            && NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidNPC
+            && kidNPC.currentLocation != null
+        )
+        {
+            kidNPC.currentLocation.characters.Remove(kidNPC);
+        }
+        KidPathingManager.WarpKidToHouse(child, delay: false);
+        FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(who);
+        homeOfFarmer.characters.RemoveWhere(character => character == child);
+        TriggerActionManager.Raise(Trigger_Doved);
+        ModEntry.Log($"Doved '{child.Name}'");
+    }
+
+    private static bool DoveChild(string[] args, TriggerActionContext context, out string error)
+    {
+        if (!ArgUtility.TryGet(args, 1, out string kidId, out error, name: "string kidId"))
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+        if (kidId == "ALL")
+        {
+            ModEntry.Log("Dove all children");
+            Game1.player.getRidOfChildren();
+            return true;
+        }
+        if ((FindChild(Game1.player, kidId) ?? FindAdoptedNPC(Game1.player, kidId)) is Child child)
+        {
+            RemoveChild(Game1.player, child);
+            return true;
+        }
+        error = "KidId not found and not 'ALL'";
+        return false;
     }
 }

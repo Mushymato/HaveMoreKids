@@ -33,6 +33,8 @@ A custom kid is not required to use this trigger, and the `kidId` argument does 
 
 Action that alters the age of a child. Since effects of age is checked and applied at start of day, if the action is called in the middle of a day then the player must sleep before changes take place. Thus, it's recommended to use this action with trigger `DayEnding`.
 
+You cannot use this on adopt from NPC kids.
+
 - `kidId|childIndex`: This argument is either a unique kid id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
 - `age`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
@@ -40,3 +42,11 @@ Action that alters the age of a child. Since effects of age is checked and appli
   - 2: Crawler (crawling around the house)
   - 3: Toddler (running around the house)
   - 4: Child NPC (Toddler + roaming NPC)
+
+## Action: mushymato.HaveMoreKids_DoveChild \<kidId\>
+
+Action that removes ('doves') a specific child, just like if you used the Dark Shrine of Selfishness.
+
+You **can** use this on adopt from NPC kids, but it will only remove the Child version, not the NPC themselves.
+
+- `kidId|childIndex`: This argument is either a unique kid id, or a index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.

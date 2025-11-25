@@ -315,10 +315,11 @@ internal static class KidPathingManager
 
     internal static void AddManagedNPCKid(Child kid, NPC kidNPC, bool goOutside)
     {
+        kidNPC.reloadData();
+        kidNPC.reloadSprite(onlyAppearance: true);
+        kidNPC.Sprite.UpdateSourceRect();
         if (goOutside)
         {
-            kidNPC.reloadData();
-            kidNPC.reloadSprite(onlyAppearance: true);
             kidNPC.InvalidateMasterSchedule();
             SchedulePathDescription? endSPD = null;
             int goOutsideTime = 0600;
@@ -363,7 +364,6 @@ internal static class KidPathingManager
             kidNPC.performSpecialScheduleChanges();
             kidNPC.resetSeasonalDialogue();
             kidNPC.resetCurrentDialogue();
-            kidNPC.Sprite.UpdateSourceRect();
 
             FarmAdjacent ??= FindLocationsAdjacentToFarm(Game1.getFarm());
             bool isFarmAdjacent = FarmAdjacent.Contains(kidNPC.currentLocation.NameOrUniqueName);

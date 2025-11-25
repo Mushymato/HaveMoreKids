@@ -69,10 +69,8 @@ internal static class DarkShrine
         if (children.FirstOrDefault(child => child.Name == kidId) is Child child)
         {
             who.Items.ReduceId(StardewValley.Object.prismaticShardQID, 1);
-            KidPathingManager.WarpKidToHouse(child, delay: false);
-            FarmHouse homeOfFarmer = Utility.getHomeOfFarmer(who);
-            homeOfFarmer.characters.RemoveWhere(character => character == child);
-            TriggerActionManager.Raise(GameDelegates.Trigger_Doved);
+
+            GameDelegates.RemoveChild(who, child);
 
             VisualEffects(location, point);
             string goodbye = Game1.content.LoadString("Strings\\Locations:WitchHut_Goodbye", child.getName());

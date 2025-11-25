@@ -286,6 +286,19 @@ internal static class KidHandler
         }
     }
 
+    internal static void ResetDaysOld(Child kid)
+    {
+        GameDelegates.TrySetChildAge(kid.Age, kid);
+    }
+
+    internal static void ResetDaysOldAll()
+    {
+        foreach (Child kid in AllKids())
+        {
+            ResetDaysOld(kid);
+        }
+    }
+
     internal static void KidEntries_Populate([CallerMemberName] string? caller = null)
     {
         if (!Context.IsMainPlayer)
@@ -296,6 +309,7 @@ internal static class KidHandler
 
         foreach (Child kid in AllKids())
         {
+            ResetDaysOld(kid);
             if (!Utility.TryParseEnum(kid.Birthday_Season, out Season season))
             {
                 SDate birthday = SDate.Now();
@@ -311,8 +325,8 @@ internal static class KidHandler
                 kid.Birthday_Day = birthday.Day;
             }
 
-            string? kidNPCId = null;
-            bool adoptedFromNPC = false;
+            string? kidNPCId;
+            bool adoptedFromNPC;
 
             if (
                 kid.GetHMKAdoptedFromNPCId() is string npcId
@@ -324,15 +338,23 @@ internal static class KidHandler
                 kidNPCId = kidDef.AdoptedFromNPC;
                 adoptedFromNPC = true;
             }
-            else if (
-                ModEntry.KidNPCEnabled
-                && kid.Age > 2
-                && kid.GetHMKKidDef() is KidDefinitionData kidDef2
-                && !GameStateQuery.IsImmutablyFalse(kidDef2.IsNPCTodayCondition)
-            )
+            else
             {
                 kidNPCId = FormChildNPCId(kid.Name);
                 adoptedFromNPC = false;
+                if (
+                    !ModEntry.KidNPCEnabled
+                    || kid.Age <= 2
+                    || kid.GetHMKKidDef() is not KidDefinitionData kidDef2
+                    || GameStateQuery.IsImmutablyFalse(kidDef2.IsNPCTodayCondition)
+                )
+                {
+                    kidNPCId = null;
+                    if (NPCLookup.GetNonChildNPC(kidNPCId) is NPC kidAsNPC)
+                    {
+                        kidAsNPC.currentLocation?.characters.Remove(kidAsNPC);
+                    }
+                }
             }
 
             string? npcParentId = kid.KidNPCParent();

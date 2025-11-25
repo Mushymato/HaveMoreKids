@@ -267,6 +267,17 @@ internal static partial class Patches
 
     private static void Farmer_getRidOfChildren_Prefix(Farmer __instance)
     {
+        foreach (KidEntry entry in KidHandler.KidEntries.Values)
+        {
+            if (
+                !entry.IsAdoptedFromNPC
+                && NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidNPC
+                && kidNPC.currentLocation != null
+            )
+            {
+                kidNPC.currentLocation.characters.Remove(kidNPC);
+            }
+        }
         KidPathingManager.GoingToTheFarm.Remove(__instance.UniqueMultiplayerID);
         KidPathingManager.ManagedNPCKids.RemoveWhere(kv => kv.Key.idOfParent.Value == __instance.UniqueMultiplayerID);
         KidPathingManager.ReturnKidsToHouse(__instance.getChildren());
