@@ -18,7 +18,7 @@
       "Target": "mushymato.HaveMoreKids/ChildData",
       "Fields": {
         "{{ModId}}_{{L@Kid}}": {
-          "DisplayName": "{{i18n:ARVCookie.DisplayName}}",
+          "DisplayName": "{{i18n:{{L@Kid}}.DisplayName}}",
           "Gender": "Male",
           // They need a Home entries (to not spawn in middle of Town), just like normal NPCs
           "Home": [

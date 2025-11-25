@@ -16,13 +16,13 @@
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Baby",
-      "FromFile": "Assets/baby/clothes/{{Lowercase:{{L@Spouse}}}}{{L@Seq}}.png",
+      "FromFile": "Assets/baby/clothes/{{L@Spouse}}{{L@Seq}}.png",
       "PatchMode": "Overlay"
     },
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Baby",
-      "FromFile": "Assets/baby/hairs/{{Lowercase:{{L@Spouse}}}}.png",
+      "FromFile": "Assets/baby/hairs/{{L@Spouse}}.png",
       "PatchMode": "Overlay"
     },
     // toddlers
@@ -34,19 +34,19 @@
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
-      "FromFile": "Assets/eyes/{{EyeStyle}}{{L@Eyes}}/{{Lowercase:{{L@Spouse}}}}.png",
+      "FromFile": "Assets/eyes/{{EyeStyle}}{{L@Eyes}}/{{L@Spouse}}.png",
       "PatchMode": "Overlay"
     },
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
-      "FromFile": "Assets/hairs/{{Lowercase:{{L@Spouse}}}}/{{L@Hair}}.png",
+      "FromFile": "Assets/hairs/{{L@Spouse}}/{{L@Hair}}.png",
       "PatchMode": "Overlay"
     },
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
-      "FromFile": "Assets/clothes/{{Lowercase:{{L@Spouse}}}}/{{L@Seq}}{{Random:01,02,03,04,05,06,07,08,09,10,11,12}}.png",
+      "FromFile": "Assets/clothes/{{L@Spouse}}/{{L@Seq}}{{Random:01,02,03,04,05,06,07,08,09,10,11,12}}.png",
       "PatchMode": "Overlay"
     },
     // toddlers (costume)
@@ -55,16 +55,10 @@
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
       "FromFile": "Assets/body/{{L@Body}}.png",
     },
-    // {
-    //   "Action": "EditImage",
-    //   "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
-    //   "FromFile": "Assets/body/{{L@Body}}.png",
-    //   "PatchMode": "Overlay"
-    // },
     {
       "Action": "EditImage",
       "Target": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
-      "FromFile": "Assets/eyes/{{EyeStyle}}{{L@Eyes}}/{{Lowercase:{{L@Spouse}}}}.png",
+      "FromFile": "Assets/eyes/{{EyeStyle}}{{L@Eyes}}/{{L@Spouse}}.png",
       "PatchMode": "Overlay"
     },
     {
@@ -87,10 +81,9 @@
               "Sprite": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Toddler",
             },
             {
-              // a conditional outfit
               "Id": "mushymato.HaveMoreKids_Toddler_Costume",
               "Sprite": "Characters/{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}_Costume",
-              "Condition": "DAY_OF_WEEK Friday",
+              "Condition": "SEASON_DAY fall 27",
               "Precedence": -1000,
             },
             {
@@ -101,15 +94,30 @@
         }
       }
     },
-    // Add this Child to spouse
+    // Add this Child to spouse or shared
     {
       "Action": "EditData",
       "Target": "mushymato.HaveMoreKids/Kids",
       "Entries": {
         "{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}": {
-          "Parent": "{{L@Spouse}}"
+          "Parent": "{{L@Parent}}"
         }
       },
+      "When": {
+        "L@Parent |contains=shared": false
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/Kids",
+      "Entries": {
+        "{{ModId}}_{{L@Spouse}}-{{L@Seq}}-{{L@Hair}}": {
+          "Shared": true
+        }
+      },
+      "When": {
+        "L@Parent |contains=shared": true
+      }
     },
   ]
 }
