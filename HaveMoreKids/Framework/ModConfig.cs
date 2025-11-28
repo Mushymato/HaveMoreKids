@@ -26,6 +26,14 @@ internal sealed record KidIdent(string Spouse, string Kid)
     }
 }
 
+internal enum NewChildGenderMode
+{
+    Alternating = 0,
+    Random = 1,
+    BoysOnly = 2,
+    GirlsOnly = 3,
+}
+
 internal class ModConfigValues
 {
     public int PregnancyChance { get; set; } = 20;
@@ -37,6 +45,7 @@ internal class ModConfigValues
     public int DaysChild { get; set; } = 84 - 55;
     public int MaxChildren { get; set; } = 4;
     public bool AlwaysAllowGenericChildren { get; set; } = false;
+    public NewChildGenderMode GenericChildrenGenderMode { get; set; } = NewChildGenderMode.Alternating;
     public bool ToddlerRoamOnFarm { get; set; } = true;
     public bool UseSingleBedAsChildBed { get; set; } = false;
     public bool PerKidDarkShrineOfSelfishness { get; set; } = true;
@@ -67,6 +76,7 @@ internal sealed class ModConfig : ModConfigValues
         DaysChild = 84 - 55;
         MaxChildren = 4;
         AlwaysAllowGenericChildren = false;
+        GenericChildrenGenderMode = NewChildGenderMode.Alternating;
         ToddlerRoamOnFarm = true;
         UseSingleBedAsChildBed = false;
         PerKidDarkShrineOfSelfishness = false;
@@ -184,6 +194,15 @@ internal sealed class ModConfig : ModConfigValues
             (value) => AlwaysAllowGenericChildren = value,
             I18n.Config_AlwaysAllowGenericChildren_Name,
             I18n.Config_AlwaysAllowGenericChildren_Description
+        );
+        GMCM.AddTextOption(
+            Mod,
+            () => GenericChildrenGenderMode.ToString(),
+            (value) => GenericChildrenGenderMode = Enum.Parse<NewChildGenderMode>(value),
+            I18n.Config_GenericChildrenGenderMode_Name,
+            I18n.Config_GenericChildrenGenderMode_Description,
+            allowedValues: Enum.GetValues<NewChildGenderMode>().Select(value => value.ToString()).ToArray(),
+            formatAllowedValue: (value) => I18n.GetByKey($"config.GenericChildrenGenderMode.value.{value}")
         );
         GMCM.AddBoolOption(
             Mod,
@@ -310,6 +329,22 @@ internal sealed class ModConfig : ModConfigValues
             (value) => AlwaysAllowGenericChildren = value,
             I18n.Config_AlwaysAllowGenericChildren_Name,
             I18n.Config_AlwaysAllowGenericChildren_Description
+        );
+        GMCM.AddTextOption(
+            Mod,
+            () => GenericChildrenGenderMode.ToString(),
+            (value) => GenericChildrenGenderMode = Enum.Parse<NewChildGenderMode>(value),
+            I18n.Config_GenericChildrenGenderMode_Name,
+            () =>
+            {
+                return string.Concat(
+                    I18n.Config_GenericChildrenGenderMode_Description(),
+                    "\n",
+                    I18n.GetByKey($"config.GenericChildrenGenderMode.value.{GenericChildrenGenderMode}.description")
+                );
+            },
+            allowedValues: Enum.GetValues<NewChildGenderMode>().Select(value => value.ToString()).ToArray(),
+            formatAllowedValue: (value) => I18n.GetByKey($"config.GenericChildrenGenderMode.value.{value}")
         );
 
         GMCM.AddBoolOption(

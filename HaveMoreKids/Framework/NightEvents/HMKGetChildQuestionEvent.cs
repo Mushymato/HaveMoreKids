@@ -43,7 +43,11 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                 string translationKey = spouse.isAdoptionSpouse()
                     ? "Strings\\Events:HaveBabyQuestion_Adoption"
                     : "Strings\\Events:HaveBabyQuestion";
-                dialogue = new(spouse, translationKey, Game1.content.LoadString(translationKey, Game1.player.Name));
+                dialogue = new(
+                    spouse,
+                    translationKey,
+                    Game1.content.LoadString(translationKey, Game1.player.Name) + "$l"
+                );
             }
             dialogue.overridePortrait = AssetManager.GetSpouseSpecialPortrait(spouse, "HMK_HaveBabyQuestion");
             dialogue.onFinish += () =>

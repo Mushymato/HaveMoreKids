@@ -701,14 +701,27 @@ internal static class KidHandler
         if (newKid == null)
         {
             babyName = AntiNameCollision(babyName);
-            bool isMale;
-            if (Game1.player.getNumberOfChildren() == 0)
+            bool isMale = false;
+            switch (ModEntry.Config.GenericChildrenGenderMode)
             {
-                isMale = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed).NextBool();
-            }
-            else
-            {
-                isMale = Game1.player.getChildren().Last().Gender == Gender.Female;
+                case NewChildGenderMode.Alternating:
+                    {
+                        List<Child> children = Game1.player.getChildren();
+                        isMale =
+                            children.Count == 0
+                                ? Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed).NextBool()
+                                : children.Last().Gender == Gender.Female;
+                    }
+                    break;
+                case NewChildGenderMode.Random:
+                    isMale = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed).NextBool();
+                    break;
+                case NewChildGenderMode.BoysOnly:
+                    isMale = true;
+                    break;
+                case NewChildGenderMode.GirlsOnly:
+                    isMale = false;
+                    break;
             }
             newKid = new(babyName, isMale, isDarkSkinned, Game1.player);
         }
