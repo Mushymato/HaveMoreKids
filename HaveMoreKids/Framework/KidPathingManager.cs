@@ -145,13 +145,30 @@ internal static class KidPathingManager
     internal static bool IsTileStandable(GameLocation location, Point tile, CollisionMask collisionMask)
     {
         return IsTilePassable(location, tile)
-            && !location.warps.Any(warp => warp.X == tile.X && warp.Y == tile.Y)
+            && !IsWarp(location, tile)
             && !location.IsTileBlockedBy(
                 tile.ToVector2(),
                 collisionMask: collisionMask,
                 ignorePassables: CollisionMask.All
             )
             && (location is not DecoratableLocation decoLoc || !decoLoc.isTileOnWall(tile.X, tile.Y));
+    }
+
+    private static bool IsWarp(GameLocation location, Point tile)
+    {
+        if (location.warps.Any(warp => warp.X == tile.X && warp.Y == tile.Y))
+        {
+            return true;
+        }
+        if (location.doors.ContainsKey(tile))
+        {
+            return true;
+        }
+        if (location.doesTileHaveProperty(tile.X, tile.Y, "TouchAction", "Back") is string touchAction)
+        {
+            return touchAction == "Warp" || touchAction == "MagicWarp";
+        }
+        return false;
     }
 
     internal static List<Point> TileStandableBFS(
@@ -429,9 +446,11 @@ internal static class KidPathingManager
         if (buildingTile?.Properties.ContainsKey("Passable") is true)
             return true;
 
-        // non-passable if Back layer has 'Passable' property
+        // non-passable if Back layer has 'Passable' or 'NPCBarrier' property
         xTile.Tiles.Tile? backTile = location.map.RequireLayer("Back").Tiles[(int)tile.X, (int)tile.Y];
         if (backTile?.Properties.ContainsKey("Passable") is true)
+            return false;
+        if (backTile?.Properties.ContainsKey("NPCBarrier") is true)
             return false;
 
         // else check tile indexes
