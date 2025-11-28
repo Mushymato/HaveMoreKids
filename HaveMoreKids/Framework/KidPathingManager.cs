@@ -476,7 +476,7 @@ internal static class KidPathingManager
         }
         else
         {
-            result = !kid.currentLocation.IsRainingHere();
+            result = !kid.currentLocation.IsWinterHere() && !kid.currentLocation.IsRainingHere();
         }
         kid.modData[Child_ModData_RoamOnFarm] = result ? "T" : "F";
 

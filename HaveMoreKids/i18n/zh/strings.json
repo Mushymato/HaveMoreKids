@@ -1,0 +1,18 @@
+{
+  "ChildTerm": "宝宝",
+  "BabyNamingTitle": "宝宝该取什么名字？",
+  "SpouseNaming": "{0}正在给宝宝取名字。",
+  "Crib_Name": "婴儿床",
+  "Crib_Empty": "爷爷说，要不再要个孩子？",
+  "Crib_Empty_EnoughKids": "爷爷说，孩子够多了。",
+  "BirthMessage_Twin": "哇！是双胞胎！",
+  "Adoption_Prompt": "欢迎来到收养登记处！无论你是否已婚，你都可以在这里注册收养孩子。",
+  "Adoption_Generic": "{0}领养孩子",
+  "Adoption_Specific": "{0}领养{1}",
+  "Adoption_Time_Day": "{0}天后",
+  "Adoption_Time_Days": "{0}天后",
+  "Adoption_Time_Tonight": "今晚",
+  "Adoption_Done": "你提交了收养文件！",
+  "Adoption_CantAdoptYet_BiggerHouse": "你需要有一个更大的房子才能领养孩子。",
+  "Adoption_CantAdoptYet_NoCrib": "你需要有一个婴儿床才能领养孩子。"
+}

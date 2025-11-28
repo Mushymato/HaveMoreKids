@@ -157,8 +157,8 @@ internal sealed class ModConfig : ModConfigValues
             return;
         }
 
-        GMCM!.AddPageLink(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name, I18n.Config_Page_Pregnancy_Description);
-        GMCM.AddPage(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name);
+        GMCM!.AddPageLink(Mod, "General", I18n.Config_Page_General_Name, I18n.Config_Page_General_Description);
+        GMCM.AddPage(Mod, "General", I18n.Config_Page_General_Name);
         GMCM.AddNumberOption(
             Mod,
             () => PregnancyChance,
@@ -226,8 +226,8 @@ internal sealed class ModConfig : ModConfigValues
             return;
         }
 
-        GMCM!.AddPageLink(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name, I18n.Config_Page_Pregnancy_Description);
-        GMCM.AddPage(Mod, "Pregnancy", I18n.Config_Page_Pregnancy_Name);
+        GMCM!.AddPageLink(Mod, "General", I18n.Config_Page_General_Name, I18n.Config_Page_General_Description);
+        GMCM.AddPage(Mod, "General", I18n.Config_Page_General_Name);
         GMCM.AddNumberOption(
             Mod,
             () => PregnancyChance,
@@ -335,14 +335,7 @@ internal sealed class ModConfig : ModConfigValues
             () => GenericChildrenGenderMode.ToString(),
             (value) => GenericChildrenGenderMode = Enum.Parse<NewChildGenderMode>(value),
             I18n.Config_GenericChildrenGenderMode_Name,
-            () =>
-            {
-                return string.Concat(
-                    I18n.Config_GenericChildrenGenderMode_Description(),
-                    "\n",
-                    I18n.GetByKey($"config.GenericChildrenGenderMode.value.{GenericChildrenGenderMode}.description")
-                );
-            },
+            I18n.Config_GenericChildrenGenderMode_Description,
             allowedValues: Enum.GetValues<NewChildGenderMode>().Select(value => value.ToString()).ToArray(),
             formatAllowedValue: (value) => I18n.GetByKey($"config.GenericChildrenGenderMode.value.{value}")
         );
@@ -380,7 +373,7 @@ internal sealed class ModConfig : ModConfigValues
         GMCM!.AddPage(Mod, "");
         if (EnabledKidsPages.Any())
         {
-            GMCM.AddParagraph(Mod, I18n.Config_Page_SpecificKids_Description);
+            GMCM.AddParagraph(Mod, I18n.Config_Page_CustomKids_Description);
             foreach ((string key, IList<string> kidIds) in EnabledKidsPages)
             {
                 if (key == KidHandler.WhoseKids_Shared)
