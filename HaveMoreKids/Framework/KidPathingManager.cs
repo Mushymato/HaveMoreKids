@@ -598,20 +598,14 @@ internal static class KidPathingManager
             return true;
         }
         // if kid ought to be outside already, skip directly to warp
-        if (kid.controller == null)
+        if (ManagedNPCKids.TryGetValue(kid, out NPCKidCtx? ctx))
         {
-            // lost controller, try to determine which method we wanted
-            if (ManagedNPCKids.TryGetValue(kid, out NPCKidCtx? ctx))
-            {
-                DelayedAction.functionAfterDelay(() => ctx.RouteEnd_SetKidInvisibleAndNPCVisible(kid, farm), 0);
-            }
-            else
-            {
-                DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
-            }
-            return false;
+            DelayedAction.functionAfterDelay(() => ctx.RouteEnd_SetKidInvisibleAndNPCVisible(kid, farm), 0);
         }
-        DelayedAction.functionAfterDelay(() => kid.controller.endBehaviorFunction?.Invoke(kid, farm), 0);
+        else
+        {
+            DelayedAction.functionAfterDelay(() => WarpKidToFarm(kid, farm), 0);
+        }
         return false;
     }
 

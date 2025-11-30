@@ -38,6 +38,6 @@
   "config.page.spousekids.name": "{{Name}}的孩子",
   "config.page.sharedKids.name": "泛用孩子",
   "config.page.nokids.description": "你没有安装任何自定义孩子内容包，但此模组的通用功能仍然适用。",
-  "config.page.nonhost.description": "因为你不是主机玩家所以你无法更改某些设置。",
+  "config.page.nonhost.description": "因为你不是主玩家所以你无法更改某些设置。",
   "config.page.kids.description": "名字：{{displayName}}\n可对话：{{talks}}\n儿童NPC：{{isKidNPC}}"
 }

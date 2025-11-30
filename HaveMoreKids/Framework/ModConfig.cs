@@ -265,7 +265,7 @@ internal sealed class ModConfig : ModConfigValues
             },
             I18n.Config_DaysBaby_Name,
             I18n.Config_DaysBaby_Description,
-            min: 0,
+            min: 1,
             max: 28
         );
         GMCM.AddNumberOption(
@@ -278,7 +278,7 @@ internal sealed class ModConfig : ModConfigValues
             },
             I18n.Config_DaysCrawler_Name,
             I18n.Config_DaysCrawler_Description,
-            min: 0,
+            min: 1,
             max: 28
         );
         GMCM.AddNumberOption(
@@ -291,7 +291,7 @@ internal sealed class ModConfig : ModConfigValues
             },
             I18n.Config_DaysToddler_Name,
             I18n.Config_DaysToddler_Description,
-            min: 0,
+            min: 1,
             max: 56
         );
 
