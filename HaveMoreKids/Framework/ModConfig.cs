@@ -261,7 +261,7 @@ internal sealed class ModConfig : ModConfigValues
             (value) =>
             {
                 DaysBaby = value;
-                KidHandler.ResetDaysOldAll();
+                KidHandler.NeedResetDaysOldAll = true;
             },
             I18n.Config_DaysBaby_Name,
             I18n.Config_DaysBaby_Description,
@@ -274,7 +274,7 @@ internal sealed class ModConfig : ModConfigValues
             (value) =>
             {
                 DaysCrawler = value;
-                KidHandler.ResetDaysOldAll();
+                KidHandler.NeedResetDaysOldAll = true;
             },
             I18n.Config_DaysCrawler_Name,
             I18n.Config_DaysCrawler_Description,
@@ -287,7 +287,7 @@ internal sealed class ModConfig : ModConfigValues
             (value) =>
             {
                 DaysToddler = value;
-                KidHandler.ResetDaysOldAll();
+                KidHandler.NeedResetDaysOldAll = true;
             },
             I18n.Config_DaysToddler_Name,
             I18n.Config_DaysToddler_Description,
