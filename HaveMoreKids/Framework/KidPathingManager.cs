@@ -729,6 +729,7 @@ internal static class KidPathingManager
                 () =>
                 {
                     Game1.warpCharacter(kid, farmHouse, targetTile);
+                    KidHandler.ResetDialogues(kid);
                     kid.controller = null;
                 },
                 0
@@ -737,6 +738,7 @@ internal static class KidPathingManager
         else
         {
             Game1.warpCharacter(kid, farmHouse, targetTile);
+            KidHandler.ResetDialogues(kid);
             kid.controller = null;
         }
     }
