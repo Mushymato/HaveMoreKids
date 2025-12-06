@@ -21,7 +21,7 @@ public class ModEntry : Mod
 
     internal const string ModId = "mushymato.HaveMoreKids";
     internal static bool hasLittleNPC = false;
-    internal static bool KidNPCEnabled => !hasLittleNPC && Config.DaysChild > -1;
+    internal static bool KidNPCEnabled => !hasLittleNPC && Config.DaysChild > 0;
 
     public override void Entry(IModHelper helper)
     {

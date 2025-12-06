@@ -490,7 +490,6 @@ internal static class KidHandler
             kid.displayName = null;
             if (kid.Age <= 2)
                 continue;
-            int? hearts = null;
 
             // Ensure kid is in a tile that can reach the door
             KidPathingManager.RepositionKidInFarmhouse(kid);
@@ -545,32 +544,24 @@ internal static class KidHandler
                 kidFriendship.Proposer = 0L;
                 Game1.player.friendshipData[kid.Name] = kidFriendship;
                 Game1.player.friendshipData[entry.KidNPCId] = kidFriendship;
-                hearts = kidFriendship.Points / 250;
-
                 KidPathingManager.AddManagedNPCKid(kid, kidAsNPC, goOutside);
             }
 
-            RefreshDialogues(kid, hearts);
+            ResetDialogues(kid);
         }
         ModEntry.LogDebug("Done day started setup");
         KidPathingManager.PathKidNPCToDoor(Game1.timeOfDay);
         NeedResetDaysOldAll = false;
     }
 
-    internal static int? RefreshDialogues(Child kid, int? hearts = null)
+    internal static void ResetDialogues(Child kid)
     {
         // make sure dialogue gets reloaded
         kid.resetSeasonalDialogue();
         kid.resetCurrentDialogue();
-        if (hearts == null && Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship))
-        {
-            hearts = friendship.Points / 250;
-        }
-        if (!kid.checkForNewCurrentDialogue(hearts ?? 0))
-        {
-            kid.checkForNewCurrentDialogue(hearts ?? 0, noPreface: true);
-        }
-        return hearts;
+        kid.updatedDialogueYet = false;
+        kid.nonVillagerNPCTimesTalked = 0;
+        return;
     }
 
     /// <summary>Unset HMK related data on saving</summary>

@@ -143,9 +143,9 @@ internal sealed class ModConfig : ModConfigValues
         return arg.ToString();
     }
 
-    private string NegativeOneIsDisabled(int arg)
+    private string ZeroIsDisabled(int arg)
     {
-        if (arg == -1)
+        if (arg == 0)
             return I18n.Config_Value_Disabled();
         return arg.ToString();
     }
@@ -307,9 +307,9 @@ internal sealed class ModConfig : ModConfigValues
                 (value) => DaysChild = value,
                 I18n.Config_DaysChild_Name,
                 I18n.Config_DaysChild_Description,
-                min: -1,
+                min: 0,
                 max: 56,
-                formatValue: NegativeOneIsDisabled
+                formatValue: ZeroIsDisabled
             );
         }
 

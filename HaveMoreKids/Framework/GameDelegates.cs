@@ -188,6 +188,7 @@ internal static class GameDelegates
     internal const string CPT_KidDisplayName = "KidDisplayName";
     internal const string CPT_KidNPCId = "KidNPCId";
     internal const string PLAYER_PARENT = "Player";
+    internal static readonly char[] IndexingPrefixes = ['N', '#'];
 
     internal static void Register(IManifest mod)
     {
@@ -346,7 +347,11 @@ internal static class GameDelegates
     private static Child? FindChild(Farmer player, string kidId)
     {
         List<Child> children = player.getChildren();
-        if (kidId[0] == '#' && int.TryParse(kidId.AsSpan(1), out int index) && index < children.Count)
+        if (
+            IndexingPrefixes.Contains(kidId[0])
+            && int.TryParse(kidId.AsSpan(1), out int index)
+            && index < children.Count
+        )
             return children[index];
         return children.FirstOrDefault(kid => kid.Name == kidId);
     }

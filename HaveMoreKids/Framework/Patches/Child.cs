@@ -129,6 +129,10 @@ internal static partial class Patches
             original: AccessTools.PropertyGetter(typeof(NPC), nameof(NPC.CurrentDialogue)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(NPC_CurrentDialogue_Postfix))
         );
+        harmony.Patch(
+            original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.canTalk)),
+            postfix: new HarmonyMethod(typeof(Patches), nameof(Child_canTalk_Postfix))
+        );
         // Let child receive 1 gift a day
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(NPC), nameof(NPC.CanReceiveGifts)),
@@ -442,10 +446,18 @@ internal static partial class Patches
     {
         if (__instance is Child kid && kid.Age >= 3)
         {
-            Game1.npcDialogues.TryGetValue(__instance.Name, out var value);
-            value ??= Game1.npcDialogues[__instance.Name] = NPC_loadCurrentDialogue_Call(__instance);
+            if (!Game1.npcDialogues.TryGetValue(__instance.Name, out Stack<Dialogue>? value) || value == null)
+            {
+                Game1.npcDialogues[__instance.Name] = value = NPC_loadCurrentDialogue_Call(__instance);
+            }
             __result = value;
         }
+    }
+
+    private static void Child_canTalk_Postfix(Child __instance, ref bool __result)
+    {
+        if (!__result && __instance.Age >= 3)
+            __result = true;
     }
 
     private static IEnumerable<CodeInstruction> NPC_Dialogue_Transpiler(
@@ -473,6 +485,22 @@ internal static partial class Patches
         }
     }
 
+    private static void RefreshLocationDialogue(Child kid)
+    {
+        if (kid.nonVillagerNPCTimesTalked == -1)
+            return;
+        int hearts = 0;
+        if (Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship))
+        {
+            hearts = friendship.Points / 250;
+        }
+        if (!kid.checkForNewCurrentDialogue(hearts))
+        {
+            kid.checkForNewCurrentDialogue(hearts, noPreface: true);
+        }
+        kid.nonVillagerNPCTimesTalked = -1;
+    }
+
     private static bool Child_checkAction_Prefix(Child __instance, Farmer who, GameLocation l, ref bool __result)
     {
         if (__instance.Age < 3)
@@ -489,6 +517,8 @@ internal static partial class Patches
             __result = __instance.tryToReceiveActiveObject(who);
             return !__result;
         }
+
+        RefreshLocationDialogue(__instance);
 
         if (__instance.CurrentDialogue.Count > 0)
         {

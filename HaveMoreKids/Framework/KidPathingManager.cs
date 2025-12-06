@@ -85,7 +85,7 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
         SetNPCInvisible(KidNPC);
         pathingState = PathingState.PathedHome;
         KidPathingManager.RepositionKidInFarmhouse(Kid);
-        KidHandler.RefreshDialogues(Kid, null);
+        KidHandler.ResetDialogues(Kid);
     }
 
     internal void RouteEnd_SetKidInvisibleAndNPCVisible(Character c, GameLocation l)
@@ -756,7 +756,7 @@ internal static class KidPathingManager
         GoingToTheFarm.Remove(kid.idOfParent.Value);
         Game1.warpCharacter(kid, farm, goingEntry.ExitPoint.ToVector2());
         kid.toddlerReachedDestination(kid, farm);
-        KidHandler.RefreshDialogues(kid, null);
+        KidHandler.ResetDialogues(kid);
     }
 
     private static bool KidPathFinding(Child kid)

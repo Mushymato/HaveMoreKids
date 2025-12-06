@@ -81,6 +81,9 @@
         "Fri": "{{i18n:{{L@Kid}}.Toddler.Dialog.Fri}} HI [HMK_Endearment], [HMK_RandomSiblingName] IS MY SIBLING",
         "Sat": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sat}} HI [HMK_Endearment]",
         "Sun": "{{i18n:{{L@Kid}}.Toddler.Dialog.Sun}} HI [HMK_Endearment]",
+        // Examples of using location dialogue keys
+        "Farm": "FARM DIALOGUE",
+        "FarmHouse": "HOUSE DIALOGUE",
       }
     },
     {

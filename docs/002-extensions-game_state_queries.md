@@ -13,7 +13,7 @@ Check that you will have a child.
 
 Check that the player has a particular child, works for both generic and custom kids.
 
-- `kidId|childIndex`: This argument is either a kid id, or an index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `kidId|childIndex`: This argument is either a kid id, or an index for child in order of birth in the format of `#<digit>` or `N<digit>`, e.g. `#0` for the first born child.
 
 ## mushymato.HaveMoreKids_HAS_ADOPTED_NPC \<NPCId\>
 
@@ -25,7 +25,7 @@ Check that the player has a child who is adopted from specific NPC. Only applica
 
 Checks a child is at a certain age, works for both generic and custom kids. For generic kids their player given name is considered the kid id.
 
-- `kidId|childIndex`: This argument is either a kid id, or an index for child in order of birth in the format of `#N`, e.g. `#0` for the first born child.
+- `kidId|childIndex`: This argument is either a kid id, or an index for child in order of birth in the format of `#<digit>` or `N<digit>`, e.g. `#0` for the first born child.
 - `age`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
   - 1: Baby (sitting baby)
