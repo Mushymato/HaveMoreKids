@@ -556,6 +556,7 @@ internal static class KidHandler
 
     internal static void ResetDialogues(Child kid)
     {
+        ModEntry.Log($"ResetDialogues for '{kid.Name}'");
         // make sure dialogue gets reloaded
         kid.resetSeasonalDialogue();
         kid.resetCurrentDialogue();

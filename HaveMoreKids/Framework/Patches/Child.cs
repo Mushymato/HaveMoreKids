@@ -489,6 +489,7 @@ internal static partial class Patches
     {
         if (kid.nonVillagerNPCTimesTalked == -1)
             return;
+        ModEntry.Log($"RefreshLocationDialogue for '{kid.Name}'");
         int hearts = 0;
         if (Game1.player.friendshipData.TryGetValue(kid.Name, out Friendship friendship))
         {

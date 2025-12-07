@@ -32,13 +32,13 @@
       "Action": "EditData",
       "Target": "Characters/Dialogue/{{ModId}}_Jas_Kid",
       "Entries": {
-        "Mon": "Mon",
-        "Tue": "Tue",
-        "Wed": "Wed",
-        "Thu": "Thu",
-        "Fri": "Fri",
-        "Sat": "Sat",
-        "Sun": "Sun",
+        "Mon": "Mon [HMK_RandomSiblingName]",
+        "Tue": "Tue [HMK_RandomSiblingName]",
+        "Wed": "Wed [HMK_RandomSiblingName]",
+        "Thu": "Thu [HMK_RandomSiblingName]",
+        "Fri": "Fri [HMK_RandomSiblingName]",
+        "Sat": "Sat [HMK_RandomSiblingName]",
+        "Sun": "Sun [HMK_RandomSiblingName]",
       }
     },
     {

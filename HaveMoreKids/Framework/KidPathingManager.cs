@@ -502,7 +502,7 @@ internal static class KidPathingManager
         if (Game1.timeOfDay >= 1850 && kid.currentLocation is not FarmHouse)
         {
             GoingToTheFarm.Clear();
-            ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to ");
+            ModEntry.LogDebug($"TenMinuteUpdate({Game1.timeOfDay}): {kid.Name} -> return to house");
             WarpKidToHouse(kid);
             return true;
         }
