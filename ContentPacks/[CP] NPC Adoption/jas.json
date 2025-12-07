@@ -39,7 +39,9 @@
         "Fri": "Fri [HMK_RandomSiblingName]",
         "Sat": "Sat [HMK_RandomSiblingName]",
         "Sun": "Sun [HMK_RandomSiblingName]",
-      }
+        "Farm": "Farm",
+        "FarmHouse": "FarmHouse",
+      },
     },
     {
       "Action": "Load",
