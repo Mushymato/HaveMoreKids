@@ -1,25 +1,99 @@
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Characters;
 using StardewValley.Delegates;
 using StardewValley.GameData.Characters;
+using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
-namespace HaveMoreKids.Framework.MapActions;
+namespace HaveMoreKids.Framework.ExtraFeatures;
 
-internal static class AdoptionRegistry
+internal static class ChildrenRegistry
 {
-    internal const string Action_ShowAdoption = $"{ModEntry.ModId}_ShowAdoption";
+    internal const string Action_ChildrenRegistry = $"{ModEntry.ModId}_ChildrenRegistry";
 
     internal static void Register()
     {
-        GameLocation.RegisterTileAction(Action_ShowAdoption, TileShowAdoption);
+        GameLocation.RegisterTileAction(Action_ChildrenRegistry, TileChildrenRegistry);
     }
 
-    private static bool TileShowAdoption(GameLocation location, string[] args, Farmer farmer, Point point)
+    private static bool TileChildrenRegistry(GameLocation location, string[] args, Farmer farmer, Point point)
     {
-        if (Game1.player.HouseUpgradeLevel < 2)
+        if (!farmer.getChildren().Where(kid => kid.GetHMKAdoptedFromNPCId() is null).Any())
+        {
+            return TileShowAdoption(location, farmer);
+        }
+        location.createQuestionDialogue(
+            AssetManager.LoadString("Registry_Prompt"),
+            [
+                new("hmk_cr_adoption", AssetManager.LoadString("Registry_Adoption")),
+                new("hmk_cr_renamer", AssetManager.LoadString("Registry_Rename")),
+                new("hmk_cr_cancel", Game1.content.LoadString("Strings\\Locations:MineCart_Destination_Cancel")),
+            ],
+            (who, response) =>
+            {
+                switch (response)
+                {
+                    case "hmk_cr_renamer":
+                        TileShowRenamer(location, farmer);
+                        break;
+                    case "hmk_cr_adoption":
+                        TileShowAdoption(location, farmer);
+                        break;
+                }
+            },
+            speaker: null
+        );
+        return true;
+    }
+
+    #region rename
+    private static void TileShowRenamer(GameLocation location, Farmer farmer)
+    {
+        Dictionary<string, Child> kids = [];
+        List<KeyValuePair<string, string>> responsePairs = [];
+        foreach (Child kid in farmer.getChildren())
+        {
+            if (kid.GetHMKAdoptedFromNPCId() is not null)
+                continue;
+            responsePairs.Add(new(kid.Name, kid.displayName));
+            kids[kid.Name] = kid;
+        }
+        location.ShowPagedResponses(
+            AssetManager.LoadString("Registry_Prompt"),
+            responsePairs,
+            (response) => ShowKidRenameMenu(kids[response], farmer),
+            addCancel: true
+        );
+    }
+
+    private static void ShowKidRenameMenu(Child kid, Farmer farmer)
+    {
+        Game1.activeClickableMenu = new NamingMenu(
+            (s) =>
+            {
+                string oldName = kid.displayName;
+                kid.SetChildDisplayName(s);
+                Game1.exitActiveMenu();
+                Farmer.canMoveNow(farmer);
+                Game1.addHUDMessage(
+                    HUDMessage.ForCornerTextbox(
+                        AssetManager.LoadString("Rename_Child_Message", oldName, kid.displayName)
+                    )
+                );
+            },
+            AssetManager.LoadString("Remame_Child_Label", kid.displayName),
+            kid.displayName
+        );
+    }
+    #endregion
+
+    #region adoption
+    private static bool TileShowAdoption(GameLocation location, Farmer farmer)
+    {
+        if (farmer.HouseUpgradeLevel < 2)
         {
             Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_BiggerHouse"));
             return false;
@@ -27,7 +101,7 @@ internal static class AdoptionRegistry
 
         List<KeyValuePair<string, string>> responses = [];
 
-        if (CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(Game1.player)))
+        if (CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(farmer)))
         {
             responses.Add(
                 new("Adoption_Generic", FormAdoptionOptionText("Adoption_Generic", ModEntry.Config.DaysPregnant, ""))
@@ -81,7 +155,7 @@ internal static class AdoptionRegistry
             return false;
         }
 
-        location.ShowPagedResponses(AssetManager.LoadString("Adoption_Prompt"), responses, OnResponse);
+        location.ShowPagedResponses(AssetManager.LoadString("Adoption_Prompt"), responses, OnAdoptionResponse);
         return true;
     }
 
@@ -102,7 +176,7 @@ internal static class AdoptionRegistry
         );
     }
 
-    private static void OnResponse(string obj)
+    private static void OnAdoptionResponse(string obj)
     {
         if (!obj.StartsWith("Adoption_"))
             return;
@@ -137,4 +211,5 @@ internal static class AdoptionRegistry
         }
         TriggerActionManager.Raise(GameDelegates.Trigger_Adoption);
     }
+    #endregion
 }

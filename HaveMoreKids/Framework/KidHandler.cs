@@ -20,12 +20,14 @@ namespace HaveMoreKids.Framework;
 internal sealed record KidEntry(
     string? KidNPCId,
     bool IsAdoptedFromNPC,
-    string DisplayName,
     long PlayerParent,
     string? OtherParent,
     Season BirthSeason,
     int BirthDay
-);
+)
+{
+    internal string DisplayName { get; set; } = "kid";
+};
 
 internal static class KidHandler
 {
@@ -92,6 +94,21 @@ internal static class KidHandler
             return kidDisplayName;
         }
         return allowNull ? null : (kid.displayName ?? kid.Name);
+    }
+
+    internal static void SetChildDisplayName(this Child kid, string newName)
+    {
+        if (kid.modData.ContainsKey(Child_ModData_DisplayName) && KidEntries.TryGetValue(kid.Name, out KidEntry? entry))
+        {
+            kid.modData[Child_ModData_DisplayName] = newName;
+            entry.DisplayName = newName;
+        }
+        else
+        {
+            kid.Name = newName;
+        }
+        kid.displayName = newName;
+        return;
     }
 
     internal static string? GetHMKAdoptedFromNPCId(this Character kid)
@@ -361,12 +378,14 @@ internal static class KidHandler
             KidEntries[kid.Name] = new(
                 kidNPCId,
                 adoptedFromNPC,
-                kid.displayName,
                 kid.idOfParent.Value,
                 npcParentId,
                 season,
                 kid.Birthday_Day
-            );
+            )
+            {
+                DisplayName = kid.displayName,
+            };
         }
         KidNPCSetup();
         MultiplayerSync.SendKidEntries(null);

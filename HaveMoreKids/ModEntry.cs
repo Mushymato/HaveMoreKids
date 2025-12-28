@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using HaveMoreKids.Framework;
-using HaveMoreKids.Framework.MapActions;
+using HaveMoreKids.Framework.ExtraFeatures;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -35,7 +35,7 @@ public class ModEntry : Mod
         KidPathingManager.Register();
         AssetManager.Register();
         MultiplayerSync.Register();
-        AdoptionRegistry.Register();
+        ChildrenRegistry.Register();
         DarkShrine.Register();
         Patches.Apply();
 

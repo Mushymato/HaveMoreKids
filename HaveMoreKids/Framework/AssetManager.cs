@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Force.DeepCloner;
-using HaveMoreKids.Framework.MapActions;
+using HaveMoreKids.Framework.ExtraFeatures;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -323,7 +323,7 @@ internal static class AssetManager
         }
         if (map.GetLayer("Buildings") is xTile.Layers.Layer buildings)
         {
-            buildings.Tiles[3, 16].Properties["Action"] = AdoptionRegistry.Action_ShowAdoption;
+            buildings.Tiles[3, 16].Properties["Action"] = ChildrenRegistry.Action_ChildrenRegistry;
         }
     }
 

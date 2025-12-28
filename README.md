@@ -18,19 +18,23 @@ You can have more kids more frequently, and have them grow up faster (or slower)
 
 You can purchase a furniture crib from Robin's shop. When placed in the farmhouse, these count as cribs for the purposes of childbirth. Thus you can raise multiple kids at once, or have a kid without the farmhouse built-in crib.
 
+### Rename Your Kids
+
+You can rename your children via the children registry at Harvey's Clinic. This works on both generic children and custom kids.
+
 ### Single Parenthood
 
-Once you have two house upgrades, you can adopt a kid from the adoption registry at Harvey's Clinic even if you aren't married.
+Once you have two house upgrades, you can adopt a kid from the children registry at Harvey's Clinic even if you aren't married.
 Content packs may also add custom kids that are only available via adoption here.
 
 ### Kids Playing Outside
 
 Once the kids reaches toddler age, they will go out to the farm in the morning and wander around the farm, then return to the house by 1900.
-By default, the kids will only go out when it is not raining, custom kids may have special rules.
+By default, the kids will only go out when it is not raining and not winter, custom kids may have special rules.
 
 ### Specific Custom Kid
 
-If you have content pack providing custom kids installed, and the author given them specific "canonical" names, giving the new child one of the canon names will bypass RNG and always choose the specific custom kid.
+If you have content pack providing custom kids installed, and the author has given them specific "canonical" names, giving the new child one of the canon names will bypass RNG and always choose the specific custom kid.
 
 ## Configuration
 
@@ -42,10 +46,22 @@ If you have content pack providing custom kids installed, and the author given t
 - `Days until Baby`: Number of days until the newborn becomes a baby. Vanilla days is 13.
 - `Days until Crawler`: Number of days until the baby becomes a crawler. Vanilla days is 14.
 - `Days until Toddler`: Number of days until the crawler becomes a toddler. Vanilla days is 13.
-- `Use Single Bed As Child Bed`: Allow children to sleep on single beds instead of special child beds furniture.
+- `Use Single Bed As Child Bed`: Allow children to sleep on single beds instead of special child beds only.
+- `Generic Children Boy/Girl Mode`: Decide how gender distribution works for generic children, has no effect on custom kids.
 - `Max Children`: Max number of children you can have (i.e. max number of children that will live in your farmhouse).
 - `Toddlers Roam on Farm`: Allow all toddlers to roam around on the farm. They will go outside in the morning, and return home by 1900.
 - `Per Kid Dark Shrine of Selfishness`: Override Dark Shrine of Selfishness to allow picking a specific kid.
+
+#### Boy/Girl Modes
+
+These are the options of `Generic Children Boy/Girl Mode`.
+Changing the option does not reset the gender of existing children, this only affects any following children you have after changing the config.
+Custom kids ignore this setting completely and uses the gender defined by the content pack.
+
+- `Alternating`: The first child will be randomly boy or girl, each following child will have the opposite gender as the previous child.
+- `Random`: Children gender is random.
+- `Boys Only`: All children will be boys.
+- `Girls Only`: All children will be girls.
 
 ### Content Pack
 
@@ -59,13 +75,21 @@ There's a config option specifically for the case where spouse has custom kids:
 
 - `Free Love`: Compatibility is provided by HMK via harmony patches. Kids will use the parent picked by Free Love but whether they can have kids at all is decided by HMK.
 - `Unique Children Talk`: Should work with the first 2 kids, but unknown what happens for 3+. HMK implements a similar feature for content packs to add custom dialogue to kids.
-- `LittleNPC`: HMK implements a similar feature that allows content packs to add custom kids who grow up into NPC. This feature is automatically disabled if `LittleNPC`'s is installed.
+- `LittleNPC`: HMK implements a similar feature that allows content packs to add custom kids who grow up into NPC. This feature is automatically disabled if LittleNPC is installed.
 
 ## Multiplayer
 
 In order to ensure proper function, all players must install this mod and the same list of content packs for this mod. Compared to content patcher child replacer mods, this mod manages appearances of other player's children in a way that is consistent for all players, and thus all players need to have matching data and textures even if it is not their baby. This is extra important if the feature of letting kid grow up to a child is enabled.
 
-## Uninstall
+## Translations
+- English
+- 简体中文
 
-You can remove this mod at any time and if you do so, all kids should revert to vanilla children.
+## Installation
+- Download and install SMAPI
+- Download this mod and extract the archive to the Mods folder.
+
+## Uninstallation
+
+You can remove this mod at any time in your save. After doing so, all kids should revert to generic children.
 Removing a content pack for this mod will make the affected kids retry choosing a unique kid appearance on new day. If there are other valid kids for them, this may mean they "change" into a different HMK custom kid that is still installed.

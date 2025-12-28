@@ -6,7 +6,10 @@
   "Crib_Empty": "Grandpa would want you to have another kid.",
   "Crib_Empty_EnoughKids": "Grandpa would say you have more than enough kids.",
   "BirthMessage_Twin": "Surprise! Twins!",
-  "Adoption_Prompt": "Welcome to the adoption registry! You can sign up to adopt a child here, regardless of whether you are married.",
+  "Registry_Prompt": "Welcome to the children registry!",
+  "Registry_Adoption": "Adopt a child",
+  "Registry_Rename": "Rename your children",
+  "Adoption_Prompt": "You can sign up to adopt a child here, regardless of whether you are married.",
   "Adoption_Generic": "Register for adoption{0}",
   "Adoption_Specific": "Register to adopt {1}{0}",
   "Adoption_Time_Day": " in {0} day",
@@ -14,5 +17,8 @@
   "Adoption_Time_Tonight": " tonight",
   "Adoption_Done": "You submitted the adoption papers!",
   "Adoption_CantAdoptYet_BiggerHouse": "You'll need a bigger house before you can adopt.",
-  "Adoption_CantAdoptYet_NoCrib": "You'll need a crib before you can adopt a baby."
+  "Adoption_CantAdoptYet_NoCrib": "You'll need a crib before you can adopt a baby.",
+  "Rename_Prompt": "You can rename your children here.",
+  "Remame_Child_Label": "Rename {0}",
+  "Rename_Child_Message": "{0} is now called {1}!"
 }

@@ -1,10 +1,8 @@
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
-using StardewValley.Locations;
-using StardewValley.Triggers;
 
-namespace HaveMoreKids.Framework.MapActions;
+namespace HaveMoreKids.Framework.ExtraFeatures;
 
 internal static class DarkShrine
 {
