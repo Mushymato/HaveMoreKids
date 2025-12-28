@@ -44,7 +44,7 @@ public class KidFestivalBehaviour
 
 internal static class AssetManager
 {
-    private const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
+    internal const string Asset_ChildData = $"{ModEntry.ModId}/ChildData";
     private const string Asset_KidDefinitions = $"{ModEntry.ModId}/Kids";
     private const string Asset_Strings = $"{ModEntry.ModId}\\Strings";
     internal const string Asset_DefaultTextureName = $"{ModEntry.ModId}_NoPortrait";

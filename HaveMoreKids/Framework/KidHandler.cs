@@ -102,6 +102,10 @@ internal static class KidHandler
         {
             kid.modData[Child_ModData_DisplayName] = newName;
             entry.DisplayName = newName;
+            if (NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidNPC)
+            {
+                kidNPC.displayName = newName;
+            }
         }
         else
         {
