@@ -73,7 +73,7 @@ There's a config option specifically for the case where spouse has custom kids:
 
 ## Compatibility
 
-- `Free Love`: Compatibility is provided by HMK via harmony patches. Kids will use the parent picked by Free Love but whether they can have kids at all is decided by HMK.
+- `Free Love`: Compatibility is provided by HMK via harmony patches. Kids will use the parent picked by Free Love using it's pregnancy chance modifiers, but whether they can have kids at all is decided by HMK.
 - `Unique Children Talk`: Should work with the first 2 kids, but unknown what happens for 3+. HMK implements a similar feature for content packs to add custom dialogue to kids.
 - `LittleNPC`: HMK implements a similar feature that allows content packs to add custom kids who grow up into NPC. This feature is automatically disabled if LittleNPC is installed.
 
