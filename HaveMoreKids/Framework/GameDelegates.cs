@@ -170,6 +170,7 @@ public sealed class CPTokenKidDisplayName
 internal static class GameDelegates
 {
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
+    internal const string GSQ_CHILD_DAYS_IN_AGE = $"{ModEntry.ModId}_CHILD_DAYS_IN_AGE";
     internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
     internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
     internal const string GSQ_WILL_HAVE_CHILD = $"{ModEntry.ModId}_WILL_HAVE_CHILD";
@@ -194,6 +195,7 @@ internal static class GameDelegates
     {
         // GSQ
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
+        GameStateQuery.Register(GSQ_CHILD_DAYS_IN_AGE, CHILD_DAYS_IN_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
         GameStateQuery.Register(GSQ_HAS_ADOPTED_NPC, HAS_ADOPTED_NPC);
         GameStateQuery.Register(GSQ_WILL_HAVE_CHILD, WILL_HAVE_CHILD);
@@ -450,6 +452,50 @@ internal static class GameDelegates
         }
         int age = FindChild(context.Player, kidId)?.Age ?? 0;
         return age >= ageMin && age <= ageMax;
+    }
+
+    private static bool CHILD_DAYS_IN_AGE(string[] query, GameStateQueryContext context)
+    {
+        if (
+            !ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "int kidId")
+            || !ArgUtility.TryGetInt(query, 2, out int ageToSub, out error, name: "int ageToSub")
+            || !ArgUtility.TryGetInt(query, 3, out int daysOldMin, out error, name: "int daysOldMin")
+            || !ArgUtility.TryGetOptionalInt(
+                query,
+                4,
+                out int daysOldMax,
+                out error,
+                defaultValue: int.MaxValue,
+                name: "int daysOldMax"
+            )
+        )
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+        if (FindChild(context.Player, kidId) is not Child kid)
+        {
+            return false;
+        }
+        int daysOld = kid.daysOld.Value;
+        switch (ageToSub)
+        {
+            case 4:
+                if (!ModEntry.KidNPCEnabled)
+                    return false;
+                daysOld -= ModEntry.Config.TotalDaysChild;
+                break;
+            case 3:
+                daysOld -= ModEntry.Config.TotalDaysToddler;
+                break;
+            case 2:
+                daysOld -= ModEntry.Config.TotalDaysCrawer;
+                break;
+            case 1:
+                daysOld -= ModEntry.Config.TotalDaysBaby;
+                break;
+        }
+        return daysOld >= daysOldMin && daysOld <= daysOldMax;
     }
 
     private static bool SetChildAge(string[] args, TriggerActionContext context, out string error)
