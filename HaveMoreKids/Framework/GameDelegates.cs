@@ -348,6 +348,11 @@ internal static class GameDelegates
 
     private static Child? FindChild(Farmer player, string kidId)
     {
+        if (Game1.getLocationFromName("FarmHouse") is null)
+        {
+            ModEntry.Log("Attempted to check kids before 'FarmHouse' location is loaded", LogLevel.Warn);
+            return null;
+        }
         List<Child> children = player.getChildren();
         if (
             IndexingPrefixes.Contains(kidId[0])
@@ -360,6 +365,11 @@ internal static class GameDelegates
 
     private static Child? FindAdoptedNPC(Farmer player, string kidId)
     {
+        if (Game1.getLocationFromName("FarmHouse") is null)
+        {
+            ModEntry.Log("Attempted to check kids before 'FarmHouse' location is loaded", LogLevel.Warn);
+            return null;
+        }
         List<Child> children = player.getChildren();
         return children.FirstOrDefault(kid =>
         {
@@ -526,13 +536,13 @@ internal static class GameDelegates
             case 4:
                 if (ModEntry.KidNPCEnabled)
                 {
-                    kid.daysOld.Value = ModEntry.Config.TotalDaysChild;
+                    kid.daysOld.Value = Math.Max(kid.daysOld.Value, ModEntry.Config.TotalDaysChild);
                     kid.Age = 4;
                     return true;
                 }
                 goto case 3;
             case 3:
-                kid.daysOld.Value = ModEntry.Config.TotalDaysToddler;
+                kid.daysOld.Value = Math.Max(kid.daysOld.Value, ModEntry.Config.TotalDaysToddler);
                 kid.Age = 3;
                 return true;
             case 2:

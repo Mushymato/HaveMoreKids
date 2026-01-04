@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using HaveMoreKids;
 using HaveMoreKids.Framework;
 using Microsoft.Xna.Framework;
@@ -10,6 +8,7 @@ using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Extensions;
 using StardewValley.Locations;
+using StardewValley.Objects;
 using StardewValley.Pathfinding;
 
 internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePathDescription? EndSPD)
@@ -17,11 +16,20 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
     internal bool ShouldPathOutside =>
         Game1.timeOfDay >= GoOutsideTime && !Kid.IsInvisible && pathingState == PathingState.None;
 
-    internal bool ShouldPathHome =>
-        hasSeenEndSPD
-        && pathingState == PathingState.PathedOutside
-        && EndSPD?.targetLocationName == KidNPC.currentLocation.NameOrUniqueName
-        && KidNPC.DirectionsToNewLocation == null;
+    internal bool ShouldPathHome
+    {
+        get
+        {
+            if (pathingState != PathingState.PathedOutside)
+                return false;
+            if (KidNPC.ignoreScheduleToday)
+                return true;
+
+            return hasSeenEndSPD
+                && KidNPC.DirectionsToNewLocation == null
+                && EndSPD?.targetLocationName == KidNPC.currentLocation.NameOrUniqueName;
+        }
+    }
 
     private enum PathingState
     {
@@ -34,11 +42,9 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
 
     public void CheckEndSPD()
     {
-        if (EndSPD == null)
-        {
+        if (EndSPD == null || hasSeenEndSPD)
             return;
-        }
-        hasSeenEndSPD = hasSeenEndSPD || EndSPD == KidNPC.DirectionsToNewLocation;
+        hasSeenEndSPD = EndSPD == KidNPC.DirectionsToNewLocation;
     }
 
     private PathingState pathingState = PathingState.None;
@@ -698,23 +704,7 @@ internal static class KidPathingManager
         kid.speed = 4;
         if (kid.currentLocation is FarmHouse farmHouse)
         {
-            int kidIdx = kid.GetChildIndex();
-            Point randomTile = GetRandomReachablePointInHouse(
-                farmHouse,
-                Utility.CreateDaySaveRandom(farmHouse.OwnerId * 2, kidIdx)
-            );
-            if (!randomTile.Equals(Point.Zero))
-            {
-                kid.setTilePosition(randomTile);
-            }
-            else
-            {
-                randomTile = farmHouse.GetChildBedSpot(kidIdx);
-                if (!randomTile.Equals(Point.Zero))
-                {
-                    kid.setTilePosition(randomTile);
-                }
-            }
+            kid.setTileLocation(GetTargetTileInHouse(kid, farmHouse));
             kid.Sprite.CurrentAnimation = null;
         }
     }
@@ -722,7 +712,8 @@ internal static class KidPathingManager
     internal static void WarpKidToHouse(Child kid, bool delay = true)
     {
         FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.GetPlayer(kid.idOfParent.Value));
-        Vector2 targetTile = GetRandomReachablePointInHouse(farmHouse, Random.Shared).ToVector2();
+        Vector2 targetTile;
+        targetTile = GetTargetTileInHouse(kid, farmHouse);
         if (delay)
         {
             DelayedAction.functionAfterDelay(
@@ -741,6 +732,26 @@ internal static class KidPathingManager
             KidHandler.ResetDialogues(kid);
             kid.controller = null;
         }
+    }
+
+    private static Vector2 GetTargetTileInHouse(Child kid, FarmHouse farmHouse)
+    {
+        if (Game1.timeOfDay > 2100)
+        {
+            // send kid to bed directly
+            int childIndex = kid.GetChildIndex();
+            BedFurniture childBed = farmHouse.GetChildBed(childIndex);
+            if (!childBed.mutex.IsLocked())
+            {
+                Point childBedSpot = farmHouse.GetChildBedSpot(childIndex);
+                if (!childBedSpot.Equals(Point.Zero))
+                {
+                    childBed.ReserveForNPC();
+                    return childBedSpot.ToVector2();
+                }
+            }
+        }
+        return GetRandomReachablePointInHouse(farmHouse, Random.Shared).ToVector2();
     }
 
     private static void WarpKidToFarm(Character c, GameLocation l)

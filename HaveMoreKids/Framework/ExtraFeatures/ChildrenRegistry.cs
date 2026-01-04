@@ -21,7 +21,7 @@ internal static class ChildrenRegistry
 
     private static bool TileChildrenRegistry(GameLocation location, string[] args, Farmer farmer, Point point)
     {
-        if (!farmer.getChildren().Where(kid => kid.GetHMKAdoptedFromNPCId() is null).Any())
+        if (!farmer.getChildren().Any(kid => kid.GetHMKAdoptedFromNPCId() is null))
         {
             return TileShowAdoption(location, farmer);
         }

@@ -281,6 +281,7 @@ internal static class KidHandler
             {
                 foreach (Child kid in AllKids())
                 {
+                    ResetDaysOld(kid);
                     if (kid.KidHMKId() is string kidId)
                     {
                         if (kidId.StartsWith(NPCChild_Prefix) || AssetManager.ChildData.ContainsKey(kidId))
@@ -324,7 +325,6 @@ internal static class KidHandler
 
         foreach (Child kid in AllKids())
         {
-            ResetDaysOld(kid);
             if (!Utility.TryParseEnum(kid.Birthday_Season, out Season season))
             {
                 SDate birthday = SDate.Now();
@@ -369,6 +369,11 @@ internal static class KidHandler
                     {
                         kidAsNPC.currentLocation?.characters.Remove(kidAsNPC);
                     }
+                }
+                else
+                {
+                    kid.Age = 4;
+                    ResetDaysOld(kid);
                 }
             }
 
@@ -501,6 +506,7 @@ internal static class KidHandler
         {
             return;
         }
+        KidEntries_Populate();
         CribManager.RecheckCribAssignments();
         // update all kids
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
@@ -533,6 +539,8 @@ internal static class KidHandler
                 {
                     goOutsideGSQ = kidDef.IsNPCTodayCondition;
                 }
+
+                ModEntry.Log($"{kid.Name} {kid.daysOld.Value} {ModEntry.Config.TotalDaysChild} {goOutsideGSQ}");
 
                 if (entry.IsAdoptedFromNPC)
                 {
@@ -648,11 +656,15 @@ internal static class KidHandler
     {
         // create and add kid
         Child? newKid = null;
-        if (spouse != null && newKidId == null)
+        if (spouse != null)
         {
-            if (PickForSpecificKidId(spouse, babyName) is string specificKidName)
+            if (!spouse.modData.ContainsKey(Character_ModData_NextKidId))
             {
-                newKidId = specificKidName;
+                // try to pick a kid of matching name
+                if (PickForSpecificKidId(spouse, babyName) is string specificKidName)
+                {
+                    newKidId = specificKidName;
+                }
             }
             spouse.modData.Remove(Character_ModData_NextKidId);
         }
@@ -918,14 +930,11 @@ internal static class KidHandler
         bool? darkSkinnedRestrict
     )
     {
-        return (
-                TryGetSpouseKidIds(spouse, out availableKidIds)
-                && FilterAvailableKidIds(spouse.Name, ref availableKidIds, darkSkinnedRestrict)
-            )
-            || (
-                TryGetSharedKidIds(out availableKidIds)
-                && FilterAvailableKidIds(WhoseKids_Shared, ref availableKidIds, darkSkinnedRestrict)
-            );
+        if (TryGetSpouseOrSharedKidIds(spouse, out _, out availableKidIds))
+        {
+            return FilterAvailableKidIds(spouse.Name, ref availableKidIds, darkSkinnedRestrict);
+        }
+        return false;
     }
 
     internal static string? PickMostLikelyKidId(

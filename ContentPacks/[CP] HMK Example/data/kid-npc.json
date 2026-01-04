@@ -10,7 +10,8 @@
           // As long as it is not null/FALSE, the child will get a generated Data/Character entry
           // Afterwards, this condition controls whether they appear as a Child or a NPC
           // By having !IS_FESTIVAL_DAY as part of the condition, the child will participate in festivals as a Child (and get automatically added next to the spouse)
-          "IsNPCTodayCondition": "!IS_FESTIVAL_DAY,!DAY_OF_WEEK Sunday",
+          // !IS_FESTIVAL_DAY,!DAY_OF_WEEK Sunday
+          "IsNPCTodayCondition": "TRUE",
         }
       }
     },
@@ -46,8 +47,8 @@
       "Entries": {
         // give the child a schedule
         // "spring": "0700 Town 37 71 2/1200 Mountain 43 23 2/1800 Town 0 0 HMK_Home",
-        "spring": "0700 Town 23 52 2/1010 Town 0 0 HMK_Home",
-        "summer": "0000 Mountain 43 23 2/0700 Town 23 52 2/1010 Town 0 0 HMK_Home",
+        "spring": "0700 Town 23 52 2/1710 Mountain 0 0 HMK_Home",
+        "summer": "0000 Mountain 43 23 2/0700 Town 23 52 2/1710 Town 0 0 HMK_Home",
         "DesertFestival": "0800 Desert 22 51/1200 Desert 24 31/1730 Town 0 0 HMK_Home"
       }
     },
