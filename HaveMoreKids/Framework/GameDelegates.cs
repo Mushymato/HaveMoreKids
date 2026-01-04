@@ -243,20 +243,23 @@ internal static class GameDelegates
         {
             dialogueAsset = kidDef.KidDialogueSheetName ?? kidId;
         }
+        dialogueAsset = string.Concat(AssetManager.Asset_CharactersDialogue, dialogueAsset);
 
-        string? endearment =
-            Game1.content.LoadStringReturnNullIfNotFound(
-                string.Concat(AssetManager.Asset_CharactersDialogue, dialogueAsset, endearmentSubkey)
-            )
-            ?? Game1.content.LoadStringReturnNullIfNotFound(
-                string.Concat(
-                    AssetManager.Asset_CharactersDialogue,
-                    dialogueAsset,
-                    endearmentSubkey,
-                    "_",
-                    player.Gender.ToString()
-                )
-            );
+        string? endearment = null;
+        if (Game1.content.DoesAssetExist<Dictionary<string, string>>(dialogueAsset))
+        {
+            endearment = Game1.content.LoadStringReturnNullIfNotFound(string.Concat(dialogueAsset, endearmentSubkey));
+            if (string.IsNullOrEmpty(endearment))
+            {
+                endearment = Game1.content.LoadStringReturnNullIfNotFound(
+                    string.Concat(dialogueAsset, endearmentSubkey, "_", player.Gender.ToString())
+                );
+            }
+        }
+        else
+        {
+            ModEntry.Log($"Dialogue asset '{dialogueAsset}' cannot be found, using default endearments", LogLevel.Warn);
+        }
         if (string.IsNullOrEmpty(endearment))
         {
             if (playerIsParent)

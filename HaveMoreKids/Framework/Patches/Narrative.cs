@@ -47,7 +47,8 @@ internal static partial class Patches
         string? kidId;
         if (__instance.speaker is Child child)
         {
-            kidId = child.Name;
+            // some shenanigans cause this to get called between saving???
+            kidId = child.KidHMKId();
         }
         else
         {
