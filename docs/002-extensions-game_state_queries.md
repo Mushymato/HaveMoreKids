@@ -21,23 +21,24 @@ Check that the player has a child who is adopted from specific NPC. Only applica
 
 - `NPCId`: This argument is the NPC Id.
 
-## mushymato.HaveMoreKids_CHILD_AGE \<kidId|childIndex\> \<Age\>
+## mushymato.HaveMoreKids_CHILD_AGE \<kidId|childIndex\> \<minAge\> [maxAge]
 
 Checks a child is at a certain age, works for both generic and custom kids. For generic kids their player given name is considered the kid id.
 
 - `kidId|childIndex`: This argument is either a kid id, or an index for child in order of birth in the format of `#<digit>` or `N<digit>`, e.g. `#0` for the first born child.
-- `age`: A number corresponding to the age stages
+- `minAge`: A number corresponding to the age stages
   - 0: Newborn (sleeping baby)
   - 1: Baby (sitting baby)
   - 2: Crawler (crawling around the house)
   - 3: Toddler (running around the house)
   - 4: Child NPC (goes outside as NPC)
+- `maxAge`: like min age, except it is the maximum value (default maxint).
 
 Age increases from 0 to 3 as days pass, but a given kid can switch between Toddler mode and Child NPC mode depending on [`mushymato.HaveMoreKids/Kids`](./001-model-child_data.md)'s `IsNPCTodayCondition`.
 
 HMK also provides the [`mushymato.HaveMoreKids_SetChildAge`](./002-extensions-triggers_actions.md) action which may change a child's age.
 
-## mushymato.HaveMoreKids_CHILD_DAYS_IN_AGE \<kidId|childIndex\> \<Age\> \<minDay\> \<maxDay\>
+## mushymato.HaveMoreKids_CHILD_DAYS_IN_AGE \<kidId|childIndex\> \<Age\> \<minDay\> [maxDay]
 
 Checks a child has spent X days at a particular age. For generic kids their player given name is considered the kid id.
 
@@ -49,4 +50,4 @@ Checks a child has spent X days at a particular age. For generic kids their play
   - 3: Toddler (running around the house)
   - 4: Child NPC (goes outside as NPC)
 - `minDay`: Minimum days they've spent at this age phase.
-- `maxDay`: Minimum days they've spent at this age phase.
+- `maxDay`: Maximum days they've spent at this age phase (default maxint).

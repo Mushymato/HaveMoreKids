@@ -62,7 +62,7 @@ internal static class ChildrenRegistry
             kids[kid.Name] = kid;
         }
         location.ShowPagedResponses(
-            AssetManager.LoadString("Registry_Prompt"),
+            AssetManager.LoadString("Rename_Prompt"),
             responsePairs,
             (response) => ShowKidRenameMenu(kids[response], farmer),
             addCancel: true
