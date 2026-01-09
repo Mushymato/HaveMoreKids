@@ -6,7 +6,10 @@
   "Crib_Empty": "爷爷说，要不再要个孩子？",
   "Crib_Empty_EnoughKids": "爷爷说，孩子够多了。",
   "BirthMessage_Twin": "哇！是双胞胎！",
-  "Adoption_Prompt": "欢迎来到收养登记处！无论你是否已婚，你都可以在这里注册收养孩子。",
+  "Registry_Prompt": "欢迎来到儿童登记所！",
+  "Registry_Adoption": "领养一个孩子",
+  "Registry_Rename": "帮孩子改名",
+  "Adoption_Prompt": "无论你是否已婚，你都可以在这里注册收养孩子。",
   "Adoption_Generic": "{0}领养孩子",
   "Adoption_Specific": "{0}领养{1}",
   "Adoption_Time_Day": "{0}天后",
@@ -14,5 +17,9 @@
   "Adoption_Time_Tonight": "今晚",
   "Adoption_Done": "你提交了收养文件！",
   "Adoption_CantAdoptYet_BiggerHouse": "你需要有一个更大的房子才能领养孩子。",
-  "Adoption_CantAdoptYet_NoCrib": "你需要有一个婴儿床才能领养孩子。"
+  "Adoption_CantAdoptYet_NoCrib": "你需要有一个婴儿床才能领养孩子。",
+  "Adoption_CantAdoptYet_MaxChildren": "你家里的孩子足够多了。",
+  "Rename_Prompt": "你可以在此更改你孩子的名字",
+  "Remame_Child_Label": "更改{0}的名字",
+  "Rename_Child_Message": "{0}的名字改成{1}！"
 }

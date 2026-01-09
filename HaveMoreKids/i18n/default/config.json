@@ -1,7 +1,7 @@
 {
   "config.value.unlimited": "Unlimited",
   "config.value.disabled": "Disabled",
-  "config.page.general.name": "General",
+  "config.page.general.name": "General Settings",
   "config.page.general.description": "Settings for pregnancy chances, length, max number of children, child stage lengths, and various child behaviors.",
   "config.PregnancyChance.name": "Pregnancy Chance",
   "config.PregnancyChance.description": "When all other conditions are filled, chance that your spouse will ask to have/adopt a child each night. Base game chance is 5%.",

@@ -258,11 +258,7 @@ internal sealed class ModConfig : ModConfigValues
         GMCM.AddNumberOption(
             Mod,
             () => DaysBaby,
-            (value) =>
-            {
-                DaysBaby = value;
-                KidHandler.NeedResetDaysOldAll = true;
-            },
+            (value) => DaysBaby = value,
             I18n.Config_DaysBaby_Name,
             I18n.Config_DaysBaby_Description,
             min: 1,
@@ -271,11 +267,7 @@ internal sealed class ModConfig : ModConfigValues
         GMCM.AddNumberOption(
             Mod,
             () => DaysCrawler,
-            (value) =>
-            {
-                DaysCrawler = value;
-                KidHandler.NeedResetDaysOldAll = true;
-            },
+            (value) => DaysCrawler = value,
             I18n.Config_DaysCrawler_Name,
             I18n.Config_DaysCrawler_Description,
             min: 1,
@@ -284,11 +276,7 @@ internal sealed class ModConfig : ModConfigValues
         GMCM.AddNumberOption(
             Mod,
             () => DaysToddler,
-            (value) =>
-            {
-                DaysToddler = value;
-                KidHandler.NeedResetDaysOldAll = true;
-            },
+            (value) => DaysToddler = value,
             I18n.Config_DaysToddler_Name,
             I18n.Config_DaysToddler_Description,
             min: 1,

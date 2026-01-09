@@ -98,6 +98,11 @@ internal static class ChildrenRegistry
             Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_BiggerHouse"));
             return false;
         }
+        if (!Patches.UnderMaxChildrenCount(farmer))
+        {
+            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_MaxChildren"));
+            return false;
+        }
 
         List<KeyValuePair<string, string>> responses = [];
 

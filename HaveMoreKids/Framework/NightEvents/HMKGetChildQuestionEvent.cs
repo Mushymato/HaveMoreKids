@@ -30,6 +30,7 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
 
             int childrenCount = Game1.player.getChildrenCount();
 
+            string lastDialogueText = "Have more kids?";
             if (
                 !AssetManager.TryGetDialogueForChild(
                     spouse,
@@ -43,21 +44,17 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                 string translationKey = spouse.isAdoptionSpouse()
                     ? "Strings\\Events:HaveBabyQuestion_Adoption"
                     : "Strings\\Events:HaveBabyQuestion";
-                dialogue = new(
-                    spouse,
-                    translationKey,
-                    Game1.content.LoadString(translationKey, Game1.player.Name) + "$l"
-                );
+                lastDialogueText = Game1.content.LoadString(translationKey, Game1.player.Name);
+                dialogue = new(spouse, translationKey, string.Concat(lastDialogueText, "$l"));
+            }
+            if (dialogue.dialogues.Count > 0)
+            {
+                lastDialogueText = dialogue.dialogues.Last().Text;
             }
             dialogue.overridePortrait = AssetManager.GetSpouseSpecialPortrait(spouse, "HMK_HaveBabyQuestion");
             dialogue.onFinish += () =>
             {
-                Game1.currentLocation.createQuestionDialogue(
-                    dialogue.dialogues.Last().Text,
-                    YesNot,
-                    AnswerPregnancyQuestion,
-                    spouse
-                );
+                Game1.currentLocation.createQuestionDialogue(lastDialogueText, YesNot, AnswerPregnancyQuestion, spouse);
                 Game1.messagePause = true;
             };
             spouse.setNewDialogue(dialogue);

@@ -281,7 +281,6 @@ internal static class KidHandler
             {
                 foreach (Child kid in AllKids())
                 {
-                    ResetDaysOld(kid);
                     if (kid.KidHMKId() is string kidId)
                     {
                         if (kidId.StartsWith(NPCChild_Prefix) || AssetManager.ChildData.ContainsKey(kidId))
@@ -307,13 +306,6 @@ internal static class KidHandler
             }
         }
     }
-
-    internal static void ResetDaysOld(Child kid)
-    {
-        GameDelegates.TrySetChildAge(kid.Age, kid);
-    }
-
-    internal static bool NeedResetDaysOldAll = false;
 
     internal static void KidEntries_Populate([CallerMemberName] string? caller = null)
     {
@@ -373,7 +365,6 @@ internal static class KidHandler
                 else
                 {
                     kid.Age = 4;
-                    ResetDaysOld(kid);
                 }
             }
 
@@ -511,10 +502,6 @@ internal static class KidHandler
         // update all kids
         foreach ((Farmer farmer, Child kid) in AllFarmersAndKids())
         {
-            if (NeedResetDaysOldAll)
-            {
-                ResetDaysOld(kid);
-            }
             kid.reloadSprite();
             kid.displayName = null;
             if (kid.Age <= 2)
@@ -582,7 +569,6 @@ internal static class KidHandler
         }
         ModEntry.LogDebug("Done day started setup");
         KidPathingManager.PathKidNPCToDoor(Game1.timeOfDay);
-        NeedResetDaysOldAll = false;
     }
 
     internal static void ResetDialogues(Child kid)

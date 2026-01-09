@@ -69,6 +69,14 @@ internal static partial class Patches
         }
     }
 
+    internal static bool UnderMaxChildrenCount(Farmer player, List<Child>? children = null)
+    {
+        if (ModEntry.Config.MaxChildren == -1)
+            return true;
+        children ??= player.getChildren();
+        return children.Count(child => child.GetHMKAdoptedFromNPCId() is null) < ModEntry.Config.MaxChildren;
+    }
+
     /// <summary>
     /// Change can get pregnant checking
     /// </summary>
@@ -132,7 +140,7 @@ internal static partial class Patches
         __instance.DefaultMap = player.homeLocation.Value;
         List<Child> children = player.getChildren();
 
-        if (ModEntry.Config.MaxChildren != -1 && children.Count >= ModEntry.Config.MaxChildren)
+        if (!UnderMaxChildrenCount(player, children))
         {
             ModEntry.Log($"- max child count reached");
             return;

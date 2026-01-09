@@ -237,13 +237,13 @@ internal static class CribManager
                     return true;
             }
         }
-        if (who.getChildrenCount() >= ModEntry.Config.MaxChildren)
+        if (Patches.UnderMaxChildrenCount(Game1.player))
         {
-            Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty_EnoughKids")));
+            Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty")));
         }
         else
         {
-            Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty")));
+            Game1.drawObjectDialogue(Game1.parseText(AssetManager.LoadString("Crib_Empty_EnoughKids")));
         }
         return true;
     }
