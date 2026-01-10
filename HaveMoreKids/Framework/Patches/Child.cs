@@ -69,6 +69,7 @@ internal static partial class Patches
         // Alter rate of child aging
         harmony.Patch(
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.dayUpdate)),
+            prefix: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Prefix)),
             transpiler: new HarmonyMethod(typeof(Patches), nameof(Child_dayUpdate_Transpiler))
         );
         // Take over child behavior
@@ -168,6 +169,15 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(Child), nameof(Child.toddlerReachedDestination)),
             postfix: new HarmonyMethod(typeof(Patches), nameof(Child_toddlerReachedDestination_Postfix))
         );
+    }
+
+    private static void Child_dayUpdate_Prefix(Child __instance)
+    {
+        if (__instance.currentLocation is not FarmHouse)
+        {
+            ModEntry.Log($"MAKE ABSOLUTELY SURE THE KID ('{__instance.Name}') IS BACK IN THE HOUSE");
+            KidPathingManager.WarpKidToHouse(__instance, false);
+        }
     }
 
     private static void Child_toddlerReachedDestination_Postfix(Child __instance, Character c, GameLocation l)

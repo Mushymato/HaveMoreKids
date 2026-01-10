@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using Force.DeepCloner;
+using System.Reflection;
+using HarmonyLib;
 using HaveMoreKids.Framework.ExtraFeatures;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -54,6 +55,11 @@ internal static class AssetManager
     private const string Furniture_DefaultCrib = $"{ModEntry.ModId}_Crib";
     internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
     internal const string Asset_CharactersSchedule = "Characters/schedules/";
+
+    private static readonly MethodInfo? characterDataMemberwiseClone = AccessTools.Method(
+        typeof(CharacterData),
+        "MemberwiseClone"
+    );
 
     private static Dictionary<string, CharacterData>? childData = null;
 
@@ -376,7 +382,7 @@ internal static class AssetManager
                 continue;
             }
 
-            childCharaData = childCharaData.ShallowClone();
+            childCharaData = (CharacterData)characterDataMemberwiseClone?.Invoke(childCharaData, [])!;
             childCharaData.DisplayName = entry.DisplayName;
             childCharaData.TextureName ??= Asset_DefaultTextureName;
             childCharaData.SpawnIfMissing = true;
