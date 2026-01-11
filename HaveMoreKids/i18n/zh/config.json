@@ -34,10 +34,10 @@
   "config.UseSingleBedAsChildBed.description": "让普通单人床变成可以给孩子用的床，使得家具选择更丰富。",
   "config.PerKidDarkShrineOfSelfishness.name": "单个孩子黑暗神殿",
   "config.PerKidDarkShrineOfSelfishness.description": "让私欲之黑暗神殿可选择一个孩子而不是所有孩子",
-  "config.page.customKids.description": "启用/禁用自定义孩子：",
+  "config.page.customKids.description": "上方编辑通用设置，下方启用/禁用自定义孩子：",
   "config.page.spousekids.name": "{{Name}}的孩子",
   "config.page.sharedKids.name": "泛用孩子",
-  "config.page.nokids.description": "你没有安装任何自定义孩子内容包，但此模组的通用功能仍然适用。",
+  "config.page.nokids.description": "你没有安装任何自定义孩子内容包，但你依然可以编辑上方'通用设置'里的选项。",
   "config.page.nonhost.description": "因为你不是主玩家所以你无法更改某些设置。",
   "config.page.kids.description": "名字：{{displayName}}\n可对话：{{talks}}\n儿童NPC：{{isKidNPC}}"
 }

@@ -34,10 +34,10 @@
   "config.UseSingleBedAsChildBed.description": "Allow children to sleep on single beds instead of special child beds.",
   "config.PerKidDarkShrineOfSelfishness.name": "Per Kid Dark Shrine",
   "config.PerKidDarkShrineOfSelfishness.description": "Override Dark Shrine of Selfishness to allow picking a specific kid.",
-  "config.page.customKids.description": "Enable/Disable custom Kids Below:",
+  "config.page.customKids.description": "Change 'General Settings' above, and Enable/Disable custom Kids Below:",
   "config.page.spousekids.name": "{{Name}}'s Kids",
   "config.page.sharedKids.name": "Shared Kids",
-  "config.page.nokids.description": "You do not have any custom kid content packs installed, but generic features of this mod will still apply.",
+  "config.page.nokids.description": "You do not have any custom kid content packs installed, but you can still change the 'General Settings' options above.",
   "config.page.nonhost.description": "Because you are not the host player, you cannot change certain settings for this mod.",
   "config.page.kids.description": "Name: {{displayName}}\nHas dialogue? {{talks}}\nIs Child NPC? {{isKidNPC}}"
 }

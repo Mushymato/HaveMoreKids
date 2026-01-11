@@ -228,7 +228,6 @@ internal static class AssetManager
     )
     {
         string dialogueKey;
-        dialogue = null;
 
         // case 1 specific child
         if (mostRecentChild != null)
@@ -236,14 +235,14 @@ internal static class AssetManager
             dialogueKey = string.Concat(keyPrefix, "_", mostRecentChild.Name);
             if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
             {
-                return true;
+                return dialogue.dialogues.Count > 0;
             }
         }
         // case 2 child count
         dialogueKey = string.Concat(keyPrefix, "_", childrenCount);
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
         {
-            return true;
+            return dialogue.dialogues.Count > 0;
         }
         if (childrenCount <= minCount)
         {
@@ -252,7 +251,7 @@ internal static class AssetManager
         // case 3 default
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(keyPrefix)) is not null)
         {
-            return true;
+            return dialogue.dialogues.Count > 0;
         }
         return false;
     }
