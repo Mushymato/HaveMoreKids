@@ -98,15 +98,12 @@ internal static class ChildrenRegistry
             Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_BiggerHouse"));
             return false;
         }
-        if (!Patches.UnderMaxChildrenCount(farmer))
-        {
-            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_MaxChildren"));
-            return false;
-        }
 
         List<KeyValuePair<string, string>> responses = [];
+        bool haveCribs = CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(farmer));
+        bool underMaxChildren = Patches.UnderMaxChildrenCount(farmer);
 
-        if (CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(farmer)))
+        if (haveCribs && underMaxChildren)
         {
             responses.Add(
                 new("Adoption_Generic", FormAdoptionOptionText("Adoption_Generic", ModEntry.Config.DaysPregnant, ""))
@@ -141,6 +138,10 @@ internal static class ChildrenRegistry
                 }
                 else if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? kidData))
                 {
+                    if (!haveCribs && underMaxChildren)
+                    {
+                        continue;
+                    }
                     displayName = TokenParser.ParseText(kidData.DisplayName);
                 }
                 else
@@ -156,7 +157,10 @@ internal static class ChildrenRegistry
         }
         if (responses.Count == 0)
         {
-            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_NoCrib"));
+            if (!haveCribs)
+                Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_NoCrib"));
+            else if (!underMaxChildren)
+                Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_MaxChildren"));
             return false;
         }
 

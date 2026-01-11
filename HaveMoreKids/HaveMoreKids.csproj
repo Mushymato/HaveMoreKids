@@ -20,7 +20,7 @@
     <Description>Allow you to have more kids and custom kids.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:36459,GitHub:Mushymato/HaveMoreKids</UpdateKeys>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <MinimumApiVersion_Behavior>UpdateFull</MinimumApiVersion_Behavior>
     <MinimumGameVersion_Behavior>UpdateFull</MinimumGameVersion_Behavior>
     <Dependencies_VersionBehavior>Update</Dependencies_VersionBehavior>
