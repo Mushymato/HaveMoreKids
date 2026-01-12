@@ -138,7 +138,7 @@ internal static class ChildrenRegistry
                 }
                 else if (AssetManager.ChildData.TryGetValue(kidId, out CharacterData? kidData))
                 {
-                    if (!haveCribs && underMaxChildren)
+                    if (!haveCribs || !underMaxChildren)
                     {
                         continue;
                     }

@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Events;
-using StardewValley.Triggers;
 
 namespace HaveMoreKids.Framework.NightEvents;
 
@@ -51,6 +50,7 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
             {
                 lastDialogueText = dialogue.dialogues.Last().Text;
             }
+            ModEntry.Log($"HMKGetChildQuestionEvent '{lastDialogueText}'");
             dialogue.overridePortrait = AssetManager.GetSpouseSpecialPortrait(spouse, "HMK_HaveBabyQuestion");
             dialogue.onFinish += () =>
             {

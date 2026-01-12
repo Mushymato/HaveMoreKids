@@ -235,6 +235,7 @@ internal static class AssetManager
             dialogueKey = string.Concat(keyPrefix, "_", mostRecentChild.Name);
             if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
             {
+                ModEntry.Log($"TryGetDialogueForChild 1 {dialogueKey} : {dialogue.dialogues.Count}");
                 return dialogue.dialogues.Count > 0;
             }
         }
@@ -242,6 +243,7 @@ internal static class AssetManager
         dialogueKey = string.Concat(keyPrefix, "_", childrenCount);
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(dialogueKey)) is not null)
         {
+            ModEntry.Log($"TryGetDialogueForChild 2 {dialogueKey} : {dialogue.dialogues.Count}");
             return dialogue.dialogues.Count > 0;
         }
         if (childrenCount <= minCount)
@@ -251,6 +253,7 @@ internal static class AssetManager
         // case 3 default
         if ((dialogue = spouse.tryToGetMarriageSpecificDialogue(keyPrefix)) is not null)
         {
+            ModEntry.Log($"TryGetDialogueForChild 3 {keyPrefix} : {dialogue.dialogues.Count}");
             return dialogue.dialogues.Count > 0;
         }
         return false;
@@ -259,7 +262,7 @@ internal static class AssetManager
     internal static Texture2D? GetSpouseSpecialPortrait(NPC spouse, string keyPrefix)
     {
         string specialPortraitPath = string.Concat("Portraits\\", spouse.getTextureName(), "_", keyPrefix);
-        ModEntry.Log(specialPortraitPath);
+        ModEntry.Log($"Tryping spouse special portrait '{specialPortraitPath}'");
         if (Game1.content.DoesAssetExist<Texture2D>(specialPortraitPath))
         {
             return Game1.content.Load<Texture2D>(specialPortraitPath);
