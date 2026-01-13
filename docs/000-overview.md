@@ -104,14 +104,14 @@ Aside from typical NPC schedule features, HMK provides these special features:
 ### Leaving the Farmhouse
 
 To help create the appearance that your kid is leaving the house, HMK will path the Child from their spot in the farmhouse to the front door under these circumstances:
-1. The Kid NPC's day start location is adjacent to the Farm (e.g. BusStop, Forest, possibly more depending on mods)
+1. The Kid NPC's day start location is adjacent to the Farm (e.g. BusStop, Forest, possibly more if you have mods adding map property warps to the Farm)
 2. The start of the Kid's first schedule point is 1220 or earlier
 
 When these conditions are met, the Child version will be visible in the farmhouse when you wake up, then leave the house through front door 30 minutes before the first schedule point of the day. Until then, the Child is visible for players to talk to and the NPC is hidden. Otherwise, they will be invisible as Child and visible as NPC from the start of the day.
 
 Day start location can be controlled in one of 2 ways:
 1. [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md)'s current `Home` entry.
-2. A 0 schedule (schedule with `time` value less than 0600).
+2. A 0 schedule (schedule with `time` value of 0000).
 
 ### Returning to the Farmhouse
 
@@ -136,19 +136,19 @@ For example let's say the Kid has this `Home` such that the `Home` tile is X:19 
   "Direction": "down"
 }
 ```
-And loaded this schedule string for the day: `0700 Town 23 52 2/1010 Town 0 0 HMK_Home`, i.e. they go from home (BusStop) to Town and then back to home.
+And loaded this schedule string for the day: `0700 Town 23 52 2/1330 SeedShop 9 26 2/1510 Town 0 0 HMK_Home`, i.e. they go from home (BusStop) to Town, then to SeedShop, and then back to home (BusStop).
 
 The behavior will be:
-1. The Child will visually leave the farmohouse in the morning, since the `Home` tile is in a map adjacent to the `Farm`.
-2. HMK will transform the schedule into equivalent of `0700 Town 23 52 2/1010 BusStop 19 14`.
-3. When the Kid NPC completes the `1010 BusStop 19 14` schedule point, they will become invisible while the Child reappears in the farmhouse.
+1. The Child will visually leave the farmohouse in the morning, since their NPC day start position is in `BusStop`, a location adjacent to the farm.
+2. HMK will transform the schedule into equivalent of `0700 Town 23 52 2/1330 SeedShop 9 26 2/1510 BusStop 19 14`.
+3. When the Kid NPC completes the final `1510 BusStop 19 14` schedule point (generated from `1510 Town 0 0 HMK_Home`), they will become invisible while the Child reappears in the farmhouse.
 
-Now if schedule string is a 0 schedule, for example `0000 Mountain 43 23 2/0700 Town 23 52 2/1010 Town 0 0 HMK_Home`:
-1. The Child will be invisible from the start of the day, because `Mountain` does not connect to `Farm` (unless another mod changes this).
-2. HMK will transform the schedule into equivalent of `0000 Mountain 43 23 2/0700 Town 23 52 2/1010 BusStop 19 14`, because the `Home` tile is unchanged.
-3. When the Kid NPC completes the `1010 BusStop 19 14` schedule point, they will become invisible while the Child reappears in the farmhouse.
+Now let's consider a case where the NPC's day start position is not adjacent to farm. This can be achieved with a 0 schedule like `0000 Mountain 43 23 2/0700 Town 23 52 2/1330 SeedShop 9 26 2/1510 Town 0 0 HMK_Home`:
+1. The Child will be invisible from the start of the day, since their NPC day start position is in `Mountain` which is not (normally) adjacent to `Farm`.
+2. HMK will transform the schedule into equivalent of `0000 Mountain 43 23 2/0700 Town 23 52 2/1330 SeedShop 9 26 2/1510 BusStop 19 14`, because the `Home` tile is unchanged.
+3. When the Kid NPC completes the `1510 BusStop 19 14` schedule point, they will become invisible while the Child reappears in the farmhouse.
 
-_Note: Although the location name of `Town` in `1010 Town 0 0 HMK_Home` is always overwritten, it's a good idea to put a real reachable location to avoid spacecore scheduler warnings_
+_Note: Although the location name of `Town` in `1510 Town 0 0 HMK_Home` is always overwritten, it's a good idea to put a real reachable location to avoid spacecore scheduler warnings_
 
 ### Dialogue Handling
 
