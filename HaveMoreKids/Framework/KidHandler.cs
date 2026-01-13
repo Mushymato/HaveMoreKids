@@ -183,10 +183,10 @@ internal static class KidHandler
         return string.Concat(childName, ChildNPC_Suffix);
     }
 
-    internal static bool? GetDarkSkinnedRestrict(Farmer player, NPC __instance)
+    internal static bool? GetDarkSkinnedRestrict(Farmer player, NPC spouse)
     {
         bool darkSkinnedPlayer = player.hasDarkSkin();
-        bool darkSkinnedSpouse = __instance.hasDarkSkin();
+        bool darkSkinnedSpouse = spouse.hasDarkSkin();
         bool? darkSkinnedRestrict = null;
         if (darkSkinnedPlayer == darkSkinnedSpouse)
         {
@@ -847,7 +847,7 @@ internal static class KidHandler
         if (AssetManager.KidDefsByParentId.TryGetValue(spouseId, out whoseKidsInfo))
         {
             kidIds = whoseKidsInfo.Keys.ToList();
-            return whoseKidsInfo.Values.Where(value => value.DefaultEnabled).Any();
+            return whoseKidsInfo.Values.Any(value => value.DefaultEnabled);
         }
         return false;
     }

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Format": "2.8.0",
+  /*
+  If you want to do anything fancier than what's in this template, please consult the github documentation and examples.
+  https://github.com/Mushymato/HaveMoreKids/blob/main/docs/000-overview.md
+  
+  Distributing mods based on this template is fine, but don't distribute other people's assets without permission!
+  */
+  "Changes": [
+    /*
+    How to use:
+
+    There are 4 pairs of baby/toddler images in this example pack:
+    - assets/baby/the1.png & assets/toddler/the1.png
+    - assets/baby/the2.png & assets/toddler/the2.png
+    - assets/baby/the3.png & assets/toddler/the3.png
+    - assets/baby/the4.png & assets/toddler/the4.png
+    Replace them with the textures you want.
+    */
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        /**
+        What are these 'LocalTokens' things?
+        Inside data/kid.json the {{L@whatever}} bits are replaced by what's written here in "LocalTokens".
+        **/
+        "L@Kid": "the1",
+        /* L@Kid: the name of the images for this kid, without the .png */
+        "L@Gender": "Male",
+        /* L@Gender: gender, no gameplay impact */
+        "L@DarkSkinned": false,
+        /* L@DarkSkinned: whether this kid is considered dark skinned, impacts whether they are selected for birth */
+        "L@Parent": "shared",
+        /* L@Parent: which NPC parent, there's 2 situations
+        - "shared" means any spouse without exclusive kids can have this kid
+        - using a particular spouse like "Abigail" makes this kid exclusive to that spouse
+        */
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "the2",
+        "L@Gender": "Male",
+        "L@DarkSkinned": true,
+        "L@Parent": "shared"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "the3",
+        "L@Gender": "Female",
+        "L@DarkSkinned": false,
+        "L@Parent": "shared"
+      }
+    },
+    {
+      "Action": "Include",
+      "FromFile": "data/kid.json",
+      "LocalTokens": {
+        "L@Kid": "the4",
+        "L@Gender": "Female",
+        "L@DarkSkinned": true,
+        "L@Parent": "shared"
+      }
+    },
+    /*
+    How to add more kids besides the four already written:
+
+    1. Put baby sprite you want to use in assets/baby folder
+    2. Put toddler sprite you want to use in assets/toddler folder
+    3. Name the sprite PNGs after your kid's name and make sure you have one baby and one toddler, i.e. for 'bob' you need assets/baby/bob.png and assets/toddler/bob.png
+    4. Add another one of these { "Action": "Include", ... } blocks below this comment block, and edit the LocalTokens section, don't forget the comma
+    */
+  ]
+}

@@ -43,14 +43,28 @@ public class HMKNewChildEvent : BaseFarmEvent
         {
             spouse = SpouseShim.GetBirthingSpouse(Game1.player);
         }
+
         if (newKidId == null)
         {
             if (spouse != null)
             {
-                isDarkSkinned = random.NextBool(
-                    (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-                );
-                newKidId = KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned);
+                bool? darkSkinRestrict = KidHandler.GetDarkSkinnedRestrict(Game1.player, spouse);
+                if (darkSkinRestrict == null)
+                {
+                    // pick 2 times, once with the rand isDarkSkinned and once unrestricted
+                    isDarkSkinned = random.NextBool(
+                        (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
+                    );
+                    newKidId =
+                        KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned)
+                        ?? KidHandler.PickKidId(spouse, darkSkinned: null);
+                }
+                else
+                {
+                    // pick 1 time with the invariant isDarkSkinned value
+                    isDarkSkinned = darkSkinRestrict.Value;
+                    newKidId = KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned);
+                }
             }
             else
             {

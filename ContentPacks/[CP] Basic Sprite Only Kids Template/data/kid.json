@@ -1,0 +1,65 @@
+{
+  "$schema": "https://smapi.io/schemas/content-patcher.json",
+  "Changes": [
+    // Sprites
+    {
+      "Action": "Load",
+      "Target": "Characters/{{ModId}}_{{L@Kid}}_baby",
+      "FromFile": "assets/baby/{{L@Kid}}.png"
+    },
+    {
+      "Action": "Load",
+      "Target": "Characters/{{ModId}}_{{L@Kid}}_toddler",
+      "FromFile": "assets/toddler/{{L@Kid}}.png"
+    },
+    // Child data
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/ChildData",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": {
+          "DisplayName": "{{L@Kid}}",
+          "Gender": "{{L@Gender}}",
+          "IsDarkSkinned": "{{L@DarkSkinned}}",
+          "Appearance": [
+            // This is the baby sprite
+            {
+              "Id": "HMK_BABY",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}_baby"
+            },
+            // This is the child sprite
+            {
+              "Id": "mushymato.HaveMoreKids_Toddler",
+              "Sprite": "Characters/{{ModId}}_{{L@Kid}}_toddler",
+            }
+          ]
+        }
+      }
+    },
+    // Add this Child to specific spouse, or shared
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/Kids",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": {
+          "Parent": "{{L@Parent}}"
+        }
+      },
+      "When": {
+        "L@Parent |contains=shared": false
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "mushymato.HaveMoreKids/Kids",
+      "Entries": {
+        "{{ModId}}_{{L@Kid}}": {
+          "Shared": true
+        }
+      },
+      "When": {
+        "L@Parent |contains=shared": true
+      }
+    },
+  ]
+}

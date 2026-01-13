@@ -1,0 +1,21 @@
+{
+  "Name": "[CP] Basic Sprite Only Kids Template",
+  "Author": "mushymato",
+  "Version": "0.1.0",
+  "Description": "Template for adding sprite only custom kids with Have More Kids. See content.json for usage instructions.",
+  "UniqueID": "mushymato.HMK.BasicSpriteOnlyKidsTemplate",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [
+    "Nexus:???"
+  ],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher",
+    "MinimumVersion": "2.8.0"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "mushymato.HaveMoreKids",
+      "IsRequired": true
+    }
+  ]
+}
