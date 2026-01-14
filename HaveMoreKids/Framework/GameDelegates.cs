@@ -191,6 +191,13 @@ internal static class GameDelegates
     internal const string PLAYER_PARENT = "Player";
     internal static readonly char[] IndexingPrefixes = ['N', '#'];
 
+    internal static uint SoloDaysUntilNewChild => Game1.player.stats.Get(Stats_daysUntilNewChild);
+
+    internal static uint GetSoloDaysUntilNewChild(Farmer farmer) => farmer.stats.Get(Stats_daysUntilNewChild);
+
+    internal static void CountDown_SoloDaysUntilNewChild(uint amount) =>
+        Game1.player.stats.Decrement(Stats_daysUntilNewChild, amount);
+
     internal static void Register(IManifest mod)
     {
         // GSQ
@@ -419,9 +426,8 @@ internal static class GameDelegates
         }
 
         bool anySpouse = spouseName == null || spouseName.EqualsIgnoreCase("Any");
-        uint playerNewChildStat = Game1.player.stats.Get(Stats_daysUntilNewChild);
         if (
-            playerNewChildStat > 0
+            SoloDaysUntilNewChild > 0
             && (anySpouse || spouseName.EqualsIgnoreCase(PLAYER_PARENT))
             && (kidId == null || Game1.player.NextKidId() == kidId)
         )

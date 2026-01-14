@@ -492,7 +492,10 @@ internal static class KidHandler
     /// <param name="e"></param>
     private static void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
-        Game1.player.stats.Decrement(GameDelegates.Stats_daysUntilNewChild);
+        if (GameDelegates.SoloDaysUntilNewChild > 1)
+        {
+            Game1.player.stats.Decrement(GameDelegates.Stats_daysUntilNewChild);
+        }
         if (!Context.IsMainPlayer)
         {
             return;
@@ -749,6 +752,12 @@ internal static class KidHandler
         }
         farmHouse.characters.Add(newKid);
         newKid.currentLocation = farmHouse;
+
+        if (GameDelegates.SoloDaysUntilNewChild == 1)
+        {
+            GameDelegates.CountDown_SoloDaysUntilNewChild(1);
+            Game1.player.modData.Remove(Character_ModData_NextKidId);
+        }
 
         if (spouse != null)
         {

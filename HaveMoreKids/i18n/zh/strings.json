@@ -17,6 +17,7 @@
   "Adoption_Time_Tonight": "今晚",
   "Adoption_Done": "你提交了收养文件！",
   "Adoption_CantAdoptYet_BiggerHouse": "你需要有一个更大的房子才能领养孩子。",
+  "Adoption_CantAdoptYet_Ongoing": "你已正在领养孩子。",
   "Adoption_CantAdoptYet_NoCrib": "你需要有一个婴儿床才能领养孩子。",
   "Adoption_CantAdoptYet_MaxChildren": "你家里的孩子足够多了。",
   "Rename_Prompt": "你可以在此更改你孩子的名字",

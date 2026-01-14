@@ -44,6 +44,7 @@ public class HMKNewChildEvent : BaseFarmEvent
             spouse = SpouseShim.GetBirthingSpouse(Game1.player);
         }
 
+        ModEntry.Log($"HMKNewChildEvent.setUp: '{newKidId}' ({isSoloAdopt})");
         if (newKidId == null)
         {
             if (spouse != null)

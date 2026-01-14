@@ -17,6 +17,7 @@
   "Adoption_Time_Tonight": " tonight",
   "Adoption_Done": "You submitted the adoption papers!",
   "Adoption_CantAdoptYet_BiggerHouse": "You'll need a bigger house before you can adopt.",
+  "Adoption_CantAdoptYet_Ongoing": "You are in the middle of an adoption process.",
   "Adoption_CantAdoptYet_NoCrib": "You'll need a crib before you can adopt a baby.",
   "Adoption_CantAdoptYet_MaxChildren": "You have more than enough kids around the house.",
   "Rename_Prompt": "You can rename your children here.",

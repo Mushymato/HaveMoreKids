@@ -77,6 +77,12 @@ internal static partial class Patches
 
     private static void FL_NPC_CanGetPregnant(NPC spouse, ref bool __result)
     {
+        if (GameDelegates.SoloDaysUntilNewChild == 1)
+        {
+            ModEntry.Log("FL_NPC_CanGetPregnant: about to solo adopt today");
+            __result = false;
+            return;
+        }
         if (spouse == null)
             return;
         ModEntry.Log("FL_NPC_CanGetPregnant: make free love actually call NPC.canGetPregnant");
@@ -169,7 +175,11 @@ internal static partial class Patches
                 __result = true;
                 return;
             }
-            else if (restrict != null && pickedKey == __instance.Name && KidHandler.FilterAvailableKidIds(pickedKey, availableKidIds, null) != null)
+            else if (
+                restrict != null
+                && pickedKey == __instance.Name
+                && KidHandler.FilterAvailableKidIds(pickedKey, availableKidIds, null) != null
+            )
             {
                 ModEntry.Log($"- success (unrestrict)! (custom kids: {pickedKey})");
                 __result = true;
@@ -209,7 +219,7 @@ internal static partial class Patches
         {
             return true;
         }
-        if (Game1.player.stats.Get(GameDelegates.Stats_daysUntilNewChild) == 1)
+        if (GameDelegates.SoloDaysUntilNewChild == 1)
         {
             HMKNewChildEvent hmkNewChildEvent = new();
             __result = hmkNewChildEvent;
@@ -217,7 +227,6 @@ internal static partial class Patches
             {
                 hmkNewChildEvent.newKidId = nextKidId;
                 hmkNewChildEvent.isSoloAdopt = true;
-                Game1.player.modData.Remove(KidHandler.Character_ModData_NextKidId);
             }
             return false;
         }

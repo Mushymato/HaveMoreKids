@@ -98,6 +98,11 @@ internal static class ChildrenRegistry
             Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_BiggerHouse"));
             return false;
         }
+        if (GameDelegates.GetSoloDaysUntilNewChild(farmer) >= 1)
+        {
+            Game1.drawObjectDialogue(AssetManager.LoadString("Adoption_CantAdoptYet_Ongoing"));
+            return false;
+        }
 
         List<KeyValuePair<string, string>> responses = [];
         bool haveCribs = CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(farmer));
