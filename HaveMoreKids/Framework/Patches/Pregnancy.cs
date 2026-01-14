@@ -169,7 +169,7 @@ internal static partial class Patches
                 __result = true;
                 return;
             }
-            else if (restrict != null && KidHandler.FilterAvailableKidIds(pickedKey, availableKidIds, null) != null)
+            else if (restrict != null && pickedKey == __instance.Name && KidHandler.FilterAvailableKidIds(pickedKey, availableKidIds, null) != null)
             {
                 ModEntry.Log($"- success (unrestrict)! (custom kids: {pickedKey})");
                 __result = true;
