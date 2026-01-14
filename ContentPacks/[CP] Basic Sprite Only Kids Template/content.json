@@ -32,7 +32,7 @@
         /* L@Gender: gender, no gameplay impact */
         "L@DarkSkinned": false,
         /* L@DarkSkinned: whether this kid is considered dark skinned, impacts whether they are selected for birth */
-        "L@Parent": "shared",
+        "L@Parent": "Abigail",
         /* L@Parent: which NPC parent, there's 2 situations
         - "shared" means any spouse without exclusive kids can have this kid
         - using a particular spouse like "Abigail" makes this kid exclusive to that spouse
@@ -46,7 +46,7 @@
         "L@Kid": "the2",
         "L@Gender": "Male",
         "L@DarkSkinned": true,
-        "L@Parent": "shared"
+        "L@Parent": "Sam"
       }
     },
     {
@@ -56,7 +56,7 @@
         "L@Kid": "the3",
         "L@Gender": "Female",
         "L@DarkSkinned": false,
-        "L@Parent": "shared"
+        "L@Parent": "Sebastian"
       }
     },
     {

@@ -60,6 +60,12 @@ internal static partial class Patches
                         nameof(FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler)
                     )
                 );
+                // 2 different spellings for some reason
+                harmony.Patch(
+                    original: AccessTools.DeclaredMethod(SpouseShim.FL_modType, "CanGetPregnant")
+                        ?? AccessTools.DeclaredMethod(SpouseShim.FL_modType, "canGetPregnant"),
+                    postfix: new HarmonyMethod(typeof(Patches), nameof(FL_NPC_CanGetPregnant))
+                );
             }
             catch (Exception err)
             {
@@ -67,6 +73,14 @@ internal static partial class Patches
                 throw;
             }
         }
+    }
+
+    private static void FL_NPC_CanGetPregnant(NPC spouse, ref bool __result)
+    {
+        if (spouse == null)
+            return;
+        ModEntry.Log("FL_NPC_CanGetPregnant: make free love actually call NPC.canGetPregnant");
+        __result = __result && spouse.canGetPregnant();
     }
 
     internal static bool UnderMaxChildrenCount(Farmer player, List<Child>? children = null)
@@ -148,21 +162,22 @@ internal static partial class Patches
 
         if (KidHandler.TryGetSpouseOrSharedKidIds(__instance, out string? pickedKey, out List<string>? availableKidIds))
         {
-            if (
-                KidHandler.FilterAvailableKidIds(
-                    pickedKey,
-                    ref availableKidIds,
-                    KidHandler.GetDarkSkinnedRestrict(player, __instance)
-                )
-            )
+            bool? restrict = KidHandler.GetDarkSkinnedRestrict(player, __instance);
+            if (KidHandler.FilterAvailableKidIds(pickedKey, availableKidIds, restrict) != null)
             {
-                ModEntry.Log($"- success! (custom kids: {pickedKey})");
+                ModEntry.Log($"- success (restrict)! (custom kids: {pickedKey})");
+                __result = true;
+                return;
+            }
+            else if (restrict != null && KidHandler.FilterAvailableKidIds(pickedKey, availableKidIds, null) != null)
+            {
+                ModEntry.Log($"- success (unrestrict)! (custom kids: {pickedKey})");
                 __result = true;
                 return;
             }
             else if (!ModEntry.Config.AlwaysAllowGenericChildren)
             {
-                ModEntry.Log($"- no custom kids left!");
+                ModEntry.Log($"- no custom kids left ({restrict})!");
                 return;
             }
         }
@@ -213,15 +228,13 @@ internal static partial class Patches
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
     /// <returns></returns>
-    private static IEnumerable<CodeInstruction> Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(
-        IEnumerable<CodeInstruction> instructions,
-        ILGenerator generator,
+    private static bool Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(
+        ref CodeMatcher matcher,
         int expectedCount
     )
     {
         try
         {
-            CodeMatcher matcher = new(instructions, generator);
             for (int i = 0; i < expectedCount; i++)
             {
                 matcher
@@ -236,7 +249,7 @@ internal static partial class Patches
                     ]);
             }
             ModEntry.LogDebug($"Replaced {expectedCount} 'random.NextDouble() < 0.05'");
-            return matcher.Instructions();
+            return true;
         }
         catch (Exception err)
         {
@@ -244,7 +257,8 @@ internal static partial class Patches
                 $"Error in Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance({expectedCount}):\n{err}",
                 LogLevel.Warn
             );
-            return instructions;
+            return false;
+            ;
         }
     }
 
@@ -253,7 +267,10 @@ internal static partial class Patches
         ILGenerator generator
     )
     {
-        return Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(instructions, generator, 2);
+        CodeMatcher matcher = new(instructions, generator);
+        if (Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(ref matcher, 2))
+            return matcher.Instructions();
+        return instructions;
     }
 
     private static IEnumerable<CodeInstruction> FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler(
@@ -261,7 +278,61 @@ internal static partial class Patches
         ILGenerator generator
     )
     {
-        return Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(instructions, generator, 1);
+        CodeMatcher matcher = new(instructions, generator);
+        if (!Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(ref matcher, 1))
+            return instructions;
+        matcher.Start();
+
+        try
+        {
+            // IL_016e: nop
+            // IL_016f: ldsfld class [StardewModdingAPI]StardewModdingAPI.IMonitor FreeLove.ModEntry::SMonitor
+            // IL_0174: ldstr "Utility_pickPersonalFarmEvent_Prefix children blocking pregnancy"
+            // IL_0179: ldc.i4.0
+            // IL_017a: callvirt instance void [StardewModdingAPI]StardewModdingAPI.IMonitor::Log(string, valuetype [StardewModdingAPI]StardewModdingAPI.LogLevel)
+            // IL_017f: nop
+            // IL_0180: br IL_02f3
+            // matcher.Start();
+            matcher
+                .MatchStartForward([
+                    new(OpCodes.Nop),
+                    new(OpCodes.Ldsfld, AccessTools.Field(SpouseShim.FL_modType, "SMonitor")),
+                    new(OpCodes.Ldstr, "Utility_pickPersonalFarmEvent_Prefix children blocking pregnancy"),
+                    new(OpCodes.Ldc_I4_0),
+                    new(OpCodes.Callvirt, AccessTools.Method(typeof(IMonitor), nameof(IMonitor.Log))),
+                    new(OpCodes.Nop),
+                    new(OpCodes.Br),
+                ])
+                .ThrowIfNotMatch("Failed to match 'children blocking pregnancy'")
+                .InsertBranch(OpCodes.Br, matcher.Pos + 7);
+
+            // IL_01b0: nop
+            // IL_01b1: ldsfld class [StardewModdingAPI]StardewModdingAPI.IMonitor FreeLove.ModEntry::SMonitor
+            // IL_01b6: ldstr "Utility_pickPersonalFarmEvent_Prefix house blocking pregnancy"
+            // IL_01bb: ldc.i4.0
+            // IL_01bc: callvirt instance void [StardewModdingAPI]StardewModdingAPI.IMonitor::Log(string, valuetype [StardewModdingAPI]StardewModdingAPI.LogLevel)
+            // IL_01c1: nop
+            // IL_01c2: br IL_02f3
+            matcher
+                .MatchStartForward([
+                    new(OpCodes.Nop),
+                    new(OpCodes.Ldsfld, AccessTools.Field(SpouseShim.FL_modType, "SMonitor")),
+                    new(OpCodes.Ldstr, "Utility_pickPersonalFarmEvent_Prefix house blocking pregnancy"),
+                    new(OpCodes.Ldc_I4_0),
+                    new(OpCodes.Callvirt, AccessTools.Method(typeof(IMonitor), nameof(IMonitor.Log))),
+                    new(OpCodes.Nop),
+                    new(OpCodes.Br),
+                ])
+                .ThrowIfNotMatch("Failed to match 'house blocking pregnancy'")
+                .InsertBranch(OpCodes.Br, matcher.Pos + 7);
+
+            return matcher.Instructions();
+        }
+        catch (Exception err)
+        {
+            ModEntry.Log($"Error in FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler:\n{err}", LogLevel.Warn);
+            return instructions;
+        }
     }
 
     private static readonly FieldInfo whichQuestionField = AccessTools.DeclaredField(

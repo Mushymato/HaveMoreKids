@@ -786,7 +786,7 @@ internal static class KidHandler
             return null;
         }
 
-        if (!FilterAvailableKidIds(pickedKey, ref availableKidIds, darkSkinned))
+        if ((availableKidIds = FilterAvailableKidIds(pickedKey, availableKidIds, darkSkinned)) == null)
         {
             return null;
         }
@@ -852,12 +852,12 @@ internal static class KidHandler
         return false;
     }
 
-    internal static bool FilterAvailableKidIds(string key, ref List<string> kidIds, bool? darkSkinnedRestrict)
+    internal static List<string>? FilterAvailableKidIds(string key, List<string> kidIds, bool? darkSkinnedRestrict)
     {
-        if (kidIds == null)
-            return false;
+        if (!kidIds.Any())
+            return null;
         HashSet<string?> children = Game1.player.getChildren().Select(child => child.KidHMKId()).ToHashSet();
-        kidIds = kidIds
+        List<string> filteredKidIds = kidIds
             .Where(id =>
                 !children.Contains(id)
                 && ModEntry.Config.EnabledKids.GetValueOrDefault(new(key, id))
@@ -865,7 +865,9 @@ internal static class KidHandler
                 && (darkSkinnedRestrict == null || kidData.IsDarkSkinned == darkSkinnedRestrict)
             )
             .ToList();
-        return kidIds.Count > 0;
+        if (!filteredKidIds.Any())
+            return null;
+        return filteredKidIds;
     }
 
     internal static bool TryGetSpouseKidIds(NPC spouse, [NotNullWhen(true)] out List<string>? availableKidIds)
@@ -887,7 +889,8 @@ internal static class KidHandler
     )
     {
         return TryGetKidIds(WhoseKids_Shared, out availableKidIds)
-            && FilterAvailableKidIds(WhoseKids_Shared, ref availableKidIds, darkSkinnedRestrict);
+            && (availableKidIds = FilterAvailableKidIds(WhoseKids_Shared, availableKidIds, darkSkinnedRestrict))
+                != null;
     }
 
     internal static bool TryGetSpouseOrSharedKidIds(
@@ -918,7 +921,7 @@ internal static class KidHandler
     {
         if (TryGetSpouseOrSharedKidIds(spouse, out _, out availableKidIds))
         {
-            return FilterAvailableKidIds(spouse.Name, ref availableKidIds, darkSkinnedRestrict);
+            return (availableKidIds = FilterAvailableKidIds(spouse.Name, availableKidIds, darkSkinnedRestrict)) != null;
         }
         return false;
     }
