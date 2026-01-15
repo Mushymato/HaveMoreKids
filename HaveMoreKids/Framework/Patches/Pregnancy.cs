@@ -326,14 +326,14 @@ internal static partial class Patches
     {
         if (GameDelegates.SoloDaysUntilNewChild == 1)
         {
-            ModEntry.LogDebug("pickPersonalFarmEvent: Forcing a solo new child event");
             HMKNewChildEvent hmkNewChildEvent = new();
             __result = hmkNewChildEvent;
             if (Game1.player.NextKidId() is string nextKidId)
             {
                 hmkNewChildEvent.newKidId = nextKidId;
-                hmkNewChildEvent.isSoloAdopt = true;
+                ModEntry.LogDebug("pickPersonalFarmEvent: Force a solo HMKNewChildEvent");
             }
+            hmkNewChildEvent.isSoloAdopt = true;
         }
         else if (__result is QuestionEvent && whichQuestionField.GetValue(__result) is int whichQ)
         {
