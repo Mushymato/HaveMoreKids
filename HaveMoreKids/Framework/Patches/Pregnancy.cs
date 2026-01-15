@@ -324,7 +324,7 @@ internal static partial class Patches
 
     private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
     {
-        if (GameDelegates.SoloDaysUntilNewChild == 1)
+        if (!Game1.weddingToday && GameDelegates.SoloDaysUntilNewChild == 1)
         {
             HMKNewChildEvent hmkNewChildEvent = new();
             __result = hmkNewChildEvent;

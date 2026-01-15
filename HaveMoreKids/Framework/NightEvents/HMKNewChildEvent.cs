@@ -2,7 +2,6 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Events;
-using StardewValley.Extensions;
 using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;

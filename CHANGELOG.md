@@ -8,7 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Improved compatibility with Free Love to allow multiple cribs to function.
-- Altered some logic regarding isdarkskined/not custom kid picking, darkskinned now acts only as priority for spouse kids, but is enforced for shared kids
+- Altered some logic regarding isdarkskined/not custom kid picking, darkskinned now acts only as priority for spouse kids, but is enforced for shared kids.
+
+### Fixed
+- Solo new kid events now have higher priority
 
 ## [1.0.3]
 
