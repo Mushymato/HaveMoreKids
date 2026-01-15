@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [wip]
+## [1.0.4]
 
 ### Changed
-- Improved compatibility with Free Love
-- Altered some logic regarding isdarkskined/not custom kid picking, darkskinned now acts only as priority
+- Improved compatibility with Free Love to allow multiple cribs to function.
+- Altered some logic regarding isdarkskined/not custom kid picking, darkskinned now acts only as priority for spouse kids, but is enforced for shared kids
 
 ## [1.0.3]
 
