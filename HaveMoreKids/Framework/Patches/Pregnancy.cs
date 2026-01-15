@@ -19,11 +19,11 @@ internal static partial class Patches
             // Change pregnancy chance
             harmony.Patch(
                 original: AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.pickPersonalFarmEvent)),
-                prefix: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Prefix)),
                 transpiler: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Transpiler)),
                 postfix: new HarmonyMethod(typeof(Patches), nameof(Utility_pickPersonalFarmEvent_Postfix))
                 {
                     after = SpouseShim.FL_ModIds,
+                    priority = Priority.Last,
                 }
             );
             // Allow pregnancy past the second child
@@ -77,15 +77,9 @@ internal static partial class Patches
 
     private static void FL_NPC_CanGetPregnant(NPC spouse, ref bool __result)
     {
-        if (GameDelegates.SoloDaysUntilNewChild == 1)
-        {
-            ModEntry.Log("FL_NPC_CanGetPregnant: about to solo adopt today");
-            __result = false;
-            return;
-        }
         if (spouse == null)
             return;
-        ModEntry.Log("FL_NPC_CanGetPregnant: make free love actually call NPC.canGetPregnant");
+        ModEntry.LogOnce("FL_NPC_CanGetPregnant: make free love actually call NPC.canGetPregnant");
         __result = __result && spouse.canGetPregnant();
     }
 
@@ -212,27 +206,6 @@ internal static partial class Patches
         return ModEntry.Config.PregnancyChance / 100f;
     }
 
-    private static bool Utility_pickPersonalFarmEvent_Prefix(ref FarmEvent __result, ref string? __state)
-    {
-        __state = null;
-        if (Game1.weddingToday)
-        {
-            return true;
-        }
-        if (GameDelegates.SoloDaysUntilNewChild == 1)
-        {
-            HMKNewChildEvent hmkNewChildEvent = new();
-            __result = hmkNewChildEvent;
-            if (Game1.player.NextKidId() is string nextKidId)
-            {
-                hmkNewChildEvent.newKidId = nextKidId;
-                hmkNewChildEvent.isSoloAdopt = true;
-            }
-            return false;
-        }
-        return true;
-    }
-
     /// <summary>Change pregnancy chance to configured number.</summary>
     /// <param name="instructions"></param>
     /// <param name="generator"></param>
@@ -349,13 +322,24 @@ internal static partial class Patches
         "whichQuestion"
     );
 
-    private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result, ref string? __state)
+    private static void Utility_pickPersonalFarmEvent_Postfix(ref FarmEvent __result)
     {
-        ModEntry.LogDebug($"Utility_pickPersonalFarmEvent_Postfix {__result}");
-        if (__result is QuestionEvent && whichQuestionField.GetValue(__result) is int whichQ)
+        if (GameDelegates.SoloDaysUntilNewChild == 1)
+        {
+            ModEntry.LogDebug("pickPersonalFarmEvent: Forcing a solo new child event");
+            HMKNewChildEvent hmkNewChildEvent = new();
+            __result = hmkNewChildEvent;
+            if (Game1.player.NextKidId() is string nextKidId)
+            {
+                hmkNewChildEvent.newKidId = nextKidId;
+                hmkNewChildEvent.isSoloAdopt = true;
+            }
+        }
+        else if (__result is QuestionEvent && whichQuestionField.GetValue(__result) is int whichQ)
         {
             if (whichQ == QuestionEvent.pregnancyQuestion || whichQ == QuestionEvent.playerPregnancyQuestion)
             {
+                ModEntry.LogDebug("pickPersonalFarmEvent: Replace QuestionEvent with HMKGetChildQuestionEvent");
                 __result = new HMKGetChildQuestionEvent(whichQ);
             }
         }
@@ -364,9 +348,13 @@ internal static partial class Patches
             // recheck crib availability before birth event
             if (!CribManager.HasAvailableCribs(Utility.getHomeOfFarmer(Game1.player)))
             {
+                ModEntry.LogDebug(
+                    "pickPersonalFarmEvent: Replace BirthingEvent with NULL due to insufficient cribs in the house"
+                );
                 __result = null!;
                 return;
             }
+            ModEntry.LogDebug("pickPersonalFarmEvent: Replace BirthingEvent with HMKNewChildEvent");
             __result = new HMKNewChildEvent();
         }
     }
