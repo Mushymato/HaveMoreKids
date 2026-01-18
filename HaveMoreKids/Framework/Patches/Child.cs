@@ -448,7 +448,7 @@ internal static partial class Patches
     {
         if (__instance is Child kid && kid.Age >= 3 && Game1.NPCGiftTastes.ContainsKey(kid.Name))
         {
-            __result = kid.GetData().CanReceiveGifts;
+            __result = kid.GetData()?.CanReceiveGifts ?? __result;
         }
     }
 
