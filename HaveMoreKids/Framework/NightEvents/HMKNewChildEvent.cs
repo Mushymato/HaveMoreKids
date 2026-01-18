@@ -70,10 +70,12 @@ public class HMKNewChildEvent : BaseFarmEvent
                 if (NPCLookup.GetNonChildNPC(kidDef.AdoptedFromNPC) is NPC adoptFrom)
                 {
                     messageDialogue = new Dialogue(adoptFrom, "", message);
+                    NPCLookup.MakeDummySpeakerWithTempDialogue(messageDialogue);
                 }
                 else if (spouse != null)
                 {
                     messageDialogue = new Dialogue(spouse, "", message);
+                    NPCLookup.MakeDummySpeakerWithTempDialogue(messageDialogue);
                 }
             }
             skipNaming = kidDef.AdoptedFromNPC != null || kidDef.BirthOrAdoptAsToddler;

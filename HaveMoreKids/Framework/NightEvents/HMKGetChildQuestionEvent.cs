@@ -57,8 +57,7 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                 Game1.currentLocation.createQuestionDialogue(lastDialogueText, YesNot, AnswerPregnancyQuestion, spouse);
                 Game1.messagePause = true;
             };
-            spouse.setNewDialogue(dialogue);
-            Game1.drawDialogue(spouse);
+            Game1.drawDialogue(NPCLookup.MakeDummySpeakerWithTempDialogue(dialogue));
             return false;
         }
         else if (whichQuestion == QuestionEvent.playerPregnancyQuestion)

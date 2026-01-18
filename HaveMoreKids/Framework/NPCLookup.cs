@@ -1,5 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using HaveMoreKids.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
 
@@ -53,5 +53,29 @@ internal static class NPCLookup
             return GetNonChildNPC(npcParentId);
         }
         return null;
+    }
+
+    internal static NPC? MakeDummySpeakerWithTempDialogue(Dialogue dialogue)
+    {
+        if (dialogue.speaker == null)
+        {
+            return null;
+        }
+        NPC dummySpeaker = new(
+            new AnimatedSprite("Characters\\Abigail", 0, 16, 16),
+            Vector2.Zero,
+            "",
+            0,
+            "???",
+            dialogue.speaker.Portrait,
+            eventActor: false
+        )
+        {
+            displayName = dialogue.speaker.displayName,
+            TemporaryDialogue = [],
+        };
+        dummySpeaker.TemporaryDialogue.Push(dialogue);
+        dialogue.speaker = dummySpeaker;
+        return dummySpeaker;
     }
 }
