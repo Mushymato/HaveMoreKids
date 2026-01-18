@@ -782,8 +782,12 @@ internal static class KidHandler
     /// <param name="spouse"></param>
     /// <param name="originalName"></param>
     /// <returns></returns>
-    internal static string? PickKidId(NPC spouse, Child? child = null, bool? darkSkinned = null)
+    internal static string? PickKidId(NPC spouse, out bool isDarkSkinned, Child? child = null)
     {
+        isDarkSkinned = Utility
+            .CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed)
+            .NextBool((spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0));
+
         if (!TryGetSpouseOrSharedKidIds(spouse, out string? pickedKey, out List<string>? availableKidIds))
         {
             return null;
@@ -795,10 +799,19 @@ internal static class KidHandler
             return null;
         }
 
-        if ((availableKidIds = FilterAvailableKidIds(pickedKey, availableKidIds, darkSkinned)) == null)
+        List<string>? filteredAvailableKidIds = FilterAvailableKidIds(pickedKey, availableKidIds, isDarkSkinned);
+        if (filteredAvailableKidIds == null)
         {
-            return null;
+            if (pickedKey == spouse.Name && GetDarkSkinnedRestrict(Game1.player, spouse) != null)
+            {
+                filteredAvailableKidIds = FilterAvailableKidIds(pickedKey, availableKidIds, null);
+            }
+            if (filteredAvailableKidIds == null)
+            {
+                return null;
+            }
         }
+        availableKidIds = filteredAvailableKidIds;
 
         // Prioritize the kid id set by trigger action, if it is valid
         if (spouse.NextKidId() is string nextKidId && availableKidIds.Contains(nextKidId))
@@ -811,10 +824,10 @@ internal static class KidHandler
         if (child != null)
         {
             name = child.Name;
-            darkSkinned = child.darkSkinned.Value;
+            isDarkSkinned = child.darkSkinned.Value;
             gender = child.Gender;
         }
-        return PickMostLikelyKidId(availableKidIds, darkSkinned, gender, name);
+        return PickMostLikelyKidId(availableKidIds, isDarkSkinned, gender, name);
     }
 
     /// <summary>Get and validate kid id</summary>
@@ -998,7 +1011,7 @@ internal static class KidHandler
             return kid;
         }
         string kidName = kid.Name;
-        if (kidName == null || PickKidId(spouse, kid) is not string newKidId)
+        if (kidName == null || PickKidId(spouse, out _, kid) is not string newKidId)
             return kid;
         return ApplyKidId(spouse.Name, kid, false, kidName, newKidId);
     }

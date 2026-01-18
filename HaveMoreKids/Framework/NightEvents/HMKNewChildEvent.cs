@@ -2,7 +2,6 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Events;
-using StardewValley.Extensions;
 using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
@@ -38,34 +37,16 @@ public class HMKNewChildEvent : BaseFarmEvent
     /// <inheritdoc />
     public override bool setUp()
     {
-        Random random = Utility.CreateRandom(Game1.uniqueIDForThisGame, Game1.stats.DaysPlayed);
         if (!isSoloAdopt)
         {
             spouse = SpouseShim.GetBirthingSpouse(Game1.player);
         }
 
-        ModEntry.Log($"HMKNewChildEvent.setUp: '{newKidId}' ({isSoloAdopt})");
         if (newKidId == null)
         {
             if (spouse != null)
             {
-                bool? darkSkinRestrict = KidHandler.GetDarkSkinnedRestrict(Game1.player, spouse);
-                if (darkSkinRestrict == null)
-                {
-                    // pick 2 times, once with the rand isDarkSkinned and once unrestricted
-                    isDarkSkinned = random.NextBool(
-                        (spouse.hasDarkSkin() ? 0.5 : 0.0) + (Game1.player.hasDarkSkin() ? 0.5 : 0.0)
-                    );
-                    newKidId =
-                        KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned)
-                        ?? KidHandler.PickKidId(spouse, darkSkinned: null);
-                }
-                else
-                {
-                    // pick 1 time with the invariant isDarkSkinned value
-                    isDarkSkinned = darkSkinRestrict.Value;
-                    newKidId = KidHandler.PickKidId(spouse, darkSkinned: isDarkSkinned);
-                }
+                newKidId = KidHandler.PickKidId(spouse, out isDarkSkinned);
             }
             else
             {
@@ -75,6 +56,7 @@ public class HMKNewChildEvent : BaseFarmEvent
                 }
             }
         }
+        ModEntry.Log($"HMKNewChildEvent.setUp: '{newKidId}' ({isSoloAdopt})");
 
         Game1.player.CanMove = false;
         timer = 1500;
