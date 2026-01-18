@@ -52,10 +52,14 @@ internal static partial class Patches
     {
         if (Game1.currentSpeaker != null && Game1.currentSpeaker.CurrentDialogue.Count == 0)
         {
-            ModEntry.Log("Game1.currentSpeaker.CurrentDialogue is empty! Force end current dialogue to prevent crash.", LogLevel.Warn);
-            Game1.currentSpeaker = null;
-            Game1.dialogueUp = false;
-            Game1.currentDialogueCharacterIndex = 0;
+            ModEntry.Log("Game1.currentSpeaker.CurrentDialogue is empty!", LogLevel.Warn);
+            Game1.currentSpeaker.CurrentDialogue.Push(
+                new Dialogue(
+                    Game1.currentSpeaker,
+                    "HMK_FailbackDialogue",
+                    "HaveMoreKids: Game1.currentSpeaker.CurrentDialogue is empty!"
+                )
+            );
         }
     }
 
