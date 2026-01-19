@@ -233,7 +233,7 @@ internal static partial class Patches
 
     private static string ModifyScheduleAssetName(NPC npc, string scheduleAssetName)
     {
-        if (npc.GetHMKChildNPCKidId() is string kidId)
+        if (npc?.GetHMKChildNPCKidId() is string kidId)
         {
             return $"{AssetManager.Asset_CharactersSchedule}\\{kidId}";
         }

@@ -71,9 +71,13 @@ internal static partial class Patches
             // some shenanigans cause this to get called between saving???
             kidId = child.KidHMKId();
         }
-        else
+        else if (__instance.speaker != null)
         {
             kidId = __instance.speaker.GetHMKChildNPCKidId();
+        }
+        else
+        {
+            return;
         }
         if (kidId == null)
         {
@@ -173,11 +177,11 @@ internal static partial class Patches
                     }
                 }
             }
-            else if (actor.GetHMKChildNPCKidId() is string kidId)
+            else if (actor?.GetHMKChildNPCKidId() is string kidId)
             {
                 actorName = kidId;
             }
-            if (actorName != null)
+            if (actorName != null && actor != null)
             {
                 if (@event.TryGetFestivalDialogueForYear(actor, actorName, out var dialogue))
                 {

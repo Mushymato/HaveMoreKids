@@ -149,7 +149,7 @@ internal static class KidHandler
                 kidKey = kidCharacter.Name;
             }
         }
-        else
+        else if (kidCharacter != null)
         {
             // NPC is kid
             if (kidCharacter.GetHMKChildNPCKidId() is string kidId)
@@ -161,6 +161,10 @@ internal static class KidHandler
             {
                 kidKey = kidCharacter.Name;
             }
+        }
+        else
+        {
+            return null;
         }
         if (AssetManager.KidDefsByKidId.TryGetValue(kidKey, out KidDefinitionData? kidDef))
         {
