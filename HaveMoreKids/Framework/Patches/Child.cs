@@ -335,33 +335,16 @@ internal static partial class Patches
         }
     }
 
-    private static IEnumerable<Child> GetChildrenOnFarm(FarmHouse __instance)
-    {
-        if (__instance.OwnerId == 0)
-        {
-            yield break;
-        }
-        if (__instance.GetParentLocation() is Farm farm)
-        {
-            foreach (Character chara in farm.characters)
-            {
-                if (chara is Child kid && kid.idOfParent.Value == __instance.OwnerId)
-                {
-                    yield return kid;
-                }
-            }
-        }
-    }
-
     private static void FarmHouse_getChildren_Postfix(FarmHouse __instance, ref List<Child> __result)
     {
-        __result.AddRange(GetChildrenOnFarm(__instance));
+        __result.AddRange(KidHandler.GetChildrenOnFarm(__instance));
+        __result.RemoveWhere(kid => kid.GetHMKAdoptedFromNPCId() is not null);
         __result.Sort((kidA, kidB) => kidB.daysOld.Value.CompareTo(kidA.daysOld.Value));
     }
 
     private static void FarmHouse_getChildrenCount_Postfix(FarmHouse __instance, ref int __result)
     {
-        __result += GetChildrenOnFarm(__instance).Count();
+        __result = __instance.getChildren().Count;
     }
 
     private static IEnumerable<CodeInstruction> Child_draw_Transpiler(

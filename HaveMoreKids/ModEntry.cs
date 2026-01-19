@@ -42,6 +42,11 @@ public class ModEntry : Mod
         help.ConsoleCommands.Add("hmk-list_npcs", "List all NPC in the world", ConsoleListNPCs);
     }
 
+    public override object? GetApi()
+    {
+        return base.GetApi();
+    }
+
     internal static void ConsoleListNPCs(string arg1, string[] arg2)
     {
         if (!Context.IsWorldReady)

@@ -24,9 +24,11 @@ internal sealed record KidEntry(
     string? OtherParent,
     Season BirthSeason,
     int BirthDay
-)
+) : IKidEntry
 {
-    internal string DisplayName { get; set; } = "kid";
+    public string DisplayName { get; internal set; } = "kid";
+
+    public NPC? GetKidNPC() => NPCLookup.GetNonChildNPC(KidNPCId);
 };
 
 internal static class KidHandler
@@ -98,11 +100,13 @@ internal static class KidHandler
 
     internal static void SetChildDisplayName(this Child kid, string newName)
     {
+        if (kid.GetHMKAdoptedFromNPCId() is not null)
+            return;
         if (kid.modData.ContainsKey(Child_ModData_DisplayName) && KidEntries.TryGetValue(kid.Name, out KidEntry? entry))
         {
             kid.modData[Child_ModData_DisplayName] = newName;
             entry.DisplayName = newName;
-            if (NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidNPC)
+            if (entry.GetKidNPC() is NPC kidNPC)
             {
                 kidNPC.displayName = newName;
             }
@@ -232,11 +236,48 @@ internal static class KidHandler
         }
     }
 
+    internal static IEnumerable<Child> GetChildrenOnFarm(FarmHouse farmHouse)
+    {
+        if (farmHouse.OwnerId == 0)
+        {
+            yield break;
+        }
+        if (farmHouse.GetParentLocation() is Farm farm)
+        {
+            foreach (Character chara in farm.characters)
+            {
+                if (chara is Child kid && kid.idOfParent.Value == farmHouse.OwnerId)
+                {
+                    yield return kid;
+                }
+            }
+        }
+    }
+
+    internal static IEnumerable<Child> GetAllChildren(this Farmer farmer)
+    {
+        return Utility.getHomeOfFarmer(farmer).GetAllChildren();
+    }
+
+    internal static IEnumerable<Child> GetAllChildren(this FarmHouse farmHouse)
+    {
+        foreach (NPC npc in farmHouse.characters)
+        {
+            if (npc is not Child kid)
+                continue;
+            yield return kid;
+        }
+        foreach (Child kid in GetChildrenOnFarm(farmHouse))
+        {
+            yield return kid;
+        }
+    }
+
     internal static IEnumerable<Child> AllKids()
     {
         foreach (Farmer farmer in Game1.getAllFarmers())
         {
-            foreach (Child kid in farmer.getChildren())
+            foreach (Child kid in farmer.GetAllChildren())
             {
                 yield return kid;
             }
@@ -247,7 +288,7 @@ internal static class KidHandler
     {
         foreach (Farmer farmer in Game1.getAllFarmers())
         {
-            foreach (Child kid in farmer.getChildren())
+            foreach (Child kid in farmer.GetAllChildren())
             {
                 yield return new(farmer, kid);
             }
@@ -360,11 +401,11 @@ internal static class KidHandler
                     || GameStateQuery.IsImmutablyFalse(kidDef2.IsNPCTodayCondition)
                 )
                 {
-                    kidNPCId = null;
                     if (NPCLookup.GetNonChildNPC(kidNPCId) is NPC kidAsNPC)
                     {
                         kidAsNPC.currentLocation?.characters.Remove(kidAsNPC);
                     }
+                    kidNPCId = null;
                 }
                 else
                 {
@@ -420,7 +461,7 @@ internal static class KidHandler
         {
             foreach (KidEntry entry in KidEntries.Values)
             {
-                if (NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidNPC)
+                if (entry.GetKidNPC() is NPC kidNPC)
                 {
                     kidNPC.reloadSprite(onlyAppearance: true);
                     kidNPC.Sprite.UpdateSourceRect();
@@ -522,7 +563,7 @@ internal static class KidHandler
             if (
                 ModEntry.KidNPCEnabled
                 && KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
-                && NPCLookup.GetNonChildNPC(entry.KidNPCId) is NPC kidAsNPC
+                && entry.GetKidNPC() is NPC kidAsNPC
             )
             {
                 string key;
