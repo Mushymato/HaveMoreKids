@@ -10,7 +10,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>default</LangVersion>
     <EnableHarmony>true</EnableHarmony>
-
+    <ModZipPath>$(MSBuildThisFileDirectory)/../_releases</ModZipPath>
     <!-- <DefineConstants>DEBUG_PATHING</DefineConstants> -->
   </PropertyGroup>
 
@@ -20,7 +20,8 @@
     <Description>Allow you to have more kids and custom kids.</Description>
     <UniqueId>mushymato.HaveMoreKids</UniqueId>
     <UpdateKeys>Nexus:36459,GitHub:Mushymato/HaveMoreKids</UpdateKeys>
-    <Version>1.0.7</Version>
+    <Version>1.1.0</Version>
+    <BaseManifest>new</BaseManifest>
     <MinimumApiVersion_Behavior>UpdateFull</MinimumApiVersion_Behavior>
     <MinimumGameVersion_Behavior>UpdateFull</MinimumGameVersion_Behavior>
     <Dependencies_VersionBehavior>Update</Dependencies_VersionBehavior>

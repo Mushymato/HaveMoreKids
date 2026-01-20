@@ -18,6 +18,7 @@ using StardewValley.TokenizableStrings;
 namespace HaveMoreKids.Framework;
 
 internal sealed record KidEntry(
+    string KidId,
     string? KidNPCId,
     bool IsAdoptedFromNPC,
     long PlayerParent,
@@ -27,6 +28,13 @@ internal sealed record KidEntry(
 ) : IKidEntry
 {
     public string DisplayName { get; internal set; } = "kid";
+
+    public Child? GetChild()
+    {
+        if (Game1.GetPlayer(PlayerParent) is not Farmer farmer)
+            return null;
+        return farmer.GetAllChildren().FirstOrDefault(kid => kid.Name == KidId);
+    }
 
     public NPC? GetKidNPC() => NPCLookup.GetNonChildNPC(KidNPCId);
 };
@@ -254,21 +262,25 @@ internal static class KidHandler
         }
     }
 
-    internal static IEnumerable<Child> GetAllChildren(this Farmer farmer)
+    internal static IEnumerable<Child> GetAllChildren(this Farmer farmer, bool includeAdoptedFromNPC = true)
     {
-        return Utility.getHomeOfFarmer(farmer).GetAllChildren();
+        return Utility.getHomeOfFarmer(farmer).GetAllChildren(includeAdoptedFromNPC);
     }
 
-    internal static IEnumerable<Child> GetAllChildren(this FarmHouse farmHouse)
+    internal static IEnumerable<Child> GetAllChildren(this FarmHouse farmHouse, bool includeAdoptedFromNPC = true)
     {
         foreach (NPC npc in farmHouse.characters)
         {
             if (npc is not Child kid)
                 continue;
+            if (!includeAdoptedFromNPC && kid.GetHMKAdoptedFromNPCId() is not null)
+                continue;
             yield return kid;
         }
         foreach (Child kid in GetChildrenOnFarm(farmHouse))
         {
+            if (!includeAdoptedFromNPC && kid.GetHMKAdoptedFromNPCId() is not null)
+                continue;
             yield return kid;
         }
     }
@@ -421,6 +433,7 @@ internal static class KidHandler
             }
 
             KidEntries[kid.Name] = new(
+                kid.Name,
                 kidNPCId,
                 adoptedFromNPC,
                 kid.idOfParent.Value,

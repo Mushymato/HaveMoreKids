@@ -1,3 +1,4 @@
+using StardewValley;
 using StardewValley.Characters;
 
 namespace HaveMoreKids.Framework;
@@ -17,5 +18,10 @@ public sealed class HaveMoreKidsAPI : IHaveMoreKidsAPI
         {
             yield return (kidId, entry);
         }
+    }
+
+    public IEnumerable<Child> GetAllChildOfFarmer(Farmer farmer, bool includeAdoptedFromNPC = true)
+    {
+        return farmer.GetAllChildren(includeAdoptedFromNPC);
     }
 }

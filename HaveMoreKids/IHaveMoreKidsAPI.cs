@@ -5,20 +5,32 @@ namespace HaveMoreKids;
 
 public interface IKidEntry
 {
+    /// <summary>The internal name of the Child</summary>
+    public string? KidId { get; }
+
     /// <summary>The internal name of the NPC version of this kid, or null if they don't have one</summary>
     public string? KidNPCId { get; }
+
     /// <summary>Whether this kid is adopted from an NPC</summary>
     public bool IsAdoptedFromNPC { get; }
+
     /// <summary>The unique multiplayer id of the player parent (i.e. the player who owns the farmhouse this kid lives in)</summary>
     public long PlayerParent { get; }
+
     /// <summary>The other parent of the kid (either NPC or the other player's unique multiplayer id)</summary>
     public string? OtherParent { get; }
+
     /// <summary>Birth season (may be different than what <see cref="Child.daysOld"> indicates)</summary>
     public Season BirthSeason { get; }
+
     /// <summary>Birth day (may be different than what <see cref="Child.daysOld"> indicates)</summary>
     public int BirthDay { get; }
+
     /// <summary>Kid display name</summary>
     public string DisplayName { get; }
+
+    /// <summary>Fetch the Child instance</summary>
+    public Child? GetChild();
 
     /// <summary>Fetch the kid NPC instance</summary>
     public NPC? GetKidNPC();
@@ -44,9 +56,14 @@ public interface IHaveMoreKidsAPI
     /// <summary>
     /// Return all children of a farmer, including adopted from NPC kids.
     /// Use this instead of <see cref="Farmer.getChildren"/> if you need access to adopted from NPC children.
+    ///
+    /// The result is not sorted in any particular way, but you can sort them by age (<see cref="Child.daysOld"/>) like this:
+    /// <code>
+    /// HMKApi.GetAllChildOfFarmer(Game1.player).Sort((kidA, kidB) => kidB.daysOld.Value.CompareTo(kidA.daysOld.Value));
+    /// </code>
     /// </summary>
     /// <returns>Iterator of Child</returns>
     /// <exception cref="KeyNotFoundException"/> Player home location is not ready
     /// <exception cref="InvalidCastException"/> Player home location is not a <see cref="StardewValley.Locations.FarmHouse"/>
-    public IEnumerable<Child> GetAllChildOfFarmer(Farmer farmer);
+    public IEnumerable<Child> GetAllChildOfFarmer(Farmer farmer, bool includeAdoptedFromNPC = true);
 }
