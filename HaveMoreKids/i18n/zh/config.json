@@ -5,6 +5,7 @@
   "config.page.general.description": "怀孕机会、长度、最大孩子数量、孩子阶段长度和各种孩子行为的设置。",
   "config.PregnancyChance.name": "怀孕机会",
   "config.PregnancyChance.description": "当所有其他条件都满足时，你的的配偶有可能每晚都会要求生/收养一个孩子。基本游戏几率为 5%。",
+  "config.PregnancyChance.delegated": "怀孕机会由'{{delegated}}'掌管",
   "config.DaysMarried.name": "结婚时长要求",
   "config.DaysMarried.description": "必须与在和配偶结婚这么多天以后才能有孩子。 原版游戏为7天。",
   "config.DaysPregnant.name": "怀孕时长",
@@ -38,6 +39,7 @@
   "config.page.spousekids.name": "{{Name}}的孩子",
   "config.page.sharedKids.name": "泛用孩子",
   "config.page.nokids.description": "你没有安装任何自定义孩子内容包，但你依然可以编辑上方'通用设置'里的选项。",
+  "config.page.adoptableNPC.name": "可领养孩子",
   "config.page.nonhost.description": "因为你不是主玩家所以你无法更改某些设置。",
   "config.page.kids.description": "名字：{{displayName}}\n可对话：{{talks}}\n儿童NPC：{{isKidNPC}}"
 }

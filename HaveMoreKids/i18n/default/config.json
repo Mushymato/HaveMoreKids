@@ -5,6 +5,7 @@
   "config.page.general.description": "Settings for pregnancy chances, length, max number of children, child stage lengths, and various child behaviors.",
   "config.PregnancyChance.name": "Pregnancy Chance",
   "config.PregnancyChance.description": "When all other conditions are filled, chance that your spouse will ask to have/adopt a child each night. Base game chance is 5%.",
+  "config.PregnancyChance.delegated": "Pregnancy Chance is delegated to '{{delegated}}'",
   "config.DaysMarried.name": "Married Days",
   "config.DaysMarried.description": "Player must be married for this many days before pregnancy can happen. Base game days is 7.",
   "config.DaysPregnant.name": "Pregnancy Days",
@@ -38,6 +39,7 @@
   "config.page.spousekids.name": "{{Name}}'s Kids",
   "config.page.sharedKids.name": "Shared Kids",
   "config.page.nokids.description": "You do not have any custom kid content packs installed, but you can still change the 'General Settings' options above.",
+  "config.page.adoptableNPC.name": "Adoptable NPC",
   "config.page.nonhost.description": "Because you are not the host player, you cannot change certain settings for this mod.",
   "config.page.kids.description": "Name: {{displayName}}\nHas dialogue? {{talks}}\nIs Child NPC? {{isKidNPC}}"
 }

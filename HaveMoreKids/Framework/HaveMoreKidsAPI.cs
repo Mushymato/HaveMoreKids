@@ -4,7 +4,7 @@ using StardewValley.Characters;
 
 namespace HaveMoreKids.Framework;
 
-internal record DelegateWithSource<TArg, TRet>(string ModId, Func<TArg, TRet> Delegate)
+internal record DelegateWithSource<TArg, TRet>(IManifest Mod, Func<TArg, TRet> Delegate)
 {
     internal TRet? Get(TArg arg) => Delegate(arg);
 }
@@ -39,18 +39,18 @@ public sealed class HaveMoreKidsAPI : IHaveMoreKidsAPI
     /// <inheritdoc/>
     public void SetPregnancyChanceDelegate(IManifest mod, Func<string, float?> pregnancyChanceDelegate)
     {
-        modPregnancyChanceDelegate = new(mod.UniqueID, pregnancyChanceDelegate);
+        modPregnancyChanceDelegate = new(mod, pregnancyChanceDelegate);
     }
 
     /// <inheritdoc/>
     public void SetNPCNewChildQuestionDelegate(IManifest mod, Func<NPC, Dialogue?> newChildQuestionDelegateNPC)
     {
-        modNPCNewChildQuestionDelegate = new(mod.UniqueID, newChildQuestionDelegateNPC);
+        modNPCNewChildQuestionDelegate = new(mod, newChildQuestionDelegateNPC);
     }
 
     /// <inheritdoc/>
     public void SetPlayerNewChildQuestionDelegate(IManifest mod, Func<long, string?> newChildQuestionDelegatePlayer)
     {
-        modPlayerNewChildQuestionDelegate = new(mod.UniqueID, newChildQuestionDelegatePlayer);
+        modPlayerNewChildQuestionDelegate = new(mod, newChildQuestionDelegatePlayer);
     }
 }

@@ -159,15 +159,28 @@ internal sealed class ModConfig : ModConfigValues
 
         GMCM!.AddPageLink(Mod, "General", I18n.Config_Page_General_Name, I18n.Config_Page_General_Description);
         GMCM.AddPage(Mod, "General", I18n.Config_Page_General_Name);
-        GMCM.AddNumberOption(
-            Mod,
-            () => PregnancyChance,
-            (value) => PregnancyChance = value,
-            I18n.Config_PregnancyChance_Name,
-            I18n.Config_PregnancyChance_Description,
-            min: 0,
-            max: 100
-        );
+        if (HaveMoreKidsAPI.modPregnancyChanceDelegate != null)
+        {
+            GMCM.AddParagraph(
+                Mod,
+                () =>
+                    I18n.Config_PregnancyChance_Delegated(
+                        delegated: HaveMoreKidsAPI.modPregnancyChanceDelegate.Mod.Name
+                    )
+            );
+        }
+        else
+        {
+            GMCM.AddNumberOption(
+                Mod,
+                () => PregnancyChance,
+                (value) => PregnancyChance = value,
+                I18n.Config_PregnancyChance_Name,
+                I18n.Config_PregnancyChance_Description,
+                min: 0,
+                max: 100
+            );
+        }
         GMCM.AddNumberOption(
             Mod,
             () => DaysMarried,
@@ -228,15 +241,28 @@ internal sealed class ModConfig : ModConfigValues
 
         GMCM!.AddPageLink(Mod, "General", I18n.Config_Page_General_Name, I18n.Config_Page_General_Description);
         GMCM.AddPage(Mod, "General", I18n.Config_Page_General_Name);
-        GMCM.AddNumberOption(
-            Mod,
-            () => PregnancyChance,
-            (value) => PregnancyChance = value,
-            I18n.Config_PregnancyChance_Name,
-            I18n.Config_PregnancyChance_Description,
-            min: 0,
-            max: 100
-        );
+        if (HaveMoreKidsAPI.modPregnancyChanceDelegate != null)
+        {
+            GMCM.AddParagraph(
+                Mod,
+                () =>
+                    I18n.Config_PregnancyChance_Delegated(
+                        delegated: HaveMoreKidsAPI.modPregnancyChanceDelegate.Mod.Name
+                    )
+            );
+        }
+        else
+        {
+            GMCM.AddNumberOption(
+                Mod,
+                () => PregnancyChance,
+                (value) => PregnancyChance = value,
+                I18n.Config_PregnancyChance_Name,
+                I18n.Config_PregnancyChance_Description,
+                min: 0,
+                max: 100
+            );
+        }
         GMCM.AddNumberOption(
             Mod,
             () => DaysMarried,
@@ -354,6 +380,7 @@ internal sealed class ModConfig : ModConfigValues
             I18n.Config_PerKidDarkShrineOfSelfishness_Description
         );
         SetupEnabledKids();
+        SetipAdoptableKids();
     }
 
     private void SetupEnabledKids()
@@ -389,6 +416,44 @@ internal sealed class ModConfig : ModConfigValues
         else
         {
             GMCM.AddParagraph(Mod, I18n.Config_Page_Nokids_Description);
+        }
+    }
+
+    private void SetipAdoptableKids()
+    {
+        GMCM!.AddPage(Mod, "");
+        List<(string, CharacterData)> adoptedFromNPCInfo = [];
+        foreach (KidDefinitionData kidDef in AssetManager.KidDefsByKidId.Values)
+        {
+            if (
+                kidDef.AdoptedFromNPC is string adoptedFromNPC
+                && Game1.characterData.TryGetValue(adoptedFromNPC, out CharacterData? characterData)
+            )
+            {
+                adoptedFromNPCInfo.Add((adoptedFromNPC, characterData));
+            }
+        }
+        if (!adoptedFromNPCInfo.Any())
+        {
+            return;
+        }
+        GMCM.AddPageLink(Mod, "AdoptedFromNPC", I18n.Config_Page_AdoptableNPC_Name);
+        GMCM.AddPage(Mod, "AdoptedFromNPC", I18n.Config_Page_AdoptableNPC_Name);
+        GMCM.AddParagraph(Mod, () => "");
+
+        foreach ((string characterId, CharacterData characterData) in adoptedFromNPCInfo)
+        {
+            string name = TokenParser.ParseText(characterData.DisplayName) ?? characterData.DisplayName;
+            GMCM.AddComplexOption(
+                Mod,
+                name: () => name,
+                draw: new KidPreview(
+                    string.Concat("Characters/", characterData.TextureName ?? characterId),
+                    characterData.Size,
+                    XPos: 0
+                ).Draw,
+                height: () => characterData.Size.Y * 3
+            );
         }
     }
 
@@ -436,14 +501,15 @@ internal sealed class ModConfig : ModConfigValues
             {
                 if (
                     data.Appearance?.FirstOrDefault(apr => apr.AppearanceIsUnconditional() && !apr.AppearanceIsBaby())
-                    is CharacterAppearanceData toddlerApr
+                        is CharacterAppearanceData toddlerApr
+                    && toddlerApr.Sprite != null
                 )
                 {
                     CharacterAppearanceData? babyApr = data.Appearance?.FirstOrDefault(apr => apr.AppearanceIsBaby());
                     GMCM.AddComplexOption(
                         Mod,
                         name: () => "",
-                        draw: new KidPreview(toddlerApr, data.Size, babyApr).Draw,
+                        draw: new KidPreview(toddlerApr.Sprite, data.Size, babyApr?.Sprite).Draw,
                         height: () => 0
                     );
                 }
@@ -469,18 +535,18 @@ internal sealed class ModConfig : ModConfigValues
         GMCM.AddPage(Mod, "");
     }
 
-    private sealed record KidPreview(CharacterAppearanceData Apr, Point Size, CharacterAppearanceData? BabyApr)
+    private sealed record KidPreview(string ToddlerSprite, Point Size, string? BabySprite = null, int XPos = 64)
     {
-        private readonly Texture2D spriteTx = Game1.content.Load<Texture2D>(Apr.Sprite);
+        private readonly Texture2D spriteTx = Game1.content.Load<Texture2D>(ToddlerSprite);
 
         private readonly Texture2D? babySpriteTx =
-            (BabyApr != null && Game1.content.DoesAssetExist<Texture2D>(BabyApr.Sprite))
-                ? Game1.content.Load<Texture2D>(BabyApr.Sprite)
+            (BabySprite != null && Game1.content.DoesAssetExist<Texture2D>(BabySprite))
+                ? Game1.content.Load<Texture2D>(BabySprite)
                 : null;
 
         public void Draw(SpriteBatch b, Vector2 origin)
         {
-            Rectangle drawRect = new((int)origin.X + 64, (int)origin.Y - Size.Y * 2, Size.X * 4, Size.Y * 4);
+            Rectangle drawRect = new((int)origin.X + XPos, (int)origin.Y - Size.Y * 2, Size.X * 4, Size.Y * 4);
             if (babySpriteTx != null)
             {
                 Rectangle drawRectBaby = new(drawRect.X + Size.X * 4 + 4, (int)origin.Y - 12, 22 * 4, 16 * 4);
