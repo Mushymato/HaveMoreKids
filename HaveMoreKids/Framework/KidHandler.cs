@@ -601,11 +601,7 @@ internal static class KidHandler
 
             GameStateQueryContext gsqCtx = new(null, farmer, null, null, Game1.random);
             // check if today is a Child day or a NPC day
-            if (
-                ModEntry.KidNPCEnabled
-                && KidEntries.TryGetValue(kid.Name, out KidEntry? entry)
-                && entry.GetKidNPC() is NPC kidAsNPC
-            )
+            if (KidEntries.TryGetValue(kid.Name, out KidEntry? entry) && entry.GetKidNPC() is NPC kidAsNPC)
             {
                 string key;
                 string? goOutsideGSQ = null;
@@ -633,7 +629,11 @@ internal static class KidHandler
                 else
                 {
                     key = entry.KidNPCId!;
-                    if (kid.daysOld.Value >= ModEntry.Config.TotalDaysChild && !string.IsNullOrEmpty(goOutsideGSQ))
+                    if (
+                        ModEntry.KidNPCEnabled
+                        && kid.daysOld.Value >= ModEntry.Config.TotalDaysChild
+                        && !string.IsNullOrEmpty(goOutsideGSQ)
+                    )
                     {
                         goOutside = GameStateQuery.CheckConditions(goOutsideGSQ, gsqCtx);
                     }
