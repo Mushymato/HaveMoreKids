@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Improved compatibility with LittleNPC, Immersive Family, etc. by excluding AdoptedFromNPC kids from the children list.
-- 
+- New GSQ mushymato.HaveMoreKids_HAS_PLAYER_CHILD, which is like mushymato.HaveMoreKids_HAS_CHILD excluding the AdoptedFromNPC kids.
+- Added a C# facing API.
 
 ## [1.0.6]
 
