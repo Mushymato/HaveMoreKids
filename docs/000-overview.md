@@ -187,7 +187,7 @@ There is a [full example HMK content pack](../ContentPacks/[CP]%20HMK%20Example)
 ## C# API
 
 You can access the C# facing API by coping [IHaveMoreKidsAPI.cs](../HaveMoreKids/IHaveMoreKidsAPI.cs) into your mod.
-Then you can create it in `Helper.Events.GameLoop.GameLaunched` like so:
+Then you can obtain it in `Helper.Events.GameLoop.GameLaunched` like so:
 ```cs
 IHaveMoreKidsAPI? hmkAPI = Helper.ModRegistry.GetApi<IHaveMoreKidsAPI>("mushymato.HaveMoreKids");
 ```

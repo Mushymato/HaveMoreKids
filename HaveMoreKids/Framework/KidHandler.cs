@@ -270,7 +270,7 @@ internal static class KidHandler
         if (Game1.getLocationFromName("FarmHouse") is null)
         {
             ModEntry.Log("Attempted to check kids before 'FarmHouse' location is loaded", LogLevel.Warn);
-            return Enumerable.Empty<Child>();
+            return [];
         }
         return Utility.getHomeOfFarmer(farmer).GetAllChildren(childrenFilter);
     }

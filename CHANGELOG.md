@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [1.1.0]
 
 ### Changed
-- Improved 
+- Improved compatibility with LittleNPC, Immersive Family, etc. by excluding AdoptedFromNPC kids from the children list.
+- 
 
 ## [1.0.6]
 
