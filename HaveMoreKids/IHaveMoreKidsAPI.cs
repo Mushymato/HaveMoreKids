@@ -4,6 +4,14 @@ using StardewValley.Characters;
 
 namespace HaveMoreKids;
 
+[Flags]
+public enum GetAllChildrenFilter
+{
+    PLAYER = 1,
+    ADOPTED = 2,
+    ALL = PLAYER | ADOPTED,
+}
+
 public interface IKidEntry
 {
     /// <summary>The internal name of the Child</summary>
@@ -68,7 +76,10 @@ public interface IHaveMoreKidsAPI
     /// <returns>Iterator of Child</returns>
     /// <exception cref="KeyNotFoundException"/> Player home location is not ready
     /// <exception cref="InvalidCastException"/> Player home location is not a <see cref="StardewValley.Locations.FarmHouse"/>
-    public IEnumerable<Child> GetAllChildOfFarmer(Farmer farmer, bool includeAdoptedFromNPC = true);
+    public IEnumerable<Child> GetAllChildrenOfFarmer(
+        Farmer farmer,
+        GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL
+    );
 
     #endregion
 

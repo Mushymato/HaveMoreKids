@@ -262,27 +262,55 @@ internal static class KidHandler
         }
     }
 
-    internal static IEnumerable<Child> GetAllChildren(this Farmer farmer, bool includeAdoptedFromNPC = true)
+    internal static IEnumerable<Child> GetAllChildren(
+        this Farmer farmer,
+        GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL
+    )
     {
-        return Utility.getHomeOfFarmer(farmer).GetAllChildren(includeAdoptedFromNPC);
+        if (Game1.getLocationFromName("FarmHouse") is null)
+        {
+            ModEntry.Log("Attempted to check kids before 'FarmHouse' location is loaded", LogLevel.Warn);
+            return Enumerable.Empty<Child>();
+        }
+        return Utility.getHomeOfFarmer(farmer).GetAllChildren(childrenFilter);
     }
 
-    internal static IEnumerable<Child> GetAllChildren(this FarmHouse farmHouse, bool includeAdoptedFromNPC = true)
+    internal static IEnumerable<Child> GetAllChildren(
+        this FarmHouse farmHouse,
+        GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL
+    )
     {
         foreach (NPC npc in farmHouse.characters)
         {
-            if (npc is not Child kid)
-                continue;
-            if (!includeAdoptedFromNPC && kid.GetHMKAdoptedFromNPCId() is not null)
+            if (npc is not Child kid || !ShouldYieldChild(childrenFilter, kid))
                 continue;
             yield return kid;
         }
         foreach (Child kid in GetChildrenOnFarm(farmHouse))
         {
-            if (!includeAdoptedFromNPC && kid.GetHMKAdoptedFromNPCId() is not null)
+            if (!ShouldYieldChild(childrenFilter, kid))
                 continue;
             yield return kid;
         }
+    }
+
+    private static bool ShouldYieldChild(GetAllChildrenFilter childrenFilter, Child kid)
+    {
+        switch (childrenFilter)
+        {
+            case GetAllChildrenFilter.ADOPTED:
+                if (kid.GetHMKAdoptedFromNPCId() is null)
+                    return false;
+                break;
+            case GetAllChildrenFilter.PLAYER:
+                if (kid.GetHMKAdoptedFromNPCId() is not null)
+                    return false;
+                break;
+            case GetAllChildrenFilter.ALL:
+            default:
+                return true;
+        }
+        return true;
     }
 
     internal static IEnumerable<Child> AllKids()

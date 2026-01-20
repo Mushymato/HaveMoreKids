@@ -18,6 +18,7 @@ public class ModEntry : Mod
     private static IMonitor? mon;
     internal static IModHelper help = null!;
     internal static ModConfig Config = null!;
+    internal static HaveMoreKidsAPI? haveMoreKidsAPI = null;
 
     internal const string ModId = "mushymato.HaveMoreKids";
     internal static bool hasLittleNPC = false;
@@ -44,7 +45,7 @@ public class ModEntry : Mod
 
     public override object? GetApi()
     {
-        return base.GetApi();
+        return haveMoreKidsAPI ??= new HaveMoreKidsAPI();
     }
 
     internal static void ConsoleListNPCs(string arg1, string[] arg2)

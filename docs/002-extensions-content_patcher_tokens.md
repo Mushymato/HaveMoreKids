@@ -25,3 +25,5 @@ Can be used...
 This token is provided by content patcher and normally it lists all the player given names of the player's children. However, due to technical reasons this will actually give the internal kid id for any HMK custom kid.
 
 This can be used to your advantage in that `{{ChildNames|valueAt=0}}` will resolve to the internal kid id of the first kid, such that `{{mushymato.HaveMoreKids/KidNPCId:{{ChildNames|valueAt=0}}}}` will yield the internal NPC id of the first child of the player (if they have one).
+
+Adopted from NPC kids are excluded.

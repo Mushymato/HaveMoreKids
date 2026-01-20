@@ -452,7 +452,7 @@ internal sealed class ModConfig : ModConfigValues
                     characterData.Size,
                     XPos: 0
                 ).Draw,
-                height: () => characterData.Size.Y * 3
+                height: () => characterData.Size.Y * 2
             );
         }
     }

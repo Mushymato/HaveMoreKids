@@ -183,3 +183,11 @@ You can have a kid via non-standard (i.e. not the vanilla nightly pregnancy ques
 ## Example Pack
 
 There is a [full example HMK content pack](../ContentPacks/[CP]%20HMK%20Example) which adds 2 kids to spouse NPC of choice, one as a talking and giftable child, and one as a full NPC.
+
+## C# API
+
+You can access the C# facing API by coping [IHaveMoreKidsAPI.cs](../HaveMoreKids/IHaveMoreKidsAPI.cs) into your mod.
+Then you can create it in `Helper.Events.GameLoop.GameLaunched` like so:
+```cs
+IHaveMoreKidsAPI? hmkAPI = Helper.ModRegistry.GetApi<IHaveMoreKidsAPI>("mushymato.HaveMoreKids");
+```

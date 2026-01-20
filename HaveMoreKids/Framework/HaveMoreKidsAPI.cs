@@ -27,9 +27,12 @@ public sealed class HaveMoreKidsAPI : IHaveMoreKidsAPI
     }
 
     /// <inheritdoc/>
-    public IEnumerable<Child> GetAllChildOfFarmer(Farmer farmer, bool includeAdoptedFromNPC = true)
+    public IEnumerable<Child> GetAllChildrenOfFarmer(
+        Farmer farmer,
+        GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL
+    )
     {
-        return farmer.GetAllChildren(includeAdoptedFromNPC);
+        return farmer.GetAllChildren(childrenFilter);
     }
 
     internal static DelegateWithSource<string, float?>? modPregnancyChanceDelegate;

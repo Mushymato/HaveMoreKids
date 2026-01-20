@@ -172,6 +172,7 @@ internal static class GameDelegates
     internal const string GSQ_CHILD_AGE = $"{ModEntry.ModId}_CHILD_AGE";
     internal const string GSQ_CHILD_DAYS_IN_AGE = $"{ModEntry.ModId}_CHILD_DAYS_IN_AGE";
     internal const string GSQ_HAS_CHILD = $"{ModEntry.ModId}_HAS_CHILD";
+    internal const string GSQ_HAS_PLAYER_CHILD = $"{ModEntry.ModId}_HAS_PLAYER_CHILD";
     internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
     internal const string GSQ_WILL_HAVE_CHILD = $"{ModEntry.ModId}_WILL_HAVE_CHILD";
     internal const string Trigger_NewChild = $"{ModEntry.ModId}_NewChild";
@@ -204,6 +205,7 @@ internal static class GameDelegates
         GameStateQuery.Register(GSQ_CHILD_AGE, CHILD_AGE);
         GameStateQuery.Register(GSQ_CHILD_DAYS_IN_AGE, CHILD_DAYS_IN_AGE);
         GameStateQuery.Register(GSQ_HAS_CHILD, HAS_CHILD);
+        GameStateQuery.Register(GSQ_HAS_PLAYER_CHILD, HAS_PLAYER_CHILD);
         GameStateQuery.Register(GSQ_HAS_ADOPTED_NPC, HAS_ADOPTED_NPC);
         GameStateQuery.Register(GSQ_WILL_HAVE_CHILD, WILL_HAVE_CHILD);
         // Trigger
@@ -356,14 +358,16 @@ internal static class GameDelegates
         return true;
     }
 
-    private static Child? FindChild(Farmer player, string kidId)
+    private static Child? FindChild(
+        Farmer player,
+        string kidId,
+        GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL
+    )
     {
-        if (Game1.getLocationFromName("FarmHouse") is null)
-        {
-            ModEntry.Log("Attempted to check kids before 'FarmHouse' location is loaded", LogLevel.Warn);
-            return null;
-        }
-        List<Child> children = player.getChildren();
+        List<Child> children = player
+            .GetAllChildren(childrenFilter)
+            .OrderByDescending(kid => kid.daysOld.Value)
+            .ToList();
         if (
             IndexingPrefixes.Contains(kidId[0])
             && int.TryParse(kidId.AsSpan(1), out int index)
@@ -375,12 +379,9 @@ internal static class GameDelegates
 
     private static Child? FindAdoptedNPC(Farmer player, string kidId)
     {
-        if (Game1.getLocationFromName("FarmHouse") is null)
-        {
-            ModEntry.Log("Attempted to check kids before 'FarmHouse' location is loaded", LogLevel.Warn);
-            return null;
-        }
-        List<Child> children = player.getChildren();
+        IEnumerable<Child> children = player
+            .GetAllChildren(GetAllChildrenFilter.ADOPTED)
+            .OrderByDescending(kid => kid.daysOld.Value);
         return children.FirstOrDefault(kid =>
         {
             if (
@@ -401,7 +402,17 @@ internal static class GameDelegates
             ModEntry.Log(error, LogLevel.Error);
             return false;
         }
-        return FindChild(context.Player, kidId) != null;
+        return FindChild(context.Player, kidId, GetAllChildrenFilter.ALL) != null;
+    }
+
+    private static bool HAS_PLAYER_CHILD(string[] query, GameStateQueryContext context)
+    {
+        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "string kidId"))
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+        return FindChild(context.Player, kidId, GetAllChildrenFilter.PLAYER) != null;
     }
 
     private static bool HAS_ADOPTED_NPC(string[] query, GameStateQueryContext context)
