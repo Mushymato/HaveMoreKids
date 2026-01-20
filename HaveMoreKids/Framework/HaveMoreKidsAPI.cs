@@ -1,4 +1,5 @@
 using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Characters;
 
@@ -18,11 +19,47 @@ public sealed class HaveMoreKidsAPI : IHaveMoreKidsAPI
     }
 
     /// <inheritdoc/>
-    public IEnumerable<(string, IKidEntry)> GetKidEntries()
+    public IKidEntry? GetKidEntry(Child kid)
     {
-        foreach ((string kidId, KidEntry entry) in KidHandler.KidEntries)
+        if (KidHandler.KidEntriesPopulated && KidHandler.KidEntries.TryGetValue(kid.Name, out KidEntry? entry))
         {
-            yield return (kidId, entry);
+            return entry;
+        }
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public int GetDaysToNextChildGrowth(Child kid)
+    {
+        return kid.Age switch
+        {
+            0 => ModEntry.Config.TotalDaysBaby - kid.daysOld.Value,
+            1 => ModEntry.Config.TotalDaysCrawer - kid.daysOld.Value,
+            2 => ModEntry.Config.TotalDaysToddler - kid.daysOld.Value,
+            3 => ModEntry.KidNPCEnabled ? ModEntry.Config.TotalDaysChild - kid.daysOld.Value : -1,
+            _ => -1,
+        };
+    }
+
+    /// <inheritdoc/>
+    public string GetChildBirthdayString(Child kid)
+    {
+        if (GetKidEntry(kid) is KidEntry kidEntry)
+        {
+            int year = kid.daysOld.Value / (28 * 4) + 1;
+            return new SDate(kidEntry.BirthDay, kidEntry.BirthSeason, year).ToLocaleString(withYear: true);
+        }
+        try
+        {
+            return SDate.Now().AddDays(-kid.daysOld.Value).ToLocaleString(withYear: true);
+        }
+        catch (ArithmeticException)
+        {
+            // The player probably changed the game date, so the birthday would be before the
+            // game started. We'll just drop the year number from the output in that case.
+            return new SDate(Game1.dayOfMonth, Game1.season, 100_000)
+                .AddDays(-kid.daysOld.Value)
+                .ToLocaleString(withYear: false);
         }
     }
 

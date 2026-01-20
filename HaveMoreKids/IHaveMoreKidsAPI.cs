@@ -58,11 +58,22 @@ public interface IHaveMoreKidsAPI
     public void SetChildDisplayName(Child kid, string newName);
 
     /// <summary>
-    /// Return HMK's kid entry info list, which will be populated once a save is loaded.
+    /// Return HMK's kid entry for a given child, which will be populated once a save is loaded.
     /// Generic children will not have an entry.
     /// </summary>
-    /// <returns>Iterator pair of (kidId, entry)</returns>
-    public IEnumerable<(string, IKidEntry)> GetKidEntries();
+    /// <param name="kid"></param>
+    /// <returns>Kid entry, or null if not available</returns>
+    public IKidEntry? GetKidEntry(Child kid);
+
+    /// <summary>Determine the number of days until next child growth</summary>
+    /// <param name="kid"></param>
+    /// <returns></returns>
+    public int GetDaysToNextChildGrowth(Child kid);
+
+    /// <summary>Get the child birthday string</summary>
+    /// <param name="kid"></param>
+    /// <returns></returns>
+    public string GetChildBirthdayString(Child kid);
 
     /// <summary>
     /// Return all children of a farmer, including adopted from NPC kids.
