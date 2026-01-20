@@ -27,25 +27,31 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
                 return true;
             }
 
-            int childrenCount = Game1.player.getChildrenCount();
-
             string lastDialogueText = "Have more kids?";
-            if (
-                !AssetManager.TryGetDialogueForChild(
-                    spouse,
-                    null,
-                    "HMK_HaveBabyQuestion",
-                    childrenCount,
-                    out Dialogue? dialogue
-                )
-            )
+
+            Dialogue? dialogue;
+            if ((dialogue = HaveMoreKidsAPI.modNPCNewChildQuestionDelegate?.Get(spouse)) == null)
             {
-                string translationKey = spouse.isAdoptionSpouse()
-                    ? "Strings\\Events:HaveBabyQuestion_Adoption"
-                    : "Strings\\Events:HaveBabyQuestion";
-                lastDialogueText = Game1.content.LoadString(translationKey, Game1.player.Name);
-                dialogue = new(spouse, translationKey, string.Concat(lastDialogueText, "$l"));
+                int childrenCount = Game1.player.getChildrenCount();
+
+                if (
+                    !AssetManager.TryGetDialogueForChild(
+                        spouse,
+                        null,
+                        "HMK_HaveBabyQuestion",
+                        childrenCount,
+                        out dialogue
+                    )
+                )
+                {
+                    string translationKey = spouse.isAdoptionSpouse()
+                        ? "Strings\\Events:HaveBabyQuestion_Adoption"
+                        : "Strings\\Events:HaveBabyQuestion";
+                    lastDialogueText = Game1.content.LoadString(translationKey, Game1.player.Name);
+                    dialogue = new(spouse, translationKey, string.Concat(lastDialogueText, "$l"));
+                }
             }
+
             if (dialogue.dialogues.Count > 0)
             {
                 lastDialogueText = dialogue.dialogues.Last().Text;
@@ -66,17 +72,25 @@ public class HMKGetChildQuestionEvent(int whichQuestion) : BaseFarmEvent
             if (value.HasValue)
             {
                 Farmer farmer = Game1.otherFarmers[value.Value];
-                if (
-                    AssetManager.LoadStringReturnNullIfNotFound("HaveBabyQuestionFarmer", farmer.displayName)
-                    is not string question
-                )
+                string? question;
+                if ((question = HaveMoreKidsAPI.modPlayerNewChildQuestionDelegate?.Get(value.Value)) == null)
                 {
-                    question = Game1.content.LoadString(
-                        farmer.IsMale != Game1.player.IsMale
-                            ? "Strings\\Events:HavePlayerBabyQuestion"
-                            : "Strings\\Events:HavePlayerBabyQuestion_Adoption",
-                        farmer.displayName
-                    );
+                    if (
+                        (
+                            question = AssetManager.LoadStringReturnNullIfNotFound(
+                                "HaveBabyQuestionFarmer",
+                                farmer.displayName
+                            )
+                        ) == null
+                    )
+                    {
+                        question = Game1.content.LoadString(
+                            farmer.IsMale != Game1.player.IsMale
+                                ? "Strings\\Events:HavePlayerBabyQuestion"
+                                : "Strings\\Events:HavePlayerBabyQuestion_Adoption",
+                            farmer.displayName
+                        );
+                    }
                 }
                 Game1.currentLocation.createQuestionDialogue(question, YesNot, AnswerPlayerPregnancyQuestion);
                 Game1.messagePause = true;

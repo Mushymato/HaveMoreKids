@@ -200,8 +200,10 @@ internal static partial class Patches
         }
     }
 
-    private static float ModifyPregnancyChance(float originalValue)
+    private static float ModifyPregnancyChance(float originalValue, string refName)
     {
+        if (HaveMoreKidsAPI.modPregnancyChanceDelegate?.Get(refName) is float modPregChance)
+            return modPregChance;
         ModEntry.LogOnce($"Modify pregnancy chance: {originalValue} -> {ModEntry.Config.PregnancyChance / 100f}");
         return ModEntry.Config.PregnancyChance / 100f;
     }
@@ -212,7 +214,8 @@ internal static partial class Patches
     /// <returns></returns>
     private static bool Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(
         ref CodeMatcher matcher,
-        int expectedCount
+        int expectedCount,
+        string refName
     )
     {
         try
@@ -227,6 +230,7 @@ internal static partial class Patches
                     .ThrowIfNotMatch("Did not find 'random.NextDouble() < 0.05'")
                     .Advance(1)
                     .InsertAndAdvance([
+                        new(OpCodes.Ldstr, $"{refName}:{i}"),
                         new(OpCodes.Call, AccessTools.Method(typeof(Patches), nameof(ModifyPregnancyChance))),
                     ]);
             }
@@ -250,7 +254,13 @@ internal static partial class Patches
     )
     {
         CodeMatcher matcher = new(instructions, generator);
-        if (Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(ref matcher, 2))
+        if (
+            Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(
+                ref matcher,
+                2,
+                "Utility_pickPersonalFarmEvent_Transpiler"
+            )
+        )
             return matcher.Instructions();
         return instructions;
     }
@@ -261,7 +271,13 @@ internal static partial class Patches
     )
     {
         CodeMatcher matcher = new(instructions, generator);
-        if (!Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(ref matcher, 1))
+        if (
+            !Utility_pickPersonalFarmEvent_InsertModifyPregnancyChance(
+                ref matcher,
+                1,
+                "FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler"
+            )
+        )
             return instructions;
         matcher.Start();
 

@@ -1,3 +1,4 @@
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
 
@@ -38,6 +39,8 @@ public interface IKidEntry
 
 public interface IHaveMoreKidsAPI
 {
+    #region Kid Info
+
     /// <summary>
     /// Set the display name for a child, works for generic or custom children but not adopted from NPC kids.
     /// Please use this instead of directly setting <see cref="Child.Name"/> and <see cref="Child.displayName"/>.
@@ -66,4 +69,56 @@ public interface IHaveMoreKidsAPI
     /// <exception cref="KeyNotFoundException"/> Player home location is not ready
     /// <exception cref="InvalidCastException"/> Player home location is not a <see cref="StardewValley.Locations.FarmHouse"/>
     public IEnumerable<Child> GetAllChildOfFarmer(Farmer farmer, bool includeAdoptedFromNPC = true);
+
+    #endregion
+
+    #region Pregnancy Questions
+
+    /// <summary>
+    /// Adds a delegate to control pregnancy chance, instead of using HMK's config.
+    /// This will be invoked by the method inserted via transpiler after relevant 'random.NextDouble() &lt; 0.05'.
+    /// The string? argument indicates which callsite is the one invoking the delegate:
+    /// <list type="bullet">
+    /// <item>
+    ///     <term>"Utility_pickPersonalFarmEvent_Transpiler:0"</term>
+    ///     <description>Applies to the vanilla spouse, or the primary spouse for Free Love mods.</description>
+    /// </item>
+    /// <item>
+    ///     <term>"Utility_pickPersonalFarmEvent_Transpiler:1"</term>
+    ///     <description>Applies to player couple.</description>
+    /// </item>
+    /// <item>
+    ///     <term>"FL_Utility_pickPersonalFarmEvent_Postfix_Transpiler:0"</term>
+    ///     <description>Applies to any additional Free Love spouses.</description>
+    /// </item>
+    /// </list>
+    /// Returning null here means HMK uses it's logic for this.
+    /// Only one delegate can be set at a time, the last mod to do so wins.
+    /// </summary>
+    /// <param name="mod"></param>
+    /// <param name="pregnancyChanceDelegate"></param>
+    public void SetPregnancyChanceDelegate(IManifest mod, Func<string, float?> pregnancyChanceDelegate);
+
+    /// <summary>
+    /// Adds a delegate to control pregnancy dialogue for NPC, instead of using HMK's keys.
+    /// The argument given is the NPC asking the question.
+    /// This delegate will not be called for adopt from NPC.
+    /// Returning null here means HMK uses it's logic for this.
+    /// Only one delegate can be set at a time, the last mod to do so wins.
+    /// </summary>
+    /// <param name="mod"></param>
+    /// <param name="pregnancyChanceDelegate"></param>
+    public void SetNPCNewChildQuestionDelegate(IManifest mod, Func<NPC, Dialogue?> newChildQuestionDelegate);
+
+    /// <summary>
+    /// Adds a delegate to control pregnancy dialogue for Player, instead of using HMK's logic.
+    /// The argument given is the unique player id of the farmer asking the question.
+    /// Returning null here means HMK uses it's logic for this.
+    /// Only one delegate can be set at a time, the last mod to do so wins.
+    /// </summary>
+    /// <param name="mod"></param>
+    /// <param name="pregnancyChanceDelegate"></param>
+    public void SetPlayerNewChildQuestionDelegate(IManifest mod, Func<long, string?> newPlayerChildQuestionDelegate);
+
+    #endregion
 }

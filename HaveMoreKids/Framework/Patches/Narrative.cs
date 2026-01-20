@@ -41,26 +41,6 @@ internal static partial class Patches
             original: AccessTools.DeclaredMethod(typeof(Dialogue), "parseDialogueString"),
             prefix: new HarmonyMethod(typeof(Patches), nameof(Dialogue_parseDialogueString_Prefix))
         );
-        // Make sure the draw loop doesn't crash sigh
-        harmony.Patch(
-            original: AccessTools.DeclaredMethod(typeof(Game1), nameof(Game1.drawDialogueBox), []),
-            prefix: new HarmonyMethod(typeof(Patches), nameof(Game1_drawDialogueBox_Prefix))
-        );
-    }
-
-    private static void Game1_drawDialogueBox_Prefix()
-    {
-        if (Game1.currentSpeaker != null && Game1.currentSpeaker.CurrentDialogue.Count == 0)
-        {
-            ModEntry.Log("Game1.currentSpeaker.CurrentDialogue is empty!", LogLevel.Warn);
-            Game1.currentSpeaker.CurrentDialogue.Push(
-                new Dialogue(
-                    Game1.currentSpeaker,
-                    "HMK_FailbackDialogue",
-                    "HaveMoreKids: Game1.currentSpeaker.CurrentDialogue is empty!"
-                )
-            );
-        }
     }
 
     private static void Dialogue_parseDialogueString_Prefix(Dialogue __instance, ref string masterString)
