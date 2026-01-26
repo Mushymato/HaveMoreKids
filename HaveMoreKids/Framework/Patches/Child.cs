@@ -617,6 +617,24 @@ internal static partial class Patches
         CharacterData? childData = __instance.GetData();
         if (childData?.Appearance is not List<CharacterAppearanceData> appearances || appearances.Count == 0)
         {
+            if (
+                childData != null
+                && __instance.GetHMKAdoptedFromNPCId() is string npcName
+                && NPCLookup.GetNonChildNPC(npcName) is NPC adoptedFrom
+            )
+            {
+                In_NPC_ChooseAppearance_Call = true;
+                NPC_ChooseAppearance_Call(__instance);
+                In_NPC_ChooseAppearance_Call = false;
+                __instance.Sprite.textureName.Value = adoptedFrom.Sprite.textureName.Value;
+                __instance.Sprite.SpriteWidth = childData.Size.X;
+                __instance.Sprite.SpriteHeight = childData.Size.Y;
+                __instance.Sprite.currentFrame = 0;
+                __instance.Breather = childData.Breather && childData.BreathChestRect.HasValue;
+                __instance.HideShadow = !childData.Shadow?.Visible ?? false;
+                __instance.forceOneTileWide.Value = true;
+                __instance.Sprite.UpdateSourceRect();
+            }
             return;
         }
         List<TempCAD> tmpCADs = [];
