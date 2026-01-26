@@ -173,6 +173,8 @@ There are 2 methods of activating adoption:
 - Set [`mushymato.HaveMoreKids/Kids`](./001-model-kids.md)'s `CanAdoptFromAdoptionRegistry` field to a GSQ that evaluates to true. This will add the kid as a custom adoptable kid.
 - Use [`mushymato.HaveMoreKids_SetNewChildEvent`](./002-extensions-triggers_actions.md) with special value `Player` as the "spouse".
 
+You do not need any [`mushymato.HaveMoreKids/ChildData`](./001-model-child_data.md) entries for an adopted NPC, as their normal `Data/Characters` entries will be automatically used for the child version as well.
+
 ## Custom Birth Events
 
 You can have a kid via non-standard (i.e. not the vanilla nightly pregnancy question) ways by doing these two things:
