@@ -24,8 +24,13 @@
     <BaseManifest>new</BaseManifest>
     <MinimumApiVersion_Behavior>UpdateFull</MinimumApiVersion_Behavior>
     <MinimumGameVersion_Behavior>UpdateFull</MinimumGameVersion_Behavior>
-    <Dependencies_VersionBehavior>Update</Dependencies_VersionBehavior>
+    <Dependencies_VersionBehavior>Ignore</Dependencies_VersionBehavior>
   </PropertyGroup>
+
+  <ItemGroup>
+    <SMAPIDependency Include="spacechase0.GenericModConfigMenu" Required="false" Version="1.16.0" />
+    <SMAPIDependency Include="Pathoschild.ContentPatcher" Required="false" Version="2.8.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.4.0" />
