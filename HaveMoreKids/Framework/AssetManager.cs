@@ -55,6 +55,7 @@ internal static class AssetManager
     private const string Furniture_DefaultCrib = $"{ModEntry.ModId}_Crib";
     internal const string Asset_CharactersDialogue = "Characters/Dialogue/";
     internal const string Asset_CharactersSchedule = "Characters/schedules/";
+    internal const AssetEditPriority AssetEditPriorityReallyLate = AssetEditPriority.Late + 100;
 
     private static readonly MethodInfo? characterDataMemberwiseClone = AccessTools.Method(
         typeof(CharacterData),
@@ -291,7 +292,7 @@ internal static class AssetManager
         if (e.Name.IsEquivalentTo("Data/Shops"))
             e.Edit(Edit_DataShops, AssetEditPriority.Default);
         if (e.Name.IsEquivalentTo("Maps/Hospital"))
-            e.Edit(Edit_MapsHospital, AssetEditPriority.Late);
+            e.Edit(Edit_MapsHospital, AssetEditPriorityReallyLate);
         if (name.IsEquivalentTo(Asset_Strings))
         {
             string stringsAsset = Path.Combine("i18n", e.Name.LanguageCode.ToString() ?? "default", "strings.json");
@@ -306,14 +307,14 @@ internal static class AssetManager
         }
 
         if (e.Name.IsEquivalentTo("Strings/UI") && e.Name.LocaleCode == ModEntry.help.Translation.Locale)
-            e.Edit(Edit_StringsUI, AssetEditPriority.Late);
+            e.Edit(Edit_StringsUI, AssetEditPriorityReallyLate);
 
         if (KidHandler.KidNPCToKid.Any())
         {
             if (name.IsEquivalentTo(Asset_DataCharacters))
-                e.Edit(Edit_DataCharacters, AssetEditPriority.Late);
+                e.Edit(Edit_DataCharacters, AssetEditPriorityReallyLate);
             if (name.IsEquivalentTo(Asset_DataNPCGiftTastes))
-                e.Edit(Edit_DataNPCGiftTastes, AssetEditPriority.Late);
+                e.Edit(Edit_DataNPCGiftTastes, AssetEditPriorityReallyLate);
         }
     }
 

@@ -740,8 +740,7 @@ internal static class KidPathingManager
         {
             // send kid to bed directly
             int childIndex = kid.GetChildIndex();
-            BedFurniture childBed = farmHouse.GetChildBed(childIndex);
-            if (!childBed.mutex.IsLocked())
+            if (farmHouse.GetChildBed(childIndex) is BedFurniture childBed && !childBed.mutex.IsLocked())
             {
                 Point childBedSpot = farmHouse.GetChildBedSpot(childIndex);
                 if (!childBedSpot.Equals(Point.Zero))
