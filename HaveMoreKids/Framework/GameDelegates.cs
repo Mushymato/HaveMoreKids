@@ -175,6 +175,7 @@ internal static class GameDelegates
     internal const string GSQ_HAS_PLAYER_CHILD = $"{ModEntry.ModId}_HAS_PLAYER_CHILD";
     internal const string GSQ_HAS_ADOPTED_NPC = $"{ModEntry.ModId}_HAS_ADOPTED_NPC";
     internal const string GSQ_WILL_HAVE_CHILD = $"{ModEntry.ModId}_WILL_HAVE_CHILD";
+    internal const string GSQ_CAN_HAVE_CHILD = $"{ModEntry.ModId}_CAN_HAVE_CHILD";
     internal const string Trigger_NewChild = $"{ModEntry.ModId}_NewChild";
     internal const string Trigger_Adoption = $"{ModEntry.ModId}_Adoption";
     internal const string Trigger_Doved = $"{ModEntry.ModId}_Doved";
@@ -190,6 +191,7 @@ internal static class GameDelegates
     internal const string CPT_KidDisplayName = "KidDisplayName";
     internal const string CPT_KidNPCId = "KidNPCId";
     internal const string PLAYER_PARENT = "Player";
+    internal const string PLAYER_SPOUSE_PARENT = "PlayerSpouse";
     internal static readonly char[] IndexingPrefixes = ['N', '#'];
 
     internal static uint SoloDaysUntilNewChild => Game1.player.stats.Get(Stats_daysUntilNewChild);
@@ -208,6 +210,7 @@ internal static class GameDelegates
         GameStateQuery.Register(GSQ_HAS_PLAYER_CHILD, HAS_PLAYER_CHILD);
         GameStateQuery.Register(GSQ_HAS_ADOPTED_NPC, HAS_ADOPTED_NPC);
         GameStateQuery.Register(GSQ_WILL_HAVE_CHILD, WILL_HAVE_CHILD);
+        GameStateQuery.Register(GSQ_CAN_HAVE_CHILD, CAN_HAVE_CHILD);
         // Trigger
         TriggerActionManager.RegisterTrigger(Trigger_NewChild);
         TriggerActionManager.RegisterTrigger(Trigger_Adoption);
@@ -393,6 +396,36 @@ internal static class GameDelegates
             }
             return false;
         });
+    }
+
+    private static bool CAN_HAVE_CHILD(string[] query, GameStateQueryContext context)
+    {
+        if (
+            !ArgUtility.TryGetOptional(
+                query,
+                1,
+                out string? spouseName,
+                out string error,
+                defaultValue: "Any",
+                name: "string? spouseName"
+            ) || !ArgUtility.TryGetOptional(query, 2, out string? kidId, out error, name: "string? kidId")
+        )
+        {
+            ModEntry.Log(error, LogLevel.Error);
+            return false;
+        }
+
+        if (!CheckCanHaveChildGeneral(out error, kidId, false))
+            return false;
+
+        if (spouseName == null || spouseName.EqualsIgnoreCase("Any") || spouseName.EqualsIgnoreCase(PLAYER_PARENT))
+            return true;
+
+        if (!CheckCanHaveChildNPCSpouse(ref error, kidId, spouseName, out _))
+        {
+            return false;
+        }
+        return true;
     }
 
     private static bool HAS_CHILD(string[] query, GameStateQueryContext context)
@@ -627,16 +660,10 @@ internal static class GameDelegates
             return false;
         }
 
-        if (kidId != null && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
-        {
-            skipHomeCheck = skipHomeCheck || kidDef.AdoptedFromNPC != null || kidDef.BirthOrAdoptAsToddler;
-        }
-
-        if (!skipHomeCheck && !HomeIsValidForPregnancy(Utility.getHomeOfFarmer(Game1.player), out error))
+        if (!CheckCanHaveChildGeneral(out error, kidId, skipHomeCheck))
         {
             return false;
         }
-        error = null!;
 
         if (spouseName.EqualsIgnoreCase(PLAYER_PARENT))
         {
@@ -645,7 +672,10 @@ internal static class GameDelegates
             Game1.player.stats.Set(Stats_daysUntilNewChild, daysUntilNewChild + 1);
             KidHandler.TrySetNextAdoptFromNPCKidId(Game1.player, kidId);
         }
-        else if (Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) is long spouseId)
+        else if (
+            spouseName.EqualsIgnoreCase(PLAYER_SPOUSE_PARENT)
+            && Game1.player.team.GetSpouse(Game1.player.UniqueMultiplayerID) is long spouseId
+        )
         {
             // player couple path
             Friendship friendship = Game1.player.team.GetFriendship(Game1.player.UniqueMultiplayerID, spouseId);
@@ -655,35 +685,8 @@ internal static class GameDelegates
         }
         else
         {
-            // npc spouse path
-            NPC? spouse;
-            if (string.IsNullOrEmpty(spouseName) || spouseName.EqualsIgnoreCase("Any"))
+            if (!CheckCanHaveChildNPCSpouse(ref error, kidId, spouseName, out NPC? spouse))
             {
-                IEnumerable<NPC> spouses = SpouseShim.GetSpouses(Game1.player);
-                if (!spouses.Any())
-                {
-                    error = "Player does not have a spouse";
-                    return false;
-                }
-                spouse = Game1.random.ChooseFrom(spouses.ToList());
-            }
-            else
-            {
-                if ((spouse = NPCLookup.GetNonChildNPC(spouseName)) == null)
-                {
-                    error = $"{spouseName} is not an NPC";
-                    return false;
-                }
-                if (spouse.getSpouse() != Game1.player)
-                {
-                    error = $"{spouse.Name} is not the player's spouse";
-                    return false;
-                }
-            }
-
-            if (kidId != null && kidId != "Any" && !KidHandler.TrySetNextKid(Game1.player, spouse, kidId))
-            {
-                error = $"Kid '{kidId}' is not available";
                 return false;
             }
             SpouseShim.SetNPCNewChildDate(Game1.player, spouse, daysUntilNewChild);
@@ -700,6 +703,69 @@ internal static class GameDelegates
             {
                 Game1.addHUDMessage(new HUDMessage(parsedMessage) { noIcon = true });
             }
+        }
+
+        return true;
+    }
+
+    private static bool CheckCanHaveChildGeneral(out string error, string? kidId, bool skipHomeCheck)
+    {
+        if (kidId != null && AssetManager.KidDefsByKidId.TryGetValue(kidId, out KidDefinitionData? kidDef))
+        {
+            skipHomeCheck = skipHomeCheck || kidDef.AdoptedFromNPC != null || kidDef.BirthOrAdoptAsToddler;
+        }
+
+        if (!skipHomeCheck)
+        {
+            if (!HomeIsValidForPregnancy(Utility.getHomeOfFarmer(Game1.player), out error))
+                return false;
+            if (!Patches.UnderMaxChildrenCount(Game1.player, Game1.player.getChildren()))
+            {
+                error = "Max children count reached";
+                return false;
+            }
+        }
+        error = null!;
+        return true;
+    }
+
+    private static bool CheckCanHaveChildNPCSpouse(
+        ref string error,
+        string? kidId,
+        string? spouseName,
+        [NotNullWhen(true)] out NPC? spouse
+    )
+    {
+        // npc spouse path
+        if (string.IsNullOrEmpty(spouseName) || spouseName.EqualsIgnoreCase("Any"))
+        {
+            spouse = null;
+            IEnumerable<NPC> spouses = SpouseShim.GetSpouses(Game1.player);
+            if (!spouses.Any())
+            {
+                error = "Player does not have a spouse";
+                return false;
+            }
+            spouse = Game1.random.ChooseFrom(spouses.ToList());
+        }
+        else
+        {
+            if ((spouse = NPCLookup.GetNonChildNPC(spouseName)) == null)
+            {
+                error = $"{spouseName} is not an NPC";
+                return false;
+            }
+            if (spouse.getSpouse() != Game1.player)
+            {
+                error = $"{spouse.Name} is not the player's spouse";
+                return false;
+            }
+        }
+
+        if (kidId != null && kidId != "Any" && !KidHandler.TrySetNextKid(Game1.player, spouse, kidId))
+        {
+            error = $"Kid '{kidId}' is not available";
+            return false;
         }
 
         return true;
