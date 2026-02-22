@@ -18,7 +18,6 @@
   "config.DaysToddler.description": "Number of days until the crawler becomes a toddler. Base game days is 28.",
   "config.DaysChild.name": "Days until Child NPC",
   "config.DaysChild.description": "Number of days until the toddler becomes a full NPC. This is a modded feature added by Have More Kids, and only works for custom kids that have kid NPC content.",
-  "config.DaysChild.disabled": "Because you have LittleNPC installed, the Child NPC features of Have More Kids is disabled.",
   "config.MaxChildren.name": "Max Children",
   "config.MaxChildren.description": "Max number of children you can have (i.e. max number of children that will live in your farmhouse).",
   "config.AlwaysAllowGenericChildren.name": "Always Allow Generic Children",

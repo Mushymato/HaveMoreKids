@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Graphics;
@@ -596,6 +597,12 @@ internal static class KidHandler
             if (kid.Age <= 2)
                 continue;
 
+            if (IsLittleNPC(kid))
+            {
+                ResetDialogues(kid);
+                continue;
+            }
+
             // Ensure kid is in a tile that can reach the door
             KidPathingManager.RepositionKidInFarmhouse(kid);
 
@@ -660,9 +667,23 @@ internal static class KidHandler
         KidPathingManager.PathKidNPCToDoor(Game1.timeOfDay);
     }
 
+    internal static MethodInfo? Method_IsValidLittleNPCIndex = null;
+
+    private static bool IsLittleNPC(Child kid)
+    {
+        if (Method_IsValidLittleNPCIndex != null)
+        {
+            int index = kid.GetChildIndex();
+            bool result = (bool)(Method_IsValidLittleNPCIndex.Invoke(null, [index]) ?? false);
+            ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) is an littleNPC, skipping");
+            return result;
+        }
+        return true;
+    }
+
     internal static void ResetDialogues(Child kid)
     {
-        ModEntry.Log($"ResetDialogues for '{kid.Name}'");
+        ModEntry.Log($"ResetDialogues for '{kid.Name}' ({kid.GetDialogueSheetName()})");
         // make sure dialogue gets reloaded
         kid.resetSeasonalDialogue();
         kid.resetCurrentDialogue();
@@ -713,6 +734,7 @@ internal static class KidHandler
     public static string AntiNameCollision(string name)
     {
         HashSet<string> npcIds = Utility.getAllCharacters().Select(npc => npc.Name).ToHashSet();
+        npcIds.AddRange(AssetManager.KidDefsByKidId.Keys);
         while (npcIds.Contains(name))
         {
             name += " ";

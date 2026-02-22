@@ -314,8 +314,8 @@ internal static partial class Patches
             {
                 __result = overrideSheetName ?? npcId;
             }
-            // normal HMK kid
-            else
+            // HMK custom kid
+            else if (kidDef != null)
             {
                 __result = overrideSheetName ?? __instance.Name;
             }
@@ -506,6 +506,12 @@ internal static partial class Patches
         {
             return true;
         }
+
+        if (__instance.GetHMKKidDef() == null)
+        {
+            return true;
+        }
+
         if (who.ActiveObject != null && __instance.tryToReceiveActiveObject(who, probe: true))
         {
             __result = __instance.tryToReceiveActiveObject(who);

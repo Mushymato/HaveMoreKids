@@ -309,23 +309,16 @@ internal sealed class ModConfig : ModConfigValues
             max: 56
         );
 
-        if (ModEntry.hasLittleNPC)
-        {
-            GMCM.AddParagraph(Mod, I18n.Config_DaysChild_Disabled);
-        }
-        else
-        {
-            GMCM.AddNumberOption(
-                Mod,
-                () => DaysChild,
-                (value) => DaysChild = value,
-                I18n.Config_DaysChild_Name,
-                I18n.Config_DaysChild_Description,
-                min: 0,
-                max: 56,
-                formatValue: ZeroIsDisabled
-            );
-        }
+        GMCM.AddNumberOption(
+            Mod,
+            () => DaysChild,
+            (value) => DaysChild = value,
+            I18n.Config_DaysChild_Name,
+            I18n.Config_DaysChild_Description,
+            min: 0,
+            max: 56,
+            formatValue: ZeroIsDisabled
+        );
 
         GMCM.AddNumberOption(
             Mod,

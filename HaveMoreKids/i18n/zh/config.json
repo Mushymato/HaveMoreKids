@@ -18,7 +18,6 @@
   "config.DaysToddler.description": "孩子从爬行到走路所需天数。原版游戏为28天。",
   "config.DaysChild.name": "孩子到可外出儿童NPC",
   "config.DaysChild.description": "孩子变成可外出NPC所需天数。这是Have More Kids添加的功能，只适用于有通过内容MOD添加的自定义孩子，不适用于无MOD的原版孩子。",
-  "config.DaysChild.disabled": "因为你有安装LittleNPC所以‘可外出儿童NPC’功能被自动禁用了。",
   "config.MaxChildren.name": "最大孩子数",
   "config.MaxChildren.description": "你最多可以有多少个孩子（即，你的农舍里最多可以居住多少个孩子）。",
   "config.AlwaysAllowGenericChildren.name": "允许原版孩子",

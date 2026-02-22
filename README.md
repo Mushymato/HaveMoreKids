@@ -78,7 +78,7 @@ Additionally, it's possible to create kids that are adopted from NPC. These are 
 - `Free Love`: Compatibility is provided by HMK via harmony patches. Kids will use the parent picked by Free Love using it's pregnancy chance modifiers, but whether they can have kids at all is decided by HMK.
 - `Unique Children Talk`: Should work with the first 2 kids, but unknown what happens for 3+. HMK implements a similar feature for content packs to add custom dialogue to kids.
 - `Unique Children`: It's unknown which appearance system would take precedence when it comes to custom kids, but generic children should get to have unique children decide their appearance.
-- `LittleNPC`: HMK implements a similar feature that allows content packs to add custom kids who grow up into NPC. The HMK side feature is automatically disabled if LittleNPC is installed. Thus it should be possible to use HMK for the general tweaks, and LittleNPC for the child to NPC aspect.
+- `LittleNPC`: HMK implements a similar feature that allows content packs to add custom kids who grow up into NPC. The HMK side feature is automatically disabled if LittleNPC is installed and applicable to a particular kid. Thus it should be possible to use HMK for the general tweaks, and LittleNPC for the child to NPC aspect.
 - `Immersive Family`: Compatible, but only has events for first 2 kids and may use the wrong appearance if you have custom kids.
 
 ## Multiplayer

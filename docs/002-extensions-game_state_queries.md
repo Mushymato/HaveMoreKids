@@ -4,10 +4,17 @@ HMK provides these [game state queries](https://stardewvalleywiki.com/Modding:Ga
 
 ## mushymato.HaveMoreKids_WILL_HAVE_CHILD [spouseName] [kidId]
 
-Check that you will have a child.
+Check that you will have a child (i.e. spouse is pregnant).
 
 - `spouseName`: A specific spouse name to check for, can use `Any` for anyone, and `Player` for player adoptions.
 - `kidId`: A specific kid id to check for.
+
+## mushymato.HaveMoreKids_CAN_HAVE_CHILD [spouseName] [kidId]
+
+Check that you are able to have a child with this spouse.
+
+- `spouseName`: A specific spouse name to check for, can use `Any` for anyone, and `Player` for player adoptions.
+- `kidId`: A specific kid id to check for, if given this will check that this `kidId` is still available.
 
 ## mushymato.HaveMoreKids_HAS_CHILD \<kidId|childIndex\>
 

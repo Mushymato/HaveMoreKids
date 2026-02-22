@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using HaveMoreKids.Framework;
 using HaveMoreKids.Framework.ExtraFeatures;
@@ -21,8 +22,7 @@ public class ModEntry : Mod
     internal static HaveMoreKidsAPI? haveMoreKidsAPI = null;
 
     internal const string ModId = "mushymato.HaveMoreKids";
-    internal static bool hasLittleNPC = false;
-    internal static bool KidNPCEnabled => !hasLittleNPC && Config.DaysChild > 0;
+    internal static bool KidNPCEnabled => Config.DaysChild > 0;
 
     public override void Entry(IModHelper helper)
     {
@@ -65,7 +65,17 @@ public class ModEntry : Mod
         Config.Register(ModManifest);
         GameDelegates.Register(ModManifest);
         SpouseShim.Register(Helper);
-        hasLittleNPC = Helper.ModRegistry.IsLoaded("Candidus42.LittleNPCs");
+        IModInfo? modInfo = help.ModRegistry.Get("Candidus42.LittleNPCs");
+        if (
+            modInfo?.GetType().GetProperty("Mod")?.GetValue(modInfo)?.GetType().Assembly is Assembly littleNPC
+            && littleNPC.GetType("LittleNPCs.Framework.Common") is Type littleNPCcommon
+        )
+        {
+            KidHandler.Method_IsValidLittleNPCIndex = HarmonyLib.AccessTools.DeclaredMethod(
+                littleNPCcommon,
+                "IsValidLittleNPCIndex"
+            );
+        }
     }
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
