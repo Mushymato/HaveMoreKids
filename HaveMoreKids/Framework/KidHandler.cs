@@ -263,6 +263,22 @@ internal static class KidHandler
         }
     }
 
+    internal static int GetChildIndexForAdoptedKid(
+        this FarmHouse farmHouse,
+        Child targetKid,
+        GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL
+    )
+    {
+        int idx = 0;
+        foreach (Child kid in farmHouse.GetAllChildren(childrenFilter).OrderByDescending(kid => kid.daysOld.Value))
+        {
+            if (kid == targetKid)
+                return idx;
+            idx++;
+        }
+        return -1;
+    }
+
     internal static IEnumerable<Child> GetAllChildren(
         this Farmer farmer,
         GetAllChildrenFilter childrenFilter = GetAllChildrenFilter.ALL

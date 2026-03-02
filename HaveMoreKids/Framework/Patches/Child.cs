@@ -607,7 +607,7 @@ internal static partial class Patches
     /// <returns></returns>
     private static bool Child_tenMinuteUpdate_Prefix(Child __instance)
     {
-        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3 || Game1.timeOfDay >= 1900)
+        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3)
         {
             return true;
         }

@@ -513,6 +513,26 @@ internal static class KidPathingManager
             return true;
         }
 
+        // after 1900, but before 2100, send adopted kids to bed
+        if (Game1.timeOfDay >= 1900)
+        {
+            if (kid.GetHMKAdoptedFromNPCId() == null)
+            {
+                return true;
+            }
+            if (
+                Game1.timeOfDay >= 2200
+                && kid.currentLocation is FarmHouse farmHouse2
+                && TryGetTargetBedTileInHouse(kid, farmHouse2, out Vector2 bedSpot)
+            )
+            {
+                kid.setTileLocation(bedSpot);
+                kid.controller = null;
+                return false;
+            }
+            return true;
+        }
+
         // kid is on the farm
         if (kid.currentLocation is Farm)
         {
@@ -738,19 +758,31 @@ internal static class KidPathingManager
     {
         if (Game1.timeOfDay > 2100)
         {
-            // send kid to bed directly
-            int childIndex = kid.GetChildIndex();
-            if (farmHouse.GetChildBed(childIndex) is BedFurniture childBed && !childBed.mutex.IsLocked())
+            if (!TryGetTargetBedTileInHouse(kid, farmHouse, out Vector2 bedSpot))
             {
-                Point childBedSpot = farmHouse.GetChildBedSpot(childIndex);
-                if (!childBedSpot.Equals(Point.Zero))
-                {
-                    childBed.ReserveForNPC();
-                    return childBedSpot.ToVector2();
-                }
+                return bedSpot;
             }
         }
         return GetRandomReachablePointInHouse(farmHouse, Random.Shared).ToVector2();
+    }
+
+    internal static bool TryGetTargetBedTileInHouse(Child kid, FarmHouse farmHouse, out Vector2 bedSpot)
+    {
+        // send kid to bed directly
+        int childIndex = farmHouse.GetChildIndexForAdoptedKid(kid);
+        ModEntry.Log($"{kid.Name} has index {childIndex}");
+        if (childIndex > -1 && farmHouse.GetChildBed(childIndex) is BedFurniture childBed && !childBed.mutex.IsLocked())
+        {
+            Point childBedSpot = farmHouse.GetChildBedSpot(childIndex);
+            if (!childBedSpot.Equals(Point.Zero))
+            {
+                childBed.ReserveForNPC();
+                bedSpot = childBedSpot.ToVector2();
+                return true;
+            }
+        }
+        bedSpot = Vector2.Zero;
+        return false;
     }
 
     private static void WarpKidToFarm(Character c, GameLocation l)
