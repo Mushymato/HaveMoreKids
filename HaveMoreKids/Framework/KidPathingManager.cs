@@ -54,6 +54,7 @@ internal record NPCKidCtx(Child Kid, NPC KidNPC, int GoOutsideTime, SchedulePath
         kid.Age = 4;
         kid.IsInvisible = true;
         kid.daysUntilNotInvisible = 1;
+        kid.IsWalkingInSquare = false;
         kid.Halt();
         kid.controller = null;
     }
@@ -526,8 +527,10 @@ internal static class KidPathingManager
                 && TryGetTargetBedTileInHouse(kid, farmHouse2, out Vector2 bedSpot)
             )
             {
-                kid.setTileLocation(bedSpot);
+                kid.IsWalkingInSquare = false;
+                kid.Halt();
                 kid.controller = null;
+                kid.setTileLocation(bedSpot);
                 return false;
             }
             return true;
@@ -768,17 +771,22 @@ internal static class KidPathingManager
 
     internal static bool TryGetTargetBedTileInHouse(Child kid, FarmHouse farmHouse, out Vector2 bedSpot)
     {
-        // send kid to bed directly
         int childIndex = farmHouse.GetChildIndexForAdoptedKid(kid);
-        ModEntry.Log($"{kid.Name} has index {childIndex}");
-        if (childIndex > -1 && farmHouse.GetChildBed(childIndex) is BedFurniture childBed && !childBed.mutex.IsLocked())
+        if (childIndex > -1 && farmHouse.GetChildBed(childIndex) is BedFurniture childBed)
         {
             Point childBedSpot = farmHouse.GetChildBedSpot(childIndex);
             if (!childBedSpot.Equals(Point.Zero))
             {
-                childBed.ReserveForNPC();
                 bedSpot = childBedSpot.ToVector2();
-                return true;
+                if (childBed.mutex.IsLocked())
+                {
+                    return kid.TilePoint != childBedSpot;
+                }
+                else
+                {
+                    childBed.ReserveForNPC();
+                    return true;
+                }
             }
         }
         bedSpot = Vector2.Zero;
@@ -795,6 +803,7 @@ internal static class KidPathingManager
             return;
         }
 
+        kid.IsWalkingInSquare = false;
         kid.Halt();
         kid.controller = null;
         GoingToTheFarm.Remove(kid.idOfParent.Value);
