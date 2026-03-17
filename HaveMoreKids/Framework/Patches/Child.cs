@@ -339,7 +339,8 @@ internal static partial class Patches
     {
         __result.AddRange(KidHandler.GetChildrenOnFarm(__instance));
         __result.RemoveWhere(kid => kid.GetHMKAdoptedFromNPCId() is not null);
-        __result.Sort((kidA, kidB) => kidB.daysOld.Value.CompareTo(kidA.daysOld.Value));
+        __result.Sort(KidHandler.SortChildren);
+        ModEntry.LogOnce($"FarmHouse_getChildren_Postfix {__result.Count}");
     }
 
     private static void FarmHouse_getChildrenCount_Postfix(FarmHouse __instance, ref int __result)
@@ -607,7 +608,7 @@ internal static partial class Patches
     /// <returns></returns>
     private static bool Child_tenMinuteUpdate_Prefix(Child __instance)
     {
-        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3)
+        if (!Game1.IsMasterGame || __instance.IsInvisible || __instance.Age < 3 || KidHandler.IsLittleNPC(__instance))
         {
             return true;
         }

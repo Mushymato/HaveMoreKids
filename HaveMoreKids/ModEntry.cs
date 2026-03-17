@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using HaveMoreKids.Framework;
 using HaveMoreKids.Framework.ExtraFeatures;
+using HaveMoreKids.Integration;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -65,9 +66,35 @@ public class ModEntry : Mod
         Config.Register(ModManifest);
         GameDelegates.Register(ModManifest);
         SpouseShim.Register(Helper);
-        IModInfo? modInfo = help.ModRegistry.Get("Candidus42.LittleNPCs");
+        SetupLittleNPCIntegration();
+    }
+
+    private static void SetupLittleNPCIntegration()
+    {
+        if (help.ModRegistry.Get("Candidus42.LittleNPCs") is not IModInfo littleNPCsModInfo)
+        {
+            return;
+        }
+        KidHandler.HasLittleNPC = true;
+        try
+        {
+            // path 1: use the api
+            KidHandler.littleNPCsAPI = help.ModRegistry.GetApi<ILittleNPCsAPI>("Candidus42.LittleNPCs");
+            if (KidHandler.littleNPCsAPI != null)
+            {
+                Log("Acquired 'Candidus42.LittleNPCs' API");
+                return;
+            }
+        }
+        catch
+        {
+            KidHandler.littleNPCsAPI = null;
+        }
+
+        // path 2: reflect for IsValidLittleNPCIndex
         if (
-            modInfo?.GetType().GetProperty("Mod")?.GetValue(modInfo)?.GetType().Assembly is Assembly littleNPC
+            littleNPCsModInfo.GetType().GetProperty("Mod")?.GetValue(littleNPCsModInfo)?.GetType().Assembly
+                is Assembly littleNPC
             && littleNPC.GetType("LittleNPCs.Framework.Common") is Type littleNPCcommon
         )
         {
@@ -75,6 +102,7 @@ public class ModEntry : Mod
                 littleNPCcommon,
                 "IsValidLittleNPCIndex"
             );
+            Log($"Acquired {KidHandler.Method_IsValidLittleNPCIndex} from 'Candidus42.LittleNPCs'");
         }
     }
 

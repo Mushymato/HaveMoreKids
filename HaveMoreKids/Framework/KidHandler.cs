@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using HaveMoreKids.Integration;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -395,6 +396,8 @@ internal static class KidHandler
                         {
                             ModEntry.Log($"Missing custom kid: '{kid.Name}' ({kidId})", LogLevel.Warn);
                             kid.Name = kid.KidDisplayName(allowNull: false);
+                            kid.modData.Remove(Child_ModData_Id);
+                            kid.modData.Remove(Child_ModData_DisplayName);
                         }
                         // reset displayName
                         kid.displayName = null;
@@ -613,11 +616,8 @@ internal static class KidHandler
             if (kid.Age <= 2)
                 continue;
 
-            if (IsLittleNPC(kid))
-            {
-                ResetDialogues(kid);
+            if (IsLittleNPC(kid, shouldLog: true))
                 continue;
-            }
 
             // Ensure kid is in a tile that can reach the door
             KidPathingManager.RepositionKidInFarmhouse(kid);
@@ -683,18 +683,46 @@ internal static class KidHandler
         KidPathingManager.PathKidNPCToDoor(Game1.timeOfDay);
     }
 
+    internal static bool HasLittleNPC = false;
+    internal static ILittleNPCsAPI? littleNPCsAPI = null;
     internal static MethodInfo? Method_IsValidLittleNPCIndex = null;
 
-    private static bool IsLittleNPC(Child kid)
+    internal static bool IsLittleNPC(Child kid, bool shouldLog = false, bool checkAge = true)
     {
-        if (Method_IsValidLittleNPCIndex != null)
+        if (!HasLittleNPC)
+            return false;
+        int index = kid.GetChildIndex();
+        if (littleNPCsAPI != null)
         {
-            int index = kid.GetChildIndex();
-            bool result = (bool)(Method_IsValidLittleNPCIndex.Invoke(null, [index]) ?? false);
-            ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) is an littleNPC, skipping");
+            bool result =
+                littleNPCsAPI.IsValidLittleNPCIndex(index)
+                && (!checkAge || kid.daysOld.Value >= littleNPCsAPI.DaysAfterKidsGrowUp);
+            if (result && shouldLog)
+                ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) is old enough to become littleNPC, skipping");
             return result;
         }
-        return true;
+        else if (Method_IsValidLittleNPCIndex != null)
+        {
+            bool result = (bool)(Method_IsValidLittleNPCIndex.Invoke(null, [index]) ?? false);
+            if (result && shouldLog)
+                ModEntry.Log($"Kid '{kid.displayName}' ({kid.Name}) might be a littleNPC, skipping");
+            return result;
+        }
+        return false;
+    }
+
+    internal static int SortChildren(Child kidA, Child kidB)
+    {
+        int ageCmp = kidB.daysOld.Value.CompareTo(kidA.daysOld.Value);
+        if (HasLittleNPC)
+        {
+            bool kidAIsCustom = kidA.KidHMKId() != null;
+            bool kidBIsCustom = kidB.KidHMKId() != null;
+            // when little npc is installed, sort non custom kids ahead of custom kids
+            if (kidAIsCustom != kidBIsCustom)
+                return kidAIsCustom ? 1 : -1;
+        }
+        return ageCmp;
     }
 
     internal static void ResetDialogues(Child kid)
