@@ -25,17 +25,14 @@ internal static class NPCLookup
             {
                 if (npc.Name == npcId && npc is not Child && npc.IsVillager && !npc.EventActor)
                 {
-                    if (npc.currentLocation?.IsActiveLocation() ?? false)
-                    {
-                        match = npc;
-                        return false;
-                    }
+                    match = npc;
+                    return match.currentLocation?.IsActiveLocation() ?? false;
                 }
                 return true;
             },
             false
         );
-        if (match != null)
+        if (match != null && (match.currentLocation?.IsActiveLocation() ?? false))
         {
             cache[npcId] = match;
         }
