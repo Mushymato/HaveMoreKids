@@ -219,13 +219,14 @@ internal static partial class Patches
             FarmerSprite.AnimationFrame animFrame = __instance.Sprite.currentAnimation[i];
             if (animFrame.frame == 0)
             {
-                animFrame.frame = frameMapping[0];
-                __instance.Sprite.currentAnimation[i] = animFrame;
+                __instance.Sprite.currentAnimation[i] = new(frameMapping[0], animFrame.milliseconds);
             }
             else
             {
-                animFrame.frame = frameMapping[animFrame.frame - offset];
-                __instance.Sprite.currentAnimation[i] = animFrame;
+                __instance.Sprite.currentAnimation[i] = new(
+                    frameMapping[animFrame.frame - offset],
+                    animFrame.milliseconds
+                );
             }
         }
         __instance.Sprite.currentFrame = __instance.Sprite.currentAnimation[0].frame;
@@ -489,10 +490,14 @@ internal static partial class Patches
         {
             hearts = friendship.Points / 250;
         }
+#if SDV17
+        kid.checkForNewCurrentDialogue(hearts);
+#else
         if (!kid.checkForNewCurrentDialogue(hearts))
         {
             kid.checkForNewCurrentDialogue(hearts, noPreface: true);
         }
+#endif
         kid.nonVillagerNPCTimesTalked = -1;
     }
 

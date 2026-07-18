@@ -188,7 +188,11 @@ public class HMKNewChildEvent : BaseFarmEvent
             return false;
         }
 
-        Game1.stats.checkForFullHouseAchievement(isDirectUnlock: true);
+        Game1.stats.checkForFullHouseAchievement(
+#if !SDV17
+            isDirectUnlock: true
+#endif
+        );
         Game1.playSound("smallSelect");
 
         // spouse stuff

@@ -47,6 +47,8 @@ internal static class KidHandler
     private const string Child_ModData_Id = $"{ModEntry.ModId}/Id";
     private const string Child_ModData_DisplayName = $"{ModEntry.ModId}/DisplayName";
     private const string Child_ModData_NPCParent = $"{ModEntry.ModId}/NPCParent";
+    private const string Child_ModData_BirthSeason = $"{ModEntry.ModId}/BirthSeason";
+    private const string Child_ModData_BirthDay = $"{ModEntry.ModId}/BirthDay";
     private const string FL_ModData_OtherParent = "aedenthorn.FreeLove/OtherParent";
     internal const string Character_ModData_NextKidId = $"{ModEntry.ModId}/NextKidId";
     internal const string WhoseKids_Shared = $"{ModEntry.ModId}#SHARED";
@@ -412,6 +414,40 @@ internal static class KidHandler
         }
     }
 
+    internal static void ParseBirthday(Child kid, out Season birthSeason, out int birthDay)
+    {
+        if (
+            !kid.modData.TryGetValue(Child_ModData_BirthSeason, out string? birthSeasonStr)
+            || !Enum.TryParse(birthSeasonStr, true, out birthSeason)
+            || !kid.modData.TryGetValue(Child_ModData_BirthDay, out string? birthDayStr)
+            || !int.TryParse(birthDayStr, out birthDay)
+        )
+        {
+#if !SDV17
+            if (Enum.TryParse(kid.Birthday_Season, out Season season))
+            {
+                birthSeason = season;
+                birthDay = kid.Birthday_Day;
+                kid.modData[Child_ModData_BirthSeason] = birthSeason.ToString();
+                kid.modData[Child_ModData_BirthDay] = birthDay.ToString();
+                return;
+            }
+#endif
+            SDate birthSDate = SDate.Now();
+            int daysOld = kid.daysOld.Value;
+            while (daysOld > birthSDate.DaysSinceStart)
+            {
+                // 10 years
+                birthSDate.AddDays(28 * 40);
+            }
+            birthSDate = birthSDate.AddDays(-daysOld);
+            birthDay = birthSDate.Day;
+            birthSeason = birthSDate.Season;
+            kid.modData[Child_ModData_BirthSeason] = birthSeason.ToString();
+            kid.modData[Child_ModData_BirthDay] = birthDay.ToString();
+        }
+    }
+
     internal static void KidEntries_Populate([CallerMemberName] string? caller = null)
     {
         if (!Context.IsMainPlayer)
@@ -422,20 +458,7 @@ internal static class KidHandler
 
         foreach (Child kid in AllKids())
         {
-            if (!Utility.TryParseEnum(kid.Birthday_Season, out Season season))
-            {
-                SDate birthday = SDate.Now();
-                int daysOld = kid.daysOld.Value;
-                while (daysOld > birthday.DaysSinceStart)
-                {
-                    // 10 years
-                    birthday.AddDays(28 * 40);
-                }
-                birthday = birthday.AddDays(-daysOld);
-                season = birthday.Season;
-                kid.Birthday_Season = Utility.getSeasonKey(birthday.Season);
-                kid.Birthday_Day = birthday.Day;
-            }
+            ParseBirthday(kid, out Season birthSeason, out int birthDay);
 
             string? kidNPCId;
             bool adoptedFromNPC;
@@ -486,8 +509,8 @@ internal static class KidHandler
                 adoptedFromNPC,
                 kid.idOfParent.Value,
                 npcParentId,
-                season,
-                kid.Birthday_Day
+                birthSeason,
+                birthDay
             )
             {
                 DisplayName = kid.displayName,
@@ -1184,17 +1207,20 @@ internal static class KidHandler
         newKid.modData[Child_ModData_NPCParent] = spouseName;
         if (newBorn)
         {
-            // newKid.modData[Child_ModData_Birthday] = $"{Game1.season}|{Game1.dayOfMonth}";
+            newKid.modData[Child_ModData_BirthSeason] = Game1.season.ToString();
+            newKid.modData[Child_ModData_BirthDay] = Game1.dayOfMonth.ToString();
+#if !SDV17
             newKid.Birthday_Season = Utility.getSeasonKey(Game1.season);
             newKid.Birthday_Day = Game1.dayOfMonth;
+#endif
         }
         if ((characterData ??= newKid.GetData()) is null)
         {
             ModEntry.Log($"Failed to get data for child ID '{newKidId}', '{kidName}' may be broken.", LogLevel.Error);
             return newKid;
         }
-        newKid.Gender = characterData.Gender;
-        newKid.darkSkinned.Value = characterData.IsDarkSkinned;
+        newKid.Gender = characterData?.Gender ?? newKid.Gender;
+        newKid.darkSkinned.Value = characterData?.IsDarkSkinned ?? newKid.darkSkinned.Value;
         newKid.reloadSprite(onlyAppearance: true);
         ModEntry.Log($"Assigned '{newKidId}' to child named '{kidName}'.", LogLevel.Info);
         return newKid;

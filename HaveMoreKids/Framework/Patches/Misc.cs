@@ -67,7 +67,7 @@ internal static partial class Patches
     {
         if (entry.Character is Child kid && !entry.IsChild)
         {
-            CharacterData data = kid.GetData();
+            CharacterData? data = kid.GetData();
             ____animatedSprite = kid.Sprite.Clone();
             ____animatedSprite.tempSpriteHeight = -1;
             ____animatedSprite.SpriteWidth = data?.Size.X ?? ____animatedSprite.SpriteWidth;
@@ -206,8 +206,14 @@ internal static partial class Patches
         {
             if (kid.GetHMKAdoptedFromNPCId() is not null)
                 continue;
+#if SDV17
+            if (kid.Birthday_Season != Game1.season)
+                continue;
+#else
             if (kid.Birthday_Season != Game1.currentSeason)
                 continue;
+
+#endif
             if (!__result.TryGetValue(kid.Birthday_Day, out List<NPC>? npcs))
             {
                 npcs = [];

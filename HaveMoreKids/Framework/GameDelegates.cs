@@ -236,9 +236,14 @@ internal static class GameDelegates
         }
     }
 
-    private static bool TSEndearment(string[] query, out string replacement, Random random, Farmer player)
+    private static bool TSEndearment(
+        string[] query,
+        [NotNullWhen(true)] out string? replacement,
+        Random random,
+        Farmer player
+    )
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, allowBlank: false, name: "string kidId"))
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
@@ -301,9 +306,14 @@ internal static class GameDelegates
         return true;
     }
 
-    private static bool TSKidName(string[] query, out string replacement, Random random, Farmer player)
+    private static bool TSKidName(
+        string[] query,
+        [NotNullWhen(true)] out string? replacement,
+        Random random,
+        Farmer player
+    )
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, allowBlank: false, name: "string kidId"))
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
@@ -318,9 +328,14 @@ internal static class GameDelegates
         return true;
     }
 
-    private static bool TSNPCParentName(string[] query, out string replacement, Random random, Farmer player)
+    private static bool TSNPCParentName(
+        string[] query,
+        [NotNullWhen(true)] out string? replacement,
+        Random random,
+        Farmer player
+    )
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, allowBlank: false, name: "string kidId"))
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
@@ -338,9 +353,14 @@ internal static class GameDelegates
         return true;
     }
 
-    private static bool TSRandomSiblingName(string[] query, out string replacement, Random random, Farmer player)
+    private static bool TSRandomSiblingName(
+        string[] query,
+        [NotNullWhen(true)] out string? replacement,
+        Random random,
+        Farmer player
+    )
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, allowBlank: false, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, allowBlank: false, name: "string kidId"))
         {
             return TokenParser.LogTokenError(query, error, out replacement);
         }
@@ -356,7 +376,7 @@ internal static class GameDelegates
                 }
             }
             if (siblings.Count > 0)
-                replacement = random.ChooseFrom(siblings);
+                replacement = random.ChooseFrom(siblings) ?? replacement;
         }
         return true;
     }
@@ -405,7 +425,7 @@ internal static class GameDelegates
                 query,
                 1,
                 out string? spouseName,
-                out string error,
+                out string? error,
                 defaultValue: "Any",
                 name: "string? spouseName"
             ) || !ArgUtility.TryGetOptional(query, 2, out string? kidId, out error, name: "string? kidId")
@@ -430,7 +450,7 @@ internal static class GameDelegates
 
     private static bool HAS_CHILD(string[] query, GameStateQueryContext context)
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, name: "string kidId"))
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;
@@ -440,7 +460,7 @@ internal static class GameDelegates
 
     private static bool HAS_PLAYER_CHILD(string[] query, GameStateQueryContext context)
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, name: "string kidId"))
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;
@@ -450,7 +470,7 @@ internal static class GameDelegates
 
     private static bool HAS_ADOPTED_NPC(string[] query, GameStateQueryContext context)
     {
-        if (!ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "string kidId"))
+        if (!ArgUtility.TryGet(query, 1, out string? kidId, out string? error, name: "string kidId"))
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;
@@ -461,8 +481,8 @@ internal static class GameDelegates
     private static bool WILL_HAVE_CHILD(string[] query, GameStateQueryContext context)
     {
         if (
-            !ArgUtility.TryGetOptional(query, 1, out string spouseName, out string error, name: "string spouseName")
-            || !ArgUtility.TryGetOptional(query, 2, out string kidId, out error, name: "string kidId")
+            !ArgUtility.TryGetOptional(query, 1, out string? spouseName, out string? error, name: "string spouseName")
+            || !ArgUtility.TryGetOptional(query, 2, out string? kidId, out error, name: "string kidId")
         )
         {
             ModEntry.Log(error, LogLevel.Error);
@@ -498,7 +518,7 @@ internal static class GameDelegates
     private static bool CHILD_AGE(string[] query, GameStateQueryContext context)
     {
         if (
-            !ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "int kidId")
+            !ArgUtility.TryGet(query, 1, out string? kidId, out string? error, name: "int kidId")
             || !ArgUtility.TryGetInt(query, 2, out int ageMin, out error, name: "int ageMin")
             || !ArgUtility.TryGetOptionalInt(
                 query,
@@ -520,7 +540,7 @@ internal static class GameDelegates
     private static bool CHILD_DAYS_IN_AGE(string[] query, GameStateQueryContext context)
     {
         if (
-            !ArgUtility.TryGet(query, 1, out string kidId, out string error, name: "int kidId")
+            !ArgUtility.TryGet(query, 1, out string? kidId, out string? error, name: "int kidId")
             || !ArgUtility.TryGetInt(query, 2, out int ageToSub, out error, name: "int ageToSub")
             || !ArgUtility.TryGetInt(query, 3, out int daysOldMin, out error, name: "int daysOldMin")
             || !ArgUtility.TryGetOptionalInt(
@@ -561,10 +581,10 @@ internal static class GameDelegates
         return daysOld >= daysOldMin && daysOld <= daysOldMax;
     }
 
-    private static bool SetChildAge(string[] args, TriggerActionContext context, out string error)
+    private static bool SetChildAge(string[] args, TriggerActionContext context, [NotNullWhen(false)] out string? error)
     {
         if (
-            !ArgUtility.TryGet(args, 1, out string kidId, out error)
+            !ArgUtility.TryGet(args, 1, out string? kidId, out error)
             || !ArgUtility.TryGetInt(args, 2, out int age, out error)
         )
         {
@@ -579,6 +599,7 @@ internal static class GameDelegates
         {
             return TrySetChildAge(age, kid);
         }
+        error = $"Did not find child '{kidId}'";
         return false;
     }
 
@@ -630,7 +651,11 @@ internal static class GameDelegates
         return true;
     }
 
-    private static bool SetNewChildEvent(string[] args, TriggerActionContext context, out string error)
+    private static bool SetNewChildEvent(
+        string[] args,
+        TriggerActionContext context,
+        [NotNullWhen(false)] out string? error
+    )
     {
         if (
             !ArgUtility.TryGetInt(args, 1, out int daysUntilNewChild, out error, name: "int daysUntilNewChild")
@@ -746,7 +771,7 @@ internal static class GameDelegates
                 error = "Player does not have a spouse";
                 return false;
             }
-            spouse = Game1.random.ChooseFrom(spouses.ToList());
+            spouse = Game1.random.ChooseFrom(spouses.ToList())!;
         }
         else
         {
@@ -789,9 +814,9 @@ internal static class GameDelegates
         ModEntry.Log($"Doved '{child.Name}'");
     }
 
-    private static bool DoveChild(string[] args, TriggerActionContext context, out string error)
+    private static bool DoveChild(string[] args, TriggerActionContext context, [NotNullWhen(false)] out string? error)
     {
-        if (!ArgUtility.TryGet(args, 1, out string kidId, out error, name: "string kidId"))
+        if (!ArgUtility.TryGet(args, 1, out string? kidId, out error, name: "string kidId"))
         {
             ModEntry.Log(error, LogLevel.Error);
             return false;

@@ -195,8 +195,10 @@ internal static partial class Patches
                 childAsNPC.Name
             )
             {
+#if !SDV17
                 Birthday_Day = childAsNPC.Birthday_Day,
                 Birthday_Season = childAsNPC.Birthday_Season,
+#endif
                 Gender = childAsNPC.Gender,
                 Portrait = childAsNPC.Portrait,
                 EventActor = true,
