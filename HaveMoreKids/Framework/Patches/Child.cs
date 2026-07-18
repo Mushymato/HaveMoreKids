@@ -466,8 +466,12 @@ internal static partial class Patches
             // IL_0018: ldarg.0
             // IL_0019: isinst StardewValley.Characters.Child
             // IL_001e: brfalse.s IL_0029
+            // 1.6.16
+            // IL_001a: ldloc.0
+            // IL_001b: isinst StardewValley.Characters.Child
+            // IL_0020: brfalse.s IL_0026
             matcher
-                .MatchEndForward([new(OpCodes.Ldarg_0), new(OpCodes.Isinst, typeof(Child)), new(OpCodes.Brfalse_S)])
+                .MatchEndForward([new(OpCodes.Isinst, typeof(Child)), new(OpCodes.Brfalse_S)])
                 .ThrowIfNotMatch("Did not find 'this is Child'");
             matcher.Opcode = OpCodes.Brtrue_S;
             matcher.Advance(-1).Operand = typeof(NPC);
